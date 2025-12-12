@@ -1,7 +1,6 @@
 ### Pātimokkha Memorize
 
 This is a web-based app & tool designed to assist Bhikkhus and students in memorizing the Pātimokkha. It features a synchronized text interface that highlights lines in time with the audio, allowing for precise follow-along practice, and includes memorization drills by hiding random words.
-![image|1048x586](upload://enxMLWAy9zQ5W7U9ZFhMlndXyuv.png)
 
 #### 🚀 How to Start
 
@@ -20,7 +19,6 @@ This application is hosted online and can be accessed directly by clicking the l
 * **Audio Player:** Standard play/pause and volume controls.
 
 * **Recitation Button (🎤):**
-![image|1078x575](upload://n7XyLsRXMrV9WY5hiAhidqyQNnr.png)
 
   * **Click to Start:** Activates Recitation Mode. The text will enlarge and highlight line-by-line synchronized with the audio.
   * 
@@ -39,7 +37,6 @@ This application is hosted online and can be accessed directly by clicking the l
 Click the Gear Icon to open the settings panel.
 
 ##### A. Memorization Drill (Hide Texts)
-![image|1043x577](upload://riu8UZai9O9LfIPnTId51GPX48r.png)
 
 This feature helps test your memory by obscuring words.
 
@@ -47,7 +44,6 @@ This feature helps test your memory by obscuring words.
 * **Hide Button:** Randomly hides words based on the selected percentage.
 * **Reveal Interaction:** Click on any hidden word (represented by a blank box) to reveal it instantly.
 * **Show Button:** Resets the text and reveals all words.
-![image|1048x581](upload://7Hv11F8kNsUsPg04hb7RtvYBZxE.png)
 
 ##### B. Speed Control
 
@@ -59,5 +55,3 @@ This feature helps test your memory by obscuring words.
 #### 💾 Uses Offline
 
 To Use Offline, download the Apk file for Android, Zip file for PC, and ZIM file for all OS and devices. (The ZIM format is opened by Kiwix, a free program dedicated to providing offline access to free educational content (To learn more see here: [kiwix.org/en/about_us/"](https://kiwix.org/en/about-us/)) .
-
-Download Link: 
