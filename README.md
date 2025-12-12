@@ -1,4 +1,4 @@
-### Memorize Pātimokkha
+### Pātimokkha Memorize
 
 This is a web-based app & tool designed to assist Bhikkhus and students in memorizing the Pātimokkha. It features a synchronized text interface that highlights lines in time with the audio, allowing for precise follow-along practice, and includes memorization drills by hiding random words.
 ![image|1048x586](upload://enxMLWAy9zQ5W7U9ZFhMlndXyuv.png)
