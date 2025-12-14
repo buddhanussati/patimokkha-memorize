@@ -189,6 +189,33 @@
     #help-container a:hover {
         color: var(--highlight-color); /* Sử dụng màu nổi bật đã có của bạn */
     }
+	@media (max-width: 600px) {
+/* FIX 1: Tighten the top navigation bar */
+.top-nav {
+gap: 9px; /* Smaller gap between the Dark Mode button and main controls */
+}
+.nav-controls {
+gap: 7px; /* Tighter gap for the navigation arrows and select */
+justify-content: flex-end; /* Ensure controls are aligned right */
+}
+.btn-nav, .btn-darkmode {
+padding: 4px 8px; /* Slightly reduced button padding */
+}
+#section-select {
+max-width: 180px; /* Force the select box to be much narrower on mobile */
+font-size: 14px; /* Smaller font to save space */
+padding: 6px; /* Tighter padding */
+}
+/* FIX 2: Ensure the Help button fits without being cut off */
+#top-right-controls {
+gap: 3px; /* Tighter gap for the rightmost controls */
+}
+/* End FIX for top bar */
+
+/* Keep the bottom bar layout fix */
+.bar-main-row { flex-direction: column; }
+.controls-cluster { width: 100%; justify-content: center; gap: 15px; }
+}
     </style>
 </head>
 <body>
@@ -235,10 +262,6 @@
             <li>Nút Tụng Đọc (🎤):
                 <ul>
                     <li>Nhấp để Bắt Đầu: Kích hoạt Chế độ Tụng Đọc. Chữ sẽ phóng to và từng dòng văn bản đồng bộ với âm thanh sẽ được làm nổi bật.</li>
-						<li>
-            <b>LƯU Ý:</b> Để đồng bộ chính xác phần văn bản & âm thanh, <b>chỉ nên</b> sử dụng phím <b>(❚❚/▶)</b> của Nút Tụng Đọc và phím <b>(« ») </b> của Nút Điều Hướng để điều khiển trình phát âm thanh (tạm dừng, tua nhanh hoặc tua lại) sau khi Chế độ Tụng Đọc được kích hoạt. Việc sử dụng các nút điều khiển của Trình Phát Âm Thanh mặc định có thể làm gián đoạn sự đồng bộ của văn bản.
-        </li>
-					
                     <li>Màu Trạng Thái:
                         <ul>
                             <li>Xanh Lá (Nhấp Nháy): Chế độ tự động phát đang hoạt động (đồng bộ).</li>
@@ -1805,21 +1828,64 @@ Bhikkhupātimokkhaṃ Niṭṭhitaṃ. [3.6]`
             option.value = index; option.text = sec.title;
             sectionSelect.appendChild(option);
         });
-        
-        // --- SỰ KIỆN AUDIO (ĐÃ SỬA) ---
-        audioPlayer.addEventListener('play', () => {
-            if (displayArea.classList.contains('recitation-active') && !recitationTimeout) runRecitationStep();
-        });
-        
-        // CẬP NHẬT MỚI: Chỉ dừng timer nếu user bấm pause, không dừng nếu audio tự hết
-        audioPlayer.addEventListener('pause', () => {
-            if (displayArea.classList.contains('recitation-active')) {
-                // Nếu audio dừng vì đã hết bài (ended), THOÁT NGAY, để timer tiếp tục chạy
-                if (audioPlayer.ended) return;
+// BỔ SUNG: Xử lý đồng bộ khi người dùng tua (scrub) audio
+        audioPlayer.addEventListener('seeked', () => {
+            // Nếu đang trong chế độ Tuỳ chỉnh thời gian (Override Interval), không đồng bộ theo audio
+            if (localStorage.getItem('overrideInterval')) return;
 
-                // Nếu audio dừng do người dùng bấm pause
-                if(recitationTimeout) clearTimeout(recitationTimeout); 
-                recitationTimeout = null;
+            // Chỉ chạy logic này khi đang trong chế độ Tụng Đọc
+            if (displayArea.classList.contains('recitation-active')) {
+                
+                // 1. Tìm dòng văn bản mới tương ứng với thời gian audio hiện tại
+                const newRecitationLine = findRecitationLine(audioPlayer.currentTime);
+                
+                // 2. Nếu dòng mới khác dòng cũ, tiến hành đồng bộ
+                if (newRecitationLine !== currentRecitationLine) {
+                    currentRecitationLine = newRecitationLine;
+                    showRecitationLine(currentRecitationLine);
+                }
+                
+                // 3. Xóa timer cũ và tạo timer mới (dựa trên thời gian còn lại của dòng mới)
+                if (!audioPlayer.paused) {
+                    // Khi audio đang chạy, runRecitationStep sẽ tự tính toán thời gian còn lại
+                    // của dòng mới và đặt timer chính xác.
+                    runRecitationStep();
+                } else {
+                    // Nếu audio đang dừng, chỉ cần xóa timer cũ và cập nhật visuals
+                    if (recitationTimeout) {
+                        clearTimeout(recitationTimeout);
+                        recitationTimeout = null;
+                    }
+                    updateButtonVisuals('manual');
+                }
+            }
+        });        
+// Change this block:
+audioPlayer.addEventListener('play', () => {
+    // OLD: if (displayArea.classList.contains('recitation-active') && !recitationTimeout) runRecitationStep();
+    
+    // NEW: Only start the timer if in recitation mode AND the user didn't just click 'PLAY'
+    // where a timer was already calculated and set in toggleRecitationAction.
+    // If recitationTimeout is null, it means the audio player's 'play' event is the first one 
+    // after a change (like a new section load or the end of a previous sequence).
+    if (displayArea.classList.contains('recitation-active') && !recitationTimeout) {
+        runRecitationStep();
+    }
+});
+        
+// CẬP NHẬT MỚI: Chỉ dừng timer nếu user bấm pause, không dừng nếu audio tự hết
+        audioPlayer.addEventListener('pause', () => {
+            // Chỉ chạy logic này khi đang trong chế độ Tụng Đọc
+            if (displayArea.classList.contains('recitation-active')) {
+                
+                // Nếu audio dừng vì đã hết bài (ended), THOÁT NGAY.
+                if (audioPlayer.ended) return; 
+
+                // Nếu audio dừng do người dùng bấm pause (dù là nút Recitation hay nút Audio Player)
+                if(recitationTimeout) {
+                    clearTimeout(recitationTimeout); 
+                    recitationTimeout = null;
+                }
                 updateButtonVisuals('manual');
             }
         });
@@ -1931,38 +1997,56 @@ Bhikkhupātimokkhaṃ Niṭṭhitaṃ. [3.6]`
 
     // --- LOGIC RECITATION (ĐÃ SỬA) ---
     
-    function toggleRecitationAction() {
-        const isActive = displayArea.classList.contains('recitation-active');
-        const isRunning = !!recitationTimeout;
+function toggleRecitationAction() {
+    const isActive = displayArea.classList.contains('recitation-active');
+    const isRunning = !!recitationTimeout;
 
-        if (!isActive) {
-            startRecitationMode();
-        } else {
-            // Nút này bây giờ thông minh hơn:
-            // 1. Nếu đang chạy (isRunning) HOẶC audio đang phát -> Bấm vào để PAUSE
-            if (isRunning || !audioPlayer.paused) {
-                if (!audioPlayer.paused) audioPlayer.pause();
-                
-                // Cần clear tay ở đây vì nếu audio đã ended thì sự kiện pause ở trên sẽ bỏ qua lệnh clear
-                if(recitationTimeout) {
-                    clearTimeout(recitationTimeout);
-                    recitationTimeout = null;
-                }
-                updateButtonVisuals('manual');
-            } 
-            // 2. Nếu đang dừng -> Bấm vào để PLAY
-            else {
-                if (audioPlayer.ended) {
-                    // Nếu nhạc hết rồi thì chỉ chạy chữ
-                    runRecitationStep();
-                } else {
-                    // Nếu nhạc chưa hết thì play nhạc (nhạc play sẽ kích hoạt chữ)
-                    audioPlayer.play();
-                }
-            }
-        }
+    if (!isActive) {
+        // Action: START RECITATION MODE (Manual Start)
+        
+        startRecitationMode();
+        
+        // --- CHANGE HERE: REMOVED audioPlayer.play() ---
+        // By removing audioPlayer.play(), the mode starts but the audio remains paused.
+        // startRecitationMode() already sets the initial line and the 'manual' visual state.
+        
+        return;
     }
 
+    // We are already in Recitation Mode
+    if (isRunning || !audioPlayer.paused) {
+        // Action: PAUSE
+        // This handles pausing when in auto-play or manual-play state.
+        if (!audioPlayer.paused) audioPlayer.pause();
+    } else {
+        // Action: PLAY / RESUME
+        if (audioPlayer.ended) {
+            // If audio ended, reset, and start from the beginning
+            audioPlayer.currentTime = 0;
+            currentRecitationLine = 0;
+            showRecitationLine(0);
+        }
+        // Simply call play. The 'play' event listener will trigger the self-correcting runRecitationStep.
+        audioPlayer.play();
+    }
+}
+function findRecitationLine(currentTime) {
+        // Iterate backwards for slightly more efficient search, 
+        // especially if seeking near the end.
+        for (let i = allLines.length - 1; i >= 0; i--) {
+            const line = allLines[i];
+            const startTime = parseFloat(line.dataset.startTime || 0);
+            const duration = parseFloat(line.dataset.duration || 0) / 1000;
+            const endTime = startTime + duration;
+
+            // If the current audio time is within this line's window
+            if (currentTime >= startTime && currentTime < endTime) {
+                return i;
+            }
+        }
+        // If the current time is before the first line, return the first line (0)
+        return 0;
+    }
     function startRecitationMode() {
         resetText();
         displayArea.classList.add('recitation-active');
@@ -1991,15 +2075,49 @@ Bhikkhupātimokkhaṃ Niṭṭhitaṃ. [3.6]`
         updateButtonVisuals('auto'); 
 
         const el = allLines[currentRecitationLine];
-        const dur = parseFloat(el.dataset.duration); 
+        const dur = parseFloat(el.dataset.duration); // Full duration in ms
+        const startTimeSeconds = parseFloat(el.dataset.startTime); // Start time in seconds
+
+        let timeToNextStep = dur; // Default to full duration
+
+        // --- NEW: Check if Custom Speed is OFF before syncing ---
+        // Only sync with audio time if we are NOT in adjusted/override mode
+        const isCustomSpeed = localStorage.getItem('overrideInterval') !== null;
+        
+        if (!isCustomSpeed && !audioPlayer.paused) {
+        // --------------------------------------------------------
+            const lineDurationSeconds = dur / 1000;
+            const elapsedTimeSeconds = audioPlayer.currentTime - startTimeSeconds;
+            
+            // Remaining time in milliseconds
+            const remainingDurationMs = (lineDurationSeconds - elapsedTimeSeconds) * 1000;
+            
+            if (remainingDurationMs > 50) {
+                // If there's significant time left, use it for the timer
+                timeToNextStep = remainingDurationMs;
+            } else if (elapsedTimeSeconds >= lineDurationSeconds) {
+                // If the audio is already past this line, advance immediately
+                currentRecitationLine += 1;
+                // If we advanced past the end, exit, otherwise re-run the step for the next line
+                if (currentRecitationLine < allLines.length) {
+                    runRecitationStep();
+                    return; // Stop here, the recursive call handles the next step
+                } else {
+                    exitRecitation();
+                    return;
+                }
+            }
+            // If remainingDurationMs is <= 50, it uses that small amount for a quick jump.
+        }
 
         const nextIdx = currentRecitationLine + 1;
         if (nextIdx < allLines.length) {
             recitationTimeout = setTimeout(() => {
-                currentRecitationLine = nextIdx; runRecitationStep();
-            }, dur);
+                currentRecitationLine = nextIdx; 
+                runRecitationStep();
+            }, timeToNextStep);
         } else {
-             recitationTimeout = setTimeout(() => { exitRecitation(); }, dur);
+             recitationTimeout = setTimeout(() => { exitRecitation(); }, timeToNextStep);
         }
     }
 
