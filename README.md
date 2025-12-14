@@ -22,7 +22,7 @@ This application is hosted online and can be accessed directly by clicking the l
 
   * **Click to Start:** Activates Recitation Mode. The text will enlarge and highlight line-by-line synchronized with the audio.
   * 
-       **NOTE:** </b> For perfect synchronization, it is recommended to <b>only</b> use the toggles of <b>Recitation Button (❚❚/▶)</b> and <b>Navigation Buttons (« »)</b> to control playback (pause, play, fast forward) once Recitation Mode is active. Using the standard Audio Player controls (play/pause/seek) may interrupt the text synchronization.
+      ~~**NOTE:** </b> For perfect synchronization, it is recommended to <b>only</b> use the toggles of <b>Recitation Button (❚❚/▶)</b> and <b>Navigation Buttons (« »)</b> to control playback (pause, play, fast forward) once Recitation Mode is active. Using the standard Audio Player controls (play/pause/seek) may interrupt the text synchronization.~~ See [Release v1.0.2"](https://github.com/buddhanussati/patimokkha-memorize/releases/tag/v1.0.2) .
             </li>
   * **Status Colors:**
     * Green (Pulsing): Auto-play mode is active (synchronized).
