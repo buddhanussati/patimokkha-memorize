@@ -1,9 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Học Thuộc Lòng Pātimokkha</title>
+ 	<script src="jquery-1.10.2.min.js"></script>
+    <script src="dpd_i2h.js"></script>
+    <script src="dpd_ebts.js"></script>
+    <script src="dpd_deconstructor.js"></script>
+
+<style>
+    /* Popup styling (Z-Index Fixed) */
+    /* Popup styling (Z-Index Fixed) */
+    span.meaning {
+        display: block;
+        position: absolute;
+        background-color: #ffd;
+        background-image: url('imgbk.png');
+        color: #333;
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 2000;
+        font-size: 16px;
+        line-height: 1.4;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        max-width: 550px;
+        text-align: left;
+        margin-top: 1px; /* Tăng khoảng cách ra một chút */
+        border: 1px solid #d4a373;
+        min-width: 250px;
+        transition: 100ms;
+    }
+
+    [data-theme="dark"] span.meaning {
+        display: block;
+        position: absolute;
+        background-color: #333;
+        background-image: url('imgbk.png');
+        color: #fff;
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 2000;
+        font-size: 16px;
+        line-height: 1.4;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        max-width: 550px;
+        text-align: left;
+        margin-top: 1px; /* Tăng khoảng cách ra một chút */
+        border: 1px solid #d4a373;
+        min-width: 250px;
+        transition: 100ms;
+        /* --- DÒNG QUAN TRỌNG ĐỂ SỬA LỖI GIẬT --- */
+    }
+    /* Highlight word when lookup is active */
+    .word.lookup-enabled {
+        cursor: help;
+        border-bottom: 1px dotted #888;
+    }
+    .word.lookup-enabled:hover {
+        background-color: rgba(255, 215, 0, 0.2);
+    }
+</style>
     <style>
         /* --- CẤU HÌNH MÀU SẮC --- */
         :root {
@@ -336,7 +393,7 @@ gap: 3px; /* Tighter gap for the rightmost controls */
 
             <button class="icon-btn" onclick="navigateRecitation(1)" title="Tiến">»</button>
             <button id="settings-btn" class="icon-btn btn-settings" onclick="toggleSettings()" title="Cài đặt">⚙️</button>
-
+<button id="btn-dictionary" class="icon-btn" onclick="togglePaliLookup()" title="Từ điển Pali">📖</button>
         </div>
     </div>
 
@@ -364,7 +421,173 @@ gap: 3px; /* Tighter gap for the rightmost controls */
         </div>
     </div>
 </div>
+<script>
+/* =========================================
+   FULL PALI LOOKUP INTEGRATION
+   ========================================= */
 
+// Flag to satisfy the check in lookupWordHandler
+window.paliDictionary = true;
+var isLookupEnabled = false;
+// Thêm biến Timer để quản lý độ trễ cho sự kiện mouseenter
+var lookupTimer = null; 
+// Mặc định: Độ trễ 100ms
+const LOOKUP_DELAY_MS = 100; 
+
+function togglePaliLookup() {
+    isLookupEnabled = !isLookupEnabled;
+    const btn = document.getElementById('btn-dictionary');
+    
+    // --- SAVE TO LOCAL STORAGE ---
+    localStorage.setItem('dictionaryEnabled', isLookupEnabled);
+
+    if (isLookupEnabled) {
+        btn.style.backgroundColor = "#d35400"; // Active color (Orange)
+        enablePaliLookup();
+    } else {
+        btn.style.backgroundColor = ""; // Default color
+        disablePaliLookup();
+    }
+}
+
+function enablePaliLookup() {
+    // 1. Add visual indicator
+    $('.word').addClass('lookup-active');
+    
+    // 2. Gỡ bỏ các event handler cũ
+    $(document).off('mouseenter', '.word'); 
+    $(document).off('mouseleave', '.word'); 
+
+    // MOUSEENTER: Thiết lập độ trễ (delay)
+    $(document).on('mouseenter', '.word', function() {
+        var $word = $(this);
+        // Xóa bất kỳ timer nào đang chạy từ các từ khác
+        if (lookupTimer) {
+            clearTimeout(lookupTimer);
+        }
+        
+        // Thiết lập timer mới
+        lookupTimer = setTimeout(function() {
+            // Chỉ hiển thị popup nếu con trỏ vẫn còn trên từ
+            if ($word.is(':hover')) {
+                // Dùng .call() để đảm bảo 'this' trong lookupWordHandler là phần tử DOM hiện tại
+                lookupWordHandler.call($word[0]); 
+            }
+            lookupTimer = null; // Reset timer sau khi chạy
+        }, LOOKUP_DELAY_MS); 
+    });
+    
+    // MOUSELEAVE: Xóa timer và tắt popup ngay lập tức
+    $(document).on('mouseleave', '.word', function() {
+        // 1. Xóa timer hiện popup đang chờ (nếu có)
+        if (lookupTimer) {
+            clearTimeout(lookupTimer);
+            lookupTimer = null;
+        }
+        
+        // 2. Xóa popup đang hiển thị (nếu có)
+        $(this).find('span.meaning').remove();
+    });
+}
+
+function disablePaliLookup() {
+    // Đảm bảo xóa timer nếu nó đang chạy khi tắt tính năng
+    if (lookupTimer) {
+        clearTimeout(lookupTimer);
+        lookupTimer = null;
+    }
+    $('.word').removeClass('lookup-active');
+    $(document).off('mouseenter', '.word');
+    $(document).off('mouseleave', '.word');
+    $('.meaning').remove();
+}
+
+/* --- CORE HANDLER (Adapted from pali-lookup-standalone.js) --- */
+function lookupWordHandler(event) {
+    if (!window.paliDictionary) return;
+    if ($(this).children().is("span.meaning")) return;
+
+    // Get text
+    var rawText = $(this).text();
+    var word = rawText.toLowerCase().trim();
+
+    // --- CRITICAL FIX: Remove punctuation from edges ---
+    // The original script split text by punctuation. Since your HTML 
+    // includes punctuation in the span (e.g., "dhammo,"), we must strip it here.
+    word = word.replace(/^[“‘"(\[]+|[”’"),.\]?!:;]+$/g, '');
+
+    // Standard replacements from original script
+    word = word.replace(/­/g, ''); // optional hyphen
+    // Fix specific Pali spelling variations handled in original script
+    word = word.replace(/ṁg/g, 'ṅg')
+               .replace(/ṁk/g, 'ṅk')
+               .replace(/ṁ/g, 'ṁ'); // (Original had this, keeping for safety)
+
+    // Perform Lookup
+    var meaning = lookupWord(word, rawText); // Pass rawText for display title
+    
+    if (meaning) {
+        var textBox = $('<span class="meaning">' + meaning + '</span>');
+        $(this).append(textBox);
+        
+        // Prevent popup from going off-screen (Right edge detection)
+        var offset = $(this).offset();
+        var width = 300; // approx max width
+        if (offset.left + width > $(window).width()) {
+             textBox.css({left: 'auto', right: 0});
+        }
+    }
+}
+
+/* --- LOOKUP LOGIC (Exact copy of logic from pali-lookup-standalone.js) --- */
+function lookupWord(word, displayTitle) {
+    // Safety check for data
+    if (typeof dpd_i2h === 'undefined') {
+        console.warn("Pali Data (dpd_i2h) not loaded!");
+        return "<i>Dictionary data not found.<br>Please check console.</i>";
+    }
+
+    let out = "";
+    
+    // Logic from original: replace quotes and normalize 'ṁ' to 'ṃ' for dictionary keys
+    const originalWord = word;
+    var lookupKey = word.replace(/[’”'"]/g, "").replace(/ṁ/g, "ṃ");
+
+    // 1. Dictionary Lookup (dpd_i2h)
+    if (lookupKey in dpd_i2h) {
+        out += `<strong>${originalWord}</strong>`;
+        out += `<ul style="line-height: 1.4em; padding-left: 15px; margin-top: 4px; list-style: disc inside;">`;
+        
+        for (const headword of dpd_i2h[lookupKey]) {
+            if (headword in dpd_ebts) {
+                // Formatting logic from original script
+                const match = headword.match(/^(.+?)\s(\d[\d.]*)$/);
+                let formattedHeadword;
+                if (match) {
+                    const wordPart = match[1].trim();
+                    const numberPart = match[2];
+                    formattedHeadword = `${wordPart}<sub style="font-size:60%; font-weight:bold;">${numberPart}</sub>`;
+                } else {
+                    formattedHeadword = headword;
+                }
+                out += `<li><b>${formattedHeadword}</b>: ${dpd_ebts[headword]}</li>`;
+            }
+        }
+        out += "</ul>";
+    }
+
+    // 2. Deconstructor Lookup (dpd_deconstructor)
+    if (typeof dpd_deconstructor !== 'undefined' && lookupKey in dpd_deconstructor) {
+        if(out === "") out += `<strong>${originalWord}</strong><br>`; // Header if not already added
+        out += `<div style="margin-top:8px; border-top:1px solid #555; padding-top:4px;">
+                <small style="color:#aaa">Deconstruction:</small><br>
+                ${dpd_deconstructor[lookupKey]}
+                </div>`;
+    }
+
+    return out === "" ? null : out.replace(/ṁ/g, "ṃ");
+}
+</script>
 <script>
     // --- DỮ LIỆU ---
     const sections = [
@@ -1801,7 +2024,15 @@ Bhikkhupātimokkhaṃ Niṭṭhitaṃ. [3.6]`
              body.removeAttribute('data-theme');
              if (btn) btn.innerHTML = "🌙";
         }
-        
+        const savedDictState = localStorage.getItem('dictionaryEnabled');
+    if (savedDictState === 'true') {
+        isLookupEnabled = true;
+        const btn = document.getElementById('btn-dictionary');
+        if (btn) btn.style.backgroundColor = "#d35400";
+        // We must wait a tiny bit to ensure the text is rendered before enabling lookup, 
+        // or simply call this, as enablePaliLookup attaches events to '.word' which are dynamic
+        enablePaliLookup(); 
+    }
         const savedInterval = localStorage.getItem('overrideInterval');
         const intervalInput = document.getElementById('recitation-interval');
         const speedControlArea = document.getElementById('speed-control-area');
