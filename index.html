@@ -336,8 +336,13 @@ gap: 3px; /* Tighter gap for the rightmost controls */
             </li>
             <li>Exit (✖): Appears only during Recitation Mode. Click this (top left of the control bar) to stop the mode and return to the full text view.</li>
         </ul>
-
-        <h5>3. Settings & Memorization Tools (⚙️)</h5>
+<h5>3. Pāli Dictionary Lookup</h5>
+<ul>
+    <li><b>Toggle On/Off:</b> Use the <b>📖</b> button on the control bar.</li>
+    <li><b>How to Look Up:</b> When the feature is turned on, simply hover over any Pāli word.</li>
+    <li><b>Functionality:</b> Allows you to look up the meaning of Pāli words directly within the text without leaving the page. The definition window will appear right next to the word.</li>
+</ul>
+        <h5>4. Settings & Memorization Tools (⚙️)</h5>
         <p>Click the Gear Icon to open the settings panel.</p>
         
         <h5>A. Memorization Drill (Hide Texts)</h5>
@@ -352,7 +357,7 @@ gap: 3px; /* Tighter gap for the rightmost controls */
         <h5>B. Speed Control</h5>
         <ul>
             <li>Default: Uses the specific timing written in the code (e.g., [5.0] seconds) for perfect synchronization with the chanting audio.</li>
-            <li>Adjust (↪): Allows you to override the default timing.
+            <li>Adjust (🕒): Allows you to override the default timing.
                 <ul>
                     <li>Set a fixed duration (e.g., 3.0 seconds) for every line.</li>
                     <li>Useful for practicing recitation at a steady, slower, or faster pace without audio sync.</li>
@@ -411,12 +416,12 @@ gap: 3px; /* Tighter gap for the rightmost controls */
             <div class="setting-group">
                 <span style="font-size:13px; font-weight:600">Speed:</span>
                 
-                <button id="btn-show-speed" class="btn-sm" onclick="toggleSpeedControl()" style="background:#2980b9; color:white;">↪Adjust</button>
+                <button id="btn-show-speed" class="btn-sm" onclick="toggleSpeedControl()" style="background:#2980b9; color:white;">🕒</button>
 
                 <div id="speed-control-area" style="display:none; align-items:center; gap:5px;">
                     <input type="range" id="recitation-interval" min="1" max="10" step="0.5" value="3" oninput="updateRecitationInterval(this.value)" style="width:80px">
                     <span id="recitation-interval-label" style="font-size:12px">3.0s</span>
-                    <button class="btn-sm" onclick="resetSpeedDefault()" style="background:#6a4c93; color:white;" title="Use default values">↩Default</button>
+                    <button class="btn-sm" onclick="resetSpeedDefault()" style="background:#6a4c93; color:white;" title="Use default values">Use default</button>
                 </div>
             </div>
         </div>

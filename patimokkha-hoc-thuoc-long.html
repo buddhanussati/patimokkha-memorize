@@ -334,9 +334,14 @@ gap: 3px; /* Tighter gap for the rightmost controls */
                 </ul>
             </li>
             <li>Thoát (✖): Chỉ xuất hiện trong Chế độ Tụng Đọc. Nhấp vào nút này để dừng chế độ và trở về chế độ xem toàn văn bản.</li>
+			</ul>
+               <h5>3. Từ Điển Pāli</h5>
+                <ul>
+                   <li><b>Bật/Tắt:</b> Sử dụng nút <b>📖</b> trên thanh điều khiển.</li>
+                   <li><b>Cách Tra Cứu:</b> Khi tính năng được bật, chỉ cần di chuột qua bất kỳ từ Pāli nào.</li>
+                   <li><b>Tính Năng:</b> Cho phép bạn tra cứu ý nghĩa của các từ Pāli ngay trong văn bản mà không cần rời khỏi trang. Cửa sổ giải nghĩa sẽ hiển thị ngay bên cạnh từ.</li>
         </ul>
-
-        <h5>3. Cài Đặt & Công Cụ Ghi Nhớ (⚙️)</h5>
+        <h5>4. Cài Đặt & Công Cụ Ghi Nhớ (⚙️)</h5>
         <p>Nhấp vào biểu tượng Bánh Răng (⚙️) để mở bảng cài đặt.</p>
         
         <h5>A. Bài Tập Ghi Nhớ (Ẩn Chữ)</h5>
@@ -410,12 +415,12 @@ gap: 3px; /* Tighter gap for the rightmost controls */
             <div class="setting-group">
                 <span style="font-size:13px; font-weight:600">Tốc độ:</span>
                 
-                <button id="btn-show-speed" class="btn-sm" onclick="toggleSpeedControl()" style="background:#2980b9; color:white;">↪Tuỳ chỉnh</button>
+                <button id="btn-show-speed" class="btn-sm" onclick="toggleSpeedControl()" style="background:#2980b9; color:white;">🕒</button>
 
                 <div id="speed-control-area" style="display:none; align-items:center; gap:5px;">
                     <input type="range" id="recitation-interval" min="1" max="10" step="0.5" value="3" oninput="updateRecitationInterval(this.value)" style="width:80px">
                     <span id="recitation-interval-label" style="font-size:12px">3.0s</span>
-                    <button class="btn-sm" onclick="resetSpeedDefault()" style="background:#6a4c93; color:white;" title="Huỷ tuỳ chỉnh, dùng thời gian gốc">↩Mặc định</button>
+                    <button class="btn-sm" onclick="resetSpeedDefault()" style="background:#6a4c93; color:white;" title="Huỷ tuỳ chỉnh, dùng thời gian gốc">Về mặc định</button>
                 </div>
             </div>
         </div>
