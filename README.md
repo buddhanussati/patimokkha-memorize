@@ -32,7 +32,11 @@ This application is hosted online and can be accessed directly by clicking the l
   * **» (Next):** Jump forward to the next line of text and skip audio forward.
 * **Exit (✖):** Appears only during Recitation Mode. Click this (top left of the control bar) to stop the mode and return to the full text view.
 
-##### 3. Settings & Memorization Tools (⚙️)
+##### 3. Pāli Dictionary
+* **Toggle On/Off:** Use the **📖** button on the control bar.
+* **How to Look Up:** When the feature is turned on, simply hover over any Pāli word.
+* **Functionality:** Allows you to look up the meaning of Pāli words directly within the text without leaving the page. The definition window will appear right next to the word.
+##### 4. Settings & Memorization Tools (⚙️)
 
 Click the Gear Icon to open the settings panel.
 
@@ -48,7 +52,7 @@ This feature helps test your memory by obscuring words.
 ##### B. Speed Control
 
 * **Default:** Uses the specific timing written in the code (e.g., [5.0] seconds) for perfect synchronization with the chanting audio.
-* **Adjust (↪):** Allows you to override the default timing.
+* **Adjust (🕒):** Allows you to override the default timing.
   * Set a fixed duration (e.g., 3.0 seconds) for every line.
   * Useful for practicing recitation at a steady, slower, or faster pace without audio sync.
 
