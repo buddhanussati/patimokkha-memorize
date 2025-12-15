@@ -32,7 +32,7 @@ This application is hosted online and can be accessed directly by clicking the l
   * **» (Next):** Jump forward to the next line of text and skip audio forward.
 * **Exit (✖):** Appears only during Recitation Mode. Click this (top left of the control bar) to stop the mode and return to the full text view.
 
-##### 3. Pāli Dictionary
+##### 3. Pāli Dictionary Lookup
 * **Toggle On/Off:** Use the **📖** button on the control bar.
 * **How to Look Up:** When the feature is turned on, simply hover over any Pāli word.
 * **Functionality:** Allows you to look up the meaning of Pāli words directly within the text without leaving the page. The definition window will appear right next to the word.
