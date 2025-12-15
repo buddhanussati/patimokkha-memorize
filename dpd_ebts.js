@@ -33,6 +33,8 @@ let dpd_ebts = {
   "addasā": "(qkhứ hthành) <b>đã thấy</b> [a + √dis + a + ā]",
   "addhamāsa": "(dt.nam) <b>nửa tháng; bán nguyệt; 14 hoặc 15 ngày</b> [addha + māsa]",
   "addhānagamanasamaya": "(dt.nam) <b>thời điểm thực hiện một hành trình; dịp đi trên một chuyến đi đường</b> [addhāna + gamana + samaya]",
+"pannarasa 1": "(số đếm) <b>mười lăm (15)</b> [pañca + dasa]",
+"pannarasa 2": "(dt.nam) <b>ngày mười lăm của nửa tháng âm lịch</b> [pañca + dasa]",
   "addhānamaggappaṭipanna": "(tính từ) <b>đang đi dọc theo đường chính; đang thực hiện một hành trình dọc theo đường lớn</b> [addhāna + magga + paṭipanna]",
   "adhikaraṇa 1": "(dt.trung) <b>(luật tạng) vấn đề; sự việc cần được xét xử; vụ việc</b>; (nghĩa đen) việc làm cao hơn [adhi + √kar + aṇa]",
   "adhikaraṇa 2": "(dt.trung) <b>nguyên nhân; lý do; cơ sở; sự hỗ trợ</b>; (nghĩa đen) việc làm cao hơn [adhi + √kar + aṇa]",
