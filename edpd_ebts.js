@@ -1,6 +1,8 @@
 let dpd_ebts = {
  "abbhakkhāna": "nt. <b>misrepresenting; slandering; falsely accusing (someone of)</b> [abhi + ā + √khā + ana]",
   "abbhetabba": "ptp. <b>(vinaya) should be rehabilitated; should be reintegrated; should be readmitted</b>; lit. to be recalled [ā + √vhe + a + tabba]",
+    "thenosi": "sandhi. <b>you are a thief!; you are a robber!</b> [theno + asi]",
+
   "abbheti": "pr. <b>(vinaya) rehabilitates; reintegrates; readmits</b>; lit. recalls [ā + √vhe + a + ti]",
   "abbhācikkhi": "aor. <b>misrepresented; slandered; falsely accused</b> [abhi + ā + √cikkh + i]",
   "abhihaṭṭhuṃ 1": "inf. <b>to take away</b> [abhi + √har + tuṃ]",

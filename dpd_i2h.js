@@ -11,6 +11,11 @@ dpd_i2h = {
     "vilapi",
     "vilapiṃ"
   ],
+      "thenosīti": [
+    "thenosi",
+  ],
+  
+  
     "pannarasa": [
     "pannarasa 1",
     "pannarasa 2"

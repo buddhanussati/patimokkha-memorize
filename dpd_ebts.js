@@ -5,6 +5,7 @@ let dpd_ebts = {
 "abbhācikkhi": "(qkhứ) <b>đã nói xấu; đã vu khống; đã phỉ báng</b> [abhi + ā + √cikkh + i]",
   "abhihaṭṭhuṃ 1": "(thể mục đích) <b>để mang đi</b> [abhi + √har + tuṃ]",
   "abhihaṭṭhuṃ 2": "(thể mục đích) <b>để mang đến</b> [abhi + √har]",
+"thenosi": "(sandhi) <b>bạn là một kẻ trộm!; bạn là một tên cướp!</b> [theno + asi]",
   "abhinetabba": "(thể khả năng) <b>nên được mang đến; nên được mời đến; nên được dẫn đến</b>; (nghĩa đen) nên được dẫn dắt [abhi + √nī + a + tabba]",
   "vilapi": "(qkhứ) <b>đã nói lảm nhảm; đã nói chuyện vô nghĩa; đã nói bậy</b> [vi + √lap + i]",
     "vilapiṃ": "(qkhứ) <b>tôi đã nói lảm nhảm; tôi đã nói chuyện vô nghĩa; tôi đã nói bậy</b> [vi + √lap + i + iṃ]",
