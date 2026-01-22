@@ -2805,14 +2805,14 @@ The Bhikkhu's Pātimokkha is finished.`
             // No need to set color, default is none
         }
 		const savedEngState = localStorage.getItem('englishEnabled');
-        const engBtn = document.getElementById('btn-eng-toggle');
+        const engBtn = document.getElementById('btn-english-toggle');
         // If it is 'true' OR null (first time user), turn it ON
         if (savedEngState === 'true' || savedEngState === null) {
             displayArea.classList.add('show-translation');
-            if (engBtn) engBtn.classList.add('btn-eng-active');
+            if (engBtn) engBtn.classList.add('btn-english-active');
         } else {
             displayArea.classList.remove('show-translation');
-            if (engBtn) engBtn.classList.remove('btn-eng-active');
+            if (engBtn) engBtn.classList.remove('btn-english-active');
         }
         const savedInterval = localStorage.getItem('overrideInterval');
         const intervalInput = document.getElementById('recitation-interval');
@@ -3045,13 +3045,13 @@ function renderText(rawText) {
 /* --- UPDATED: TOGGLE VIETNAMESE WITH SAVE --- */
 function toggleEnglish() {
     displayArea.classList.toggle('show-translation');
-    const btn = document.getElementById('btn-eng-toggle');
+    const btn = document.getElementById('btn-english-toggle');
     const isEnabled = displayArea.classList.contains('show-translation');
     
     if (isEnabled) {
-        btn.classList.add('btn-eng-active');
+        btn.classList.add('btn-english-active');
     } else {
-        btn.classList.remove('btn-eng-active');
+        btn.classList.remove('btn-english-active');
     }
 
     // Save state to LocalStorage
