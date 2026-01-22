@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pātimokkha Memorize</title>
- 	<script src="jquery-1.10.2.min.js"></script>
-    <script src="edpd_i2h.js"></script>
-    <script src="edpd_ebts.js"></script>
-    <script src="dpd_deconstructor.js"></script>
+ 	<script src="./js/jquery-1.10.2.min.js"></script>
+    <script src="./js/edpd_i2h.js"></script>
+    <script src="./js/edpd_ebts.js"></script>
+    <script src="./js/dpd_deconstructor.js"></script>
 
 <style>
     /* Popup styling (Z-Index Fixed) */
@@ -16,7 +16,7 @@
         display: block;
         position: absolute;
         background-color: #ffd;
-        background-image: url('imgbk.png');
+        background-image: url('./images/imgbk.png');
         color: #333;
         padding: 10px;
         border-radius: 5px;
@@ -36,7 +36,7 @@
         display: block;
         position: absolute;
         background-color: #333;
-        background-image: url('imgbk.png');
+        background-image: url('./images/imgbk.png');
         color: #fff;
         padding: 10px;
         border-radius: 5px;
@@ -90,7 +90,7 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
-			background-image: url('imgbk.png');
+			background-image: url('./images/imgbk.png');
             color: var(--text-color);
             margin: 0;
             padding: 15px;
@@ -116,7 +116,7 @@
         select {
             padding: 6px; font-size: 16px; border-radius: 5px;
             border: 1px solid var(--box-border);
-            background-color: var(--bg-color); background-image: url('imgbk.png'); color: var(--text-color);
+            background-color: var(--bg-color); background-image: url('./images/imgbk.png'); color: var(--text-color);
             max-width: 200px;
         }
 
@@ -142,7 +142,7 @@
             font-size: 22px; font-weight: bold;
             color: var(--recitation-text-active);
             background-color: var(--recitation-bg-active);
-			background-image: url('imgbk.png');
+			background-image: url('./images/imgbk.png');
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -167,7 +167,7 @@
         /* --- BOTTOM BAR --- */
         .bottom-bar {
             position: fixed; bottom: 0; left: 0; width: 100%;
-            background-color: var(--footer-bg); background-image: url('imgbk.png'); color: var(--text-color);
+            background-color: var(--footer-bg); background-image: url('./images/imgbk.png'); color: var(--text-color);
             box-shadow: 0 -2px 10px rgba(0,0,0,0.2); z-index: 1000;
             border-top: 2px solid var(--primary-color);
             backdrop-filter: blur(5px);
@@ -335,6 +335,134 @@ gap: 3px; /* Tighter gap for the rightmost controls */
 .recitation-active-mode #btn-random {
     display: none; /* Hide Random to make room */
 }
+/* --- RECITAION DASHBOARD & SLIDER --- */
+
+/* Container for the boxes */
+#recitation-dashboard {
+    display: none; /* Hidden by default */
+    width: 90%;
+    max-width: 800px;
+    background-color: var(--box-bg);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid var(--box-border);
+    animation: fadeIn 0.5s;
+}
+/* Tablet/Desktop scale */
+@media (min-width: 768px) {
+    #recitation-dashboard { width: 96%; }
+}
+/* Recitation active? Show dashboard */
+.recitation-active-mode #recitation-dashboard {
+    display: block;
+}
+
+/* The Grid of Boxes */
+.dashboard-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.progress-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    background-color: #ebedf0; /* Default empty */
+    border: 1px solid #ccc;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #555;
+    transition: transform 0.1s;
+}
+
+[data-theme="dark"] .progress-box {
+    background-color: #2d333b;
+    border-color: #444;
+    color: #aaa;
+}
+
+.progress-box:hover { transform: scale(1.15); border-color: #888; }
+.progress-box.active-box { border: 2px solid var(--highlight-color); transform: scale(1.1); }
+
+/* Heatmap Colors (GitHub style Green) */
+.heatmap-0 { background-color: #ebedf0; }
+.heatmap-1 { background-color: #9be9a8; color: #222; } /* 1-25% */
+.heatmap-2 { background-color: #40c463; color: #fff; } /* 26-50% */
+.heatmap-3 { background-color: #30a14e; color: #fff; } /* 51-75% */
+.heatmap-4 { background-color: #216e39; color: #fff; } /* 76-100% */
+
+/* Dark mode overrides for colors */
+[data-theme="dark"] .heatmap-0 { background-color: #2d333b; }
+[data-theme="dark"] .heatmap-1 { background-color: #0e4429; color: #ccc; }
+[data-theme="dark"] .heatmap-2 { background-color: #006d32; }
+[data-theme="dark"] .heatmap-3 { background-color: #26a641; }
+[data-theme="dark"] .heatmap-4 { background-color: #39d353; color: #000; }
+
+/* Progress Bars Area */
+.dashboard-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.progress-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.progress-track {
+    flex-grow: 1;
+    height: 8px;
+   background-color: rgba(0, 0, 0, 0.1); /* Visible track */
+    border-radius: 4px;
+    overflow: hidden;
+	border: 1px solid rgba(0, 0, 0, 0.2);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+
+[data-theme="dark"] .progress-track {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--primary-color);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+/* SLIDER UNDER SENTENCE */
+.memorize-slider-container {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--primary-color);
+    text-align: center;
+    animation: fadeIn 0.3s;
+}
+
+.memorize-slider-container label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: var(--highlight-color);
+}
+
+.memorize-slider {
+    width: 80%;
+    max-width: 300px;
+    cursor: pointer;
+}
     </style>
 </head>
 <body>
@@ -444,6 +572,22 @@ gap: 3px; /* Tighter gap for the rightmost controls */
     You are free to Share and Adapt this material for <b>non-commercial</b> purposes. Commercial use is not permitted.
 </p>
     </div>
+	<div id="recitation-dashboard">
+    <div id="dashboard-grid" class="dashboard-grid">
+        </div>
+    <div class="dashboard-stats">
+        <div class="progress-bar-container">
+            <span style="width: 120px;">Section Progress:</span>
+            <div class="progress-track"><div id="bar-session" class="progress-fill" style="background-color: #3498db;"></div></div>
+            <span id="text-session">0%</span>
+        </div>
+        <div class="progress-bar-container">
+            <span style="width: 120px;">Memorized Total:</span>
+            <div class="progress-track"><div id="bar-total" class="progress-fill" style="background-color: #27ae60;"></div></div>
+            <span id="text-total">0%</span>
+        </div>
+    </div>
+</div>
     <h2 id="section-title">Loading...</h2>
     <div id="display-area" class="text-content"></div>
 </div>
@@ -671,39 +815,39 @@ function lookupWord(word, displayTitle) {
     const sections = [
       {
     id: 'Nidānuddeso', title: 'Nidānuddeso', audio: '0-Nidanuddeso.mp3',
-    text: `Namo tassa Bhagavato Arahato Sammāsambuddhassa. [5.1]
+    text: `Namo tassa Bhagavato Arahato Sammāsambuddhassa. [5.019]
 Homage to the Blessed One, the Worthy One, the Rightly Self-awakened One.
-Namo tassa Bhagavato Arahato Sammāsambuddhassa. [5.1]
+Namo tassa Bhagavato Arahato Sammāsambuddhassa. [5.042]
 Homage to the Blessed One, the Worthy One, the Rightly Self-awakened One.
-Namo tassa Bhagavato Arahato Sammāsambuddhassa. [6.4]
+Namo tassa Bhagavato Arahato Sammāsambuddhassa. [6.308]
 Homage to the Blessed One, the Worthy One, the Rightly Self-awakened One.
-Suṇātu me [bhante/āvuso] saṅgho. Ajjuposatho pannaraso, yadi saṅghassa pattakallaṃ, saṅgho uposathaṃ kareyya, pātimokkhaṃ uddiseyya. [12.3]
-Let the community listen to me, [venerable sirs/friends]. Today is the fifteenth day Uposatha. If the community is ready, it should perform the Uposatha and recite the Pātimokkha.
-Kiṃ saṅghassa pubbakiccaṃ? Pārisuddhiṃ āyasmanto ārocetha, [5.7]
+Suṇātu me (bhante/āvuso) saṅgho. Ajjuposatho pannaraso, yadi saṅghassa pattakallaṃ, saṅgho uposathaṃ kareyya, pātimokkhaṃ uddiseyya. [12.409]
+Let the community listen to me, (venerable sirs/friends). Today is the fifteenth day Uposatha. If the community is ready, it should perform the Uposatha and recite the Pātimokkha.
+Kiṃ saṅghassa pubbakiccaṃ? Pārisuddhiṃ āyasmanto ārocetha, [5.733]
 What is the preliminary duty of the community? Venerable sirs, announce your purity.
-pātimokkhaṃ uddisissāmi, [2.5]
+pātimokkhaṃ uddisissāmi, [2.542]
 I shall recite the Pātimokkha.
-taṃ sabbeva santā sādhukaṃ suṇoma manasi karoma. [4.1]
+taṃ sabbeva santā sādhukaṃ suṇoma manasi karoma. [4.134]
 All of us being present, let us listen well and pay close attention.
-Yassa siyā āpatti, so āvikareyya, asantiyā āpattiyā tuṇhī bhavitabbaṃ, [6.2]
+Yassa siyā āpatti, so āvikareyya, asantiyā āpattiyā tuṇhī bhavitabbaṃ, [6.082]
 Whoever has an offense should disclose it. If there is no offense, one should remain silent.
-tuṇhībhāvena kho panāyasmante “parisuddhā”ti vedissāmi. [5.9]
+tuṇhībhāvena kho panāyasmante “parisuddhā”ti vedissāmi. [5.325]
 By your silence, I shall know that you are pure.
-Yathā kho pana paccekapuṭṭhassa veyyākaraṇaṃ hoti, evamevaṃ evarūpāya parisāya yāvatatiyaṃ anusāvitaṃ hoti. [8.9]
+Yathā kho pana paccekapuṭṭhassa veyyākaraṇaṃ hoti, evamevaṃ evarūpāya parisāya yāvatatiyaṃ anusāvitaṃ hoti. [9.090]
 Just as there is an answer for a specific question, so in an assembly such as this, it is announced up to the third time.
-Yo pana bhikkhu yāvatatiyaṃ anusāviyamāne saramāno santiṃ āpattiṃ nāvikareyya, [6.7]
+Yo pana bhikkhu yāvatatiyaṃ anusāviyamāne saramāno santiṃ āpattiṃ nāvikareyya, [6.201]
 Whatever monk, when it is announced up to the third time, remembers an existing offense and does not disclose it,
-sampajānamusāvādassa hoti. [2.75]
+sampajānamusāvādassa hoti. [2.711]
 he is guilty of intentional lying.
-Sampajānamusāvādo kho panāyasmanto antarāyiko dhammo vutto bhagavatā, [5.8]
+Sampajānamusāvādo kho panāyasmanto antarāyiko dhammo vutto bhagavatā, [5.763]
 Venerable sirs, intentional lying has been called an obstructive state by the Blessed One.
-tasmā saramānena bhikkhunā āpannena visuddhāpekkhena santī āpatti āvikātabbā, āvikatā hissa phāsu hoti. [9.6]
+tasmā saramānena bhikkhunā āpannena visuddhāpekkhena santī āpatti āvikātabbā, āvikatā hissa phāsu hoti. [8.857]
 Therefore, an existing offense should be disclosed by a monk who has fallen into one, who remembers it, and who desires purity; for when it is disclosed, it is easy for him.
-Uddiṭṭhaṃ kho āyasmanto nidānaṃ. Tatthāyasmante pucchāmi, kaccittha parisuddhā, [5.8]
+Uddiṭṭhaṃ kho āyasmanto nidānaṃ. Tatthāyasmante pucchāmi, kaccittha parisuddhā, [5.832]
 Venerable sirs, the introduction has been recited. In this regard, I ask you: Are you pure in this?
-dutiyampi pucchāmi, kaccittha parisuddhā, tatiyampi pucchāmi, kaccittha parisuddhā, [5.0]
+dutiyampi pucchāmi, kaccittha parisuddhā, tatiyampi pucchāmi, kaccittha parisuddhā, [5.092]
 A second time I ask: Are you pure? A third time I ask: Are you pure?
-parisuddhetthāyasmanto, tasmā tuṇhī, evametaṃ dhārayāmīti. Nidānuddeso paṭhamo [8.0]
+parisuddhetthāyasmanto, tasmā tuṇhī, evametaṃ dhārayāmīti. Nidānuddeso paṭhamo [8.3]
 You are pure in this, therefore you are silent. Thus do I understand it. The first section, the Introduction, is finished.`
 },
 
@@ -2592,7 +2736,7 @@ The Bhikkhu's Pātimokkha is finished.`
 		
     ];
 
-    // --- BIẾN ---
+  // --- BIẾN ---
     let globalInterval = 3000; 
     let recitationTimeout = null;
     let currentRecitationLine = 0;
@@ -2660,16 +2804,15 @@ The Bhikkhu's Pātimokkha is finished.`
             isLookupEnabled = false;
             // No need to set color, default is none
         }
-		
 		const savedEngState = localStorage.getItem('englishEnabled');
-        const engBtn = document.getElementById('btn-english-toggle');
+        const engBtn = document.getElementById('btn-eng-toggle');
         // If it is 'true' OR null (first time user), turn it ON
         if (savedEngState === 'true' || savedEngState === null) {
             displayArea.classList.add('show-translation');
-            if (engBtn) engBtn.classList.add('btn-english-active');
+            if (engBtn) engBtn.classList.add('btn-eng-active');
         } else {
             displayArea.classList.remove('show-translation');
-            if (engBtn) engBtn.classList.remove('btn-english-active');
+            if (engBtn) engBtn.classList.remove('btn-eng-active');
         }
         const savedInterval = localStorage.getItem('overrideInterval');
         const intervalInput = document.getElementById('recitation-interval');
@@ -2729,14 +2872,9 @@ The Bhikkhu's Pātimokkha is finished.`
                 }
             }
         });        
-// Change this block:
+
 audioPlayer.addEventListener('play', () => {
-    // OLD: if (displayArea.classList.contains('recitation-active') && !recitationTimeout) runRecitationStep();
     
-    // NEW: Only start the timer if in recitation mode AND the user didn't just click 'PLAY'
-    // where a timer was already calculated and set in toggleRecitationAction.
-    // If recitationTimeout is null, it means the audio player's 'play' event is the first one 
-    // after a change (like a new section load or the end of a previous sequence).
     if (displayArea.classList.contains('recitation-active') && !recitationTimeout) {
         runRecitationStep();
     }
@@ -2777,19 +2915,49 @@ audioPlayer.addEventListener('play', () => {
     }
 
     // --- LOGIC GIAO DIỆN & PERSISTENCE ---
-    function loadSection(index) {
-        exitRecitation(); 
-        if (index < 0) index = sections.length - 1;
-        if (index >= sections.length) index = 0;
-        currentSectionIndex = index;
-        
-        localStorage.setItem('lastSectionIndex', index);
+    /* --- UPDATED NAVIGATION LOGIC --- */
 
-        sectionSelect.value = index;
-        titleArea.innerText = sections[index].title;
-        audioPlayer.src = 'audio/' + sections[index].audio;
-        renderText(sections[index].text);
+function loadSection(index) {
+    // 1. Check if Recitation Mode is CURRENTLY active
+    const wasRecitationActive = document.body.classList.contains('recitation-active-mode');
+
+    // 2. Stop audio if playing
+    if (!audioPlayer.paused) audioPlayer.pause();
+    
+    // 3. Handle Index wrapping
+    if (index < 0) index = sections.length - 1;
+    if (index >= sections.length) index = 0;
+    currentSectionIndex = index;
+    
+    // 4. Save preference
+    localStorage.setItem('lastSectionIndex', index);
+
+    // 5. Update UI Basics
+    sectionSelect.value = index;
+    titleArea.innerText = sections[index].title;
+    audioPlayer.src = 'audio/' + sections[index].audio; // Ensure path is correct ('audio/' or './audio/')
+    
+    // 6. Render the Text (This populates allLines)
+    renderText(sections[index].text);
+
+    // 7. RECITAION MODE PERSISTENCE CHECK
+    if (wasRecitationActive) {
+        // If mode was on, RESTART it for the new section immediately.
+        // We do NOT call exitRecitation().
+        
+        // a. Re-initialize dashboard for new section
+        startRecitationMode(); 
+        
+        // b. Reset audio position to 0
+        audioPlayer.currentTime = 0;
+        
+        // c. Ensure visuals are set to "Manual" (Paused) start
+        updateButtonVisuals('manual');
+    } else {
+        // If mode was off, ensure we clean up any remnants
+        exitRecitation();
     }
+}
 
     function selectSection() { loadSection(parseInt(sectionSelect.value)); }
     function changeSection(d) { loadSection(currentSectionIndex + d); }
@@ -2874,16 +3042,16 @@ function renderText(rawText) {
     });
 }
 
-/* --- NEW FUNCTION TO TOGGLE English --- */
+/* --- UPDATED: TOGGLE VIETNAMESE WITH SAVE --- */
 function toggleEnglish() {
     displayArea.classList.toggle('show-translation');
-    const btn = document.getElementById('btn-english-toggle');
+    const btn = document.getElementById('btn-eng-toggle');
     const isEnabled = displayArea.classList.contains('show-translation');
     
     if (isEnabled) {
-        btn.classList.add('btn-english-active');
+        btn.classList.add('btn-eng-active');
     } else {
-        btn.classList.remove('btn-english-active');
+        btn.classList.remove('btn-eng-active');
     }
 
     // Save state to LocalStorage
@@ -2901,8 +3069,151 @@ function toggleEnglish() {
         }
     }
 
-    // --- LOGIC RECITATION (ĐÃ SỬA) ---
+/* =========================================
+   MEMORIZATION DASHBOARD LOGIC
+   ========================================= */
+
+// Create a unique key for local storage: score_SectionID_LineIndex
+function getScoreKey(lineIdx) {
+    const sectionId = sections[currentSectionIndex].id;
+    return `memo_score_${sectionId}_${lineIdx}`;
+}
+
+function getLineScore(lineIdx) {
+    const val = localStorage.getItem(getScoreKey(lineIdx));
+    return val ? parseInt(val) : 0;
+}
+
+function saveLineScore(lineIdx, score) {
+    localStorage.setItem(getScoreKey(lineIdx), score);
+    updateDashboardBox(lineIdx, score);
+    updateOverallStats();
+}
+
+// Render the grid of boxes
+function renderDashboard() {
+    const grid = document.getElementById('dashboard-grid');
+    grid.innerHTML = ''; // Clear old
+
+    allLines.forEach((line, idx) => {
+        const score = getLineScore(idx);
+        const box = document.createElement('div');
+        box.className = `progress-box ${getHeatmapClass(score)}`;
+        box.innerText = idx + 1;
+        box.id = `box-${idx}`;
+        
+        // Click box to jump to line
+        box.onclick = function() {
+            jumpToLine(idx);
+        };
+
+        grid.appendChild(box);
+    });
+
+    updateOverallStats();
+}
+
+// Determine color class based on score
+function getHeatmapClass(score) {
+    if (score === 0) return 'heatmap-0';
+    if (score <= 25) return 'heatmap-1';
+    if (score <= 50) return 'heatmap-2';
+    if (score <= 75) return 'heatmap-3';
+    return 'heatmap-4';
+}
+
+function updateDashboardBox(idx, score) {
+    const box = document.getElementById(`box-${idx}`);
+    if (box) {
+        // Remove old heatmap classes
+        box.classList.remove('heatmap-0', 'heatmap-1', 'heatmap-2', 'heatmap-3', 'heatmap-4');
+        // Add new
+        box.classList.add(getHeatmapClass(score));
+    }
+}
+
+/* --- UPDATED STATISTICS LOGIC --- */
+
+function updateOverallStats() {
+    // --- 1. SESSION PROGRESS (Current Section Only) ---
+    let sessionTotalScore = 0;
+    let sessionMaxScore = allLines.length * 100; // 100% per line
+
+    allLines.forEach((_, idx) => {
+        const s = getLineScore(idx); // Get score for current section line
+        sessionTotalScore += s;
+    });
+
+    // Calculate Session %
+    // Avoid division by zero if section is empty
+    const sessionPct = sessionMaxScore === 0 ? 0 : Math.round((sessionTotalScore / sessionMaxScore) * 100);
     
+    document.getElementById('bar-session').style.width = sessionPct + '%';
+    document.getElementById('text-session').innerText = sessionPct + '%';
+
+
+    // --- 2. GLOBAL PROGRESS (All Sections) ---
+    const globalStats = calculateGlobalStats();
+    
+    // Calculate Global %
+    const globalPct = globalStats.maxScore === 0 ? 0 : Math.round((globalStats.currentScore / globalStats.maxScore) * 100);
+
+    document.getElementById('bar-total').style.width = globalPct + '%';
+    document.getElementById('text-total').innerText = globalPct + '%';
+}
+
+// Helper: Iterates through ALL sections data to calculate total mastery
+function calculateGlobalStats() {
+    let totalScore = 0;
+    let maxScore = 0;
+
+    // Loop through every section defined in your data
+    sections.forEach(section => {
+        // We need to parse the text to find how many "audio lines" exist
+        // Regex to match lines ending in time marker [x.x]
+        const lines = section.text.split('\n');
+        let lineIndex = 0;
+
+        lines.forEach(rawLine => {
+            const line = rawLine.trim();
+            if (line === '') return;
+
+            // Check if it's a valid recitation line (has time marker)
+            if (/\s*\[(\d+(\.\d+)?)\]\s*$/.test(line)) {
+                
+                // Reconstruct the storage key: memo_score_SECTIONID_LINEINDEX
+                // Note: lineIndex increments only for valid audio lines
+                const key = `memo_score_${section.id}_${lineIndex}`;
+                const savedScore = localStorage.getItem(key);
+                
+                totalScore += savedScore ? parseInt(savedScore) : 0;
+                maxScore += 100; // Each line is worth 100%
+                
+                lineIndex++;
+            }
+        });
+    });
+
+    return { currentScore: totalScore, maxScore: maxScore };
+}
+
+// Function to handle clicking a box
+function jumpToLine(idx) {
+    // Stop auto-play timer
+    if (recitationTimeout) { clearTimeout(recitationTimeout); recitationTimeout = null; }
+    
+    currentRecitationLine = idx;
+    showRecitationLine(idx);
+    
+    // Sync Audio
+    const targetEl = allLines[idx];
+    const startTime = parseFloat(targetEl.dataset.startTime || 0);
+    audioPlayer.currentTime = startTime;
+
+    // Visuals
+    updateButtonVisuals('manual');
+    if (!audioPlayer.paused) audioPlayer.pause();
+}    
 function toggleRecitationAction() {
     const isActive = displayArea.classList.contains('recitation-active');
     const isRunning = !!recitationTimeout;
@@ -2954,14 +3265,18 @@ function findRecitationLine(currentTime) {
         return 0;
     }
     function startRecitationMode() {
-        resetText();
-        displayArea.classList.add('recitation-active');
-        document.body.classList.add('recitation-active-mode');
-        
-        currentRecitationLine = 0;
-        showRecitationLine(0);
-        updateButtonVisuals('manual');
-    }
+    resetText();
+    displayArea.classList.add('recitation-active');
+    document.body.classList.add('recitation-active-mode');
+    
+    // --- NEW: GENERATE DASHBOARD ---
+    renderDashboard(); 
+    // -------------------------------
+
+    currentRecitationLine = 0;
+    showRecitationLine(0);
+    updateButtonVisuals('manual');
+}
 
     function exitRecitation() {
         if(recitationTimeout) clearTimeout(recitationTimeout); recitationTimeout = null;
@@ -2970,6 +3285,11 @@ function findRecitationLine(currentTime) {
         displayArea.classList.remove('recitation-active');
         document.body.classList.remove('recitation-active-mode');
         document.querySelector('.line-recitation-show')?.classList.remove('line-recitation-show');
+        
+        // --- FIX: Remove all slider containers from the text ---
+        document.querySelectorAll('.memorize-slider-container').forEach(el => el.remove());
+        // -------------------------------------------------------
+
         updateButtonVisuals('inactive');
     }
 
@@ -3028,12 +3348,71 @@ function findRecitationLine(currentTime) {
     }
 
     function showRecitationLine(idx) {
-        document.querySelector('.line-recitation-show')?.classList.remove('line-recitation-show');
-        if (allLines[idx]) {
-            allLines[idx].classList.add('line-recitation-show');
-            allLines[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+    // 1. Remove highlight from previous line
+    document.querySelector('.line-recitation-show')?.classList.remove('line-recitation-show');
+    
+    // 2. Remove highlight from previous dashboard box
+    document.querySelector('.progress-box.active-box')?.classList.remove('active-box');
+
+    // 3. Highlight new line & new box
+    if (allLines[idx]) {
+        const lineDiv = allLines[idx];
+        lineDiv.classList.add('line-recitation-show');
+        lineDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Highlight box in dashboard
+        const box = document.getElementById(`box-${idx}`);
+        if(box) box.classList.add('active-box');
+
+        // --- NEW: INJECT SLIDER ---
+        injectSlider(lineDiv, idx);
     }
+}
+
+// Function to create/update slider
+function injectSlider(lineElement, idx) {
+    // Check if slider container already exists in this line
+    let sliderContainer = lineElement.querySelector('.memorize-slider-container');
+    
+    if (!sliderContainer) {
+        // Create container
+        sliderContainer = document.createElement('div');
+        sliderContainer.className = 'memorize-slider-container';
+        
+        // Create Label
+        const label = document.createElement('label');
+        label.id = `label-slider-${idx}`;
+        
+        // Create Input
+        const input = document.createElement('input');
+        input.type = 'range';
+        input.min = 0;
+        input.max = 100;
+		input.step = 10;
+        input.className = 'memorize-slider';
+        
+        // Logic
+        input.oninput = function() {
+            const val = this.value;
+            label.innerText = `Memorized: ${val}%`;
+            // Save and update dashboard immediately
+            saveLineScore(idx, parseInt(val));
+        };
+
+        // Append
+        sliderContainer.appendChild(label);
+        sliderContainer.appendChild(input);
+        lineElement.appendChild(sliderContainer);
+    }
+
+    // Set current values
+    const currentScore = getLineScore(idx);
+    const input = sliderContainer.querySelector('input');
+    const label = sliderContainer.querySelector('label');
+    
+    input.value = currentScore;
+    label.innerText = `Memorized: ${currentScore}%`;
+}
 
 function navigateRecitation(d) {
         // 1. Check if audio is currently playing before we do anything

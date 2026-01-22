@@ -1,0 +1,3608 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kinh Hộ Trì</title>
+ 	<script src="./js/jquery-1.10.2.min.js"></script>
+    <script src="./js/prdpd_i2h.js"></script>
+    <script src="./js/prdpd_ebts.js"></script>
+    <script src="./js/prdpd_deconstructor.js"></script>
+
+<style>
+    /* Popup styling (Z-Index Fixed) */
+    span.meaning {
+        display: block;
+        position: absolute;
+        background-color: #ffd;
+        background-image: url('./images/imgbk.png');
+        color: #333;
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 2000;
+        font-size: 16px;
+        line-height: 1.4;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        max-width: 550px;
+        text-align: left;
+        margin-top: 1px; /* Tăng khoảng cách ra một chút */
+        border: 1px solid #d4a373;
+        min-width: 250px;
+        transition: 100ms;
+    }
+
+    [data-theme="dark"] span.meaning {
+        display: block;
+        position: absolute;
+        background-color: #333;
+        background-image: url('./images/imgbk.png');
+        color: #fff;
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 2000;
+        font-size: 16px;
+        line-height: 1.4;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        max-width: 550px;
+        text-align: left;
+        margin-top: 1px; /* Tăng khoảng cách ra một chút */
+        border: 1px solid #d4a373;
+        min-width: 250px;
+        transition: 100ms;
+        /* --- DÒNG QUAN TRỌNG ĐỂ SỬA LỖI GIẬT --- */
+    }
+    /* Highlight word when lookup is active */
+    .word.lookup-enabled {
+        cursor: help;
+        border-bottom: 1px dotted #888;
+    }
+    .word.lookup-enabled:hover {
+        background-color: rgba(255, 215, 0, 0.2);
+    }
+</style>
+    <style>
+        /* --- CẤU HÌNH MÀU SẮC --- */
+        :root {
+            --primary-color: #8B4513;
+            --bg-color: #ffd;
+            --text-color: #333;
+            --box-bg: #e0e0e0;
+            --box-border: #999;
+            --footer-bg: #ffd;
+            --highlight-color: #d35400;
+            --recitation-bg-active: #ffd;
+            --recitation-text-active: #8B4513;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #d4a373;
+            --bg-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --box-bg: #333;
+            --box-border: #555;
+            --footer-bg: rgba(45, 45, 45, 0.95);
+            --highlight-color: #f39c12;
+            --recitation-bg-active: #2d2d2d;
+            --recitation-text-active: #f39c12;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+			background-image: url('./images/imgbk.png');
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+            padding-bottom: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container { max-width: 800px; width: 100%; }
+
+        /* --- TOP NAV --- */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .nav-controls { display: flex; gap: 5px; flex-grow: 1; justify-content: center; }
+
+        select {
+            padding: 6px; font-size: 16px; border-radius: 5px;
+            border: 1px solid var(--box-border);
+            background-color: var(--bg-color); background-image: url('./images/imgbk.png'); color: var(--text-color);
+            max-width: 200px;
+        }
+
+        .btn-nav, .btn-darkmode {
+            background: transparent; border: 1px solid var(--primary-color);
+            color: var(--primary-color); padding: 5px 10px; border-radius: 5px; cursor: pointer;
+        }
+        .btn-darkmode { background: #34495e; color: #fff; border: none; font-size: 18px; }
+
+        h2 { text-align: center; color: var(--primary-color); margin: 5px 0 15px 0; font-size: 20px; }
+
+        /* --- TEXT CONTENT --- */
+        .text-content {
+            font-size: 18px; text-align: center; line-height: 1.8; position: relative;
+        }
+        
+        /* Ẩn văn bản gốc khi Recitation bật */
+        .text-content.recitation-active > .line-break { display: none; }
+
+        /* Hiện dòng Recitation */
+        .text-content.recitation-active .line-recitation-show {
+            display: block !important;
+            font-size: 22px; font-weight: bold;
+            color: var(--recitation-text-active);
+            background-color: var(--recitation-bg-active);
+			background-image: url('./images/imgbk.png');
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.4s;
+            border: 2px solid var(--primary-color);
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .line-recitation-show[data-has-custom-time="true"]::after {
+            position: absolute; top: 5px; right: 5px; font-size: 12px; opacity: 0.5;
+        }
+
+        .word { display: inline-block; margin: 0 2px; padding: 1px 2px; }
+        .word.hidden {
+            color: transparent; background-color: var(--box-bg);
+            border: 1px solid var(--box-border); cursor: pointer; min-width: 1.2em;
+        }
+        .word.revealed { color: var(--highlight-color); border-bottom: 1px dashed var(--highlight-color); }
+        .line-break { display: block; margin-bottom: 8px; }
+
+        /* --- BOTTOM BAR --- */
+        .bottom-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background-color: var(--footer-bg); background-image: url('./images/imgbk.png'); color: var(--text-color);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.2); z-index: 1000;
+            border-top: 2px solid var(--primary-color);
+            backdrop-filter: blur(5px);
+        }
+
+        .bar-main-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 10px; gap: 10px; max-width: 800px; margin: 0 auto;
+        }
+
+        audio { height: 32px; flex-grow: 1; max-width: 100%; border-radius: 15px; }
+
+        .controls-cluster { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+        .icon-btn {
+            background-color: var(--primary-color); color: #fff; border: none;
+            width: 36px; height: 36px; border-radius: 50%;
+            font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.1s;
+        }
+        .icon-btn:active { transform: scale(0.95); }
+        
+        /* Trạng thái nút Recitation */
+        .btn-recitation { background-color: #2e8b57; transition: all 0.3s ease; }
+        .btn-recitation.active-auto { background-color: #2e8b57; animation: pulse-green 2s infinite; }
+        .btn-recitation.active-manual { background-color: #3566d0; }
+        
+        /* Nút Exit mới */
+        #btn-exit-recitation {
+            background-color: #c0392b; /* Màu đỏ */
+            display: none; /* Mặc định ẩn */
+        }
+       /* --- VN Button Styling in Bottom Bar --- */
+#btn-vn-toggle {
+    font-weight: bold;
+    font-size: 13px; /* Smaller font to fit in the circle */
+    background-color: #4a69bd;
+    display: flex; /* Visible by default */
+}
+
+/* State: VN Mode Active (Visual Feedback) */
+#btn-vn-toggle.active-vn {
+    background-color: #4a69bd;
+	box-shadow: 0 0 10px rgba(39, 174, 96, 0.5);
+    border: 2px solid #fff;
+}
+#vn-display-area {
+    line-height: 2.2; /* Change this number to adjust spacing (e.g., 1.4 for tighter, 2.0 for looser) */
+}
+/* --- VISIBILITY SWAPPING LOGIC --- */
+
+/* 1. Default State (Recitation Inactive) */
+#btn-vn-toggle { display: flex; }
+
+/* 2. Active State (Recitation Active) */
+/* When body has .recitation-active-mode: Hide VN, Show Exit */
+.recitation-active-mode #btn-vn-toggle { display: none; }
+.recitation-active-mode #btn-exit-recitation { display: flex; }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(39, 174, 96, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(39, 174, 96, 0); }
+        }
+        
+        .btn-settings { background-color: #7f8c8d; }
+        .settings-panel {
+            max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out;
+            background-color: rgba(0,0,0,0.03); border-top: 1px dashed var(--box-border);
+        }
+        .settings-panel.open { max-height: 200px; }
+        .settings-content { padding: 10px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;}
+        .setting-group { display: flex; align-items: center; gap: 8px; }
+
+        /* Nút nhỏ trong setting */
+        .btn-sm {
+            border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 13px;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @media (max-width: 600px) {
+            .bar-main-row { flex-direction: column; }
+            .controls-cluster { width: 100%; justify-content: center; gap: 15px; }
+        }
+	#help-container a {
+        /* Đặt màu liên kết cố định */
+        color: #007bff; /* Màu xanh dương sáng */
+        text-decoration: underline;
+    }
+
+    /* Quy tắc cho chế độ Tối (Dark Mode) */
+    [data-theme="dark"] #help-container a {
+        /* Màu liên kết trong Dark Mode */
+        color: #90CAF9; /* Màu xanh sáng hơn */
+    }
+
+    /* Định dạng khi di chuột qua */
+    #help-container a:hover {
+        color: var(--highlight-color); /* Sử dụng màu nổi bật đã có của bạn */
+    }
+	@media (max-width: 600px) {
+/* FIX 1: Tighten the top navigation bar */
+.top-nav {
+gap: 9px; /* Smaller gap between the Dark Mode button and main controls */
+}
+.nav-controls {
+gap: 7px; /* Tighter gap for the navigation arrows and select */
+justify-content: flex-end; /* Ensure controls are aligned right */
+}
+.btn-nav, .btn-darkmode {
+padding: 4px 8px; /* Slightly reduced button padding */
+}
+#section-select {
+max-width: 180px; /* Force the select box to be much narrower on mobile */
+font-size: 14px; /* Smaller font to save space */
+padding: 6px; /* Tighter padding */
+}
+/* FIX 2: Ensure the Help button fits without being cut off */
+#top-right-controls {
+gap: 3px; /* Tighter gap for the rightmost controls */
+}
+/* End FIX for top bar */
+
+/* Keep the bottom bar layout fix */
+.bar-main-row { flex-direction: column; }
+.controls-cluster { width: 100%; justify-content: center; gap: 15px; }
+}
+/* --- RECITAION DASHBOARD & SLIDER --- */
+
+/* Container for the boxes */
+#recitation-dashboard {
+    display: none; /* Hidden by default */
+    width: 90%;
+    max-width: 800px;
+    background-color: var(--box-bg);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid var(--box-border);
+    animation: fadeIn 0.5s;
+}
+/* Tablet/Desktop scale */
+@media (min-width: 768px) {
+    #recitation-dashboard { width: 96%; }
+}
+/* Recitation active? Show dashboard */
+.recitation-active-mode #recitation-dashboard {
+    display: block;
+}
+
+/* The Grid of Boxes */
+.dashboard-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.progress-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    background-color: #ebedf0; /* Default empty */
+    border: 1px solid #ccc;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #555;
+    transition: transform 0.1s;
+}
+
+[data-theme="dark"] .progress-box {
+    background-color: #2d333b;
+    border-color: #444;
+    color: #aaa;
+}
+
+.progress-box:hover { transform: scale(1.15); border-color: #888; }
+.progress-box.active-box { border: 2px solid var(--highlight-color); transform: scale(1.1); }
+
+/* Heatmap Colors (GitHub style Green) */
+.heatmap-0 { background-color: #ebedf0; }
+.heatmap-1 { background-color: #9be9a8; color: #222; } /* 1-25% */
+.heatmap-2 { background-color: #40c463; color: #fff; } /* 26-50% */
+.heatmap-3 { background-color: #30a14e; color: #fff; } /* 51-75% */
+.heatmap-4 { background-color: #216e39; color: #fff; } /* 76-100% */
+
+/* Dark mode overrides for colors */
+[data-theme="dark"] .heatmap-0 { background-color: #2d333b; }
+[data-theme="dark"] .heatmap-1 { background-color: #0e4429; color: #ccc; }
+[data-theme="dark"] .heatmap-2 { background-color: #006d32; }
+[data-theme="dark"] .heatmap-3 { background-color: #26a641; }
+[data-theme="dark"] .heatmap-4 { background-color: #39d353; color: #000; }
+
+/* Progress Bars Area */
+.dashboard-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.progress-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.progress-track {
+    flex-grow: 1;
+    height: 8px;
+   background-color: rgba(0, 0, 0, 0.1); /* Visible track */
+    border-radius: 4px;
+    overflow: hidden;
+	border: 1px solid rgba(0, 0, 0, 0.2);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+
+[data-theme="dark"] .progress-track {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.progress-fill {
+    height: 100%;
+    background-color: var(--primary-color);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+/* SLIDER UNDER SENTENCE */
+.memorize-slider-container {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--primary-color);
+    text-align: center;
+    animation: fadeIn 0.3s;
+}
+
+.memorize-slider-container label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: var(--highlight-color);
+}
+
+.memorize-slider {
+    width: 80%;
+    max-width: 300px;
+    cursor: pointer;
+}
+    </style>
+</head>
+<body>
+
+<div class="container" id="main-container">
+<div class="top-nav">
+    <button class="btn-darkmode" onclick="toggleTheme()">🌙</button> 
+    
+
+        
+        <div class="nav-controls">
+
+            <button class="btn-nav" onclick="changeSection(-1)">❮</button>
+            <select id="section-select" onchange="selectSection()"></select>
+            <button class="btn-nav" onclick="changeSection(1)">❯</button>
+	    <div id="top-right-controls" style="display: flex; gap: 5px; align-items: center;">
+        
+        <button id="help-toggle" class="btn-nav" aria-expanded="false" title="Trợ giúp">&#9432;</button>		
+        </div>
+    </div>
+</div>
+
+
+<div id="help-container" style="display: none; padding: 20px; background-color: var(--box-bg); border: 1px solid var(--box-border); margin-bottom: 15px; border-radius: 8px;">
+        <h3>Kinh Hộ Trì Paritta</h3>
+        <p>Đây là ứng dụng & công cụ trên nền tảng web được thiết kế để hỗ trợ các hành giả trong việc nghe, học, và tụng trì hàng ngày Kinh Hộ Trì Paritta. Ứng dụng có giao diện đồng bộ âm thanh & văn bản, làm nổi bật từng dòng chữ theo thời gian của âm thanh, cho phép thực hành tụng đọc chính xác, đồng thời bao gồm các bài tập ghi nhớ bằng cách ẩn ngẫu nhiên các từ.</p>
+
+
+        <h4>📖 Hướng Dẫn Sử Dụng</h4>
+        
+        <h5>1. Điều Hướng (Thanh Trên Cùng)</h5>
+        <ul>
+            <li>Chuyển Đổi Chủ Đề (🌙/☀️): Chuyển đổi giữa Chế Độ Sáng và Chế Độ Tối để dễ đọc trong các điều kiện ánh sáng khác nhau.</li>
+            <li>Chọn Các Mục: Sử dụng menu thả xuống để chuyển đến một bài kinh cụ thể (ví dụ: Maṅgalasutta, Mettasutta).</li>
+            <li>Mũi Tên (❮ ❯): Điều hướng đến phần trước hoặc phần kế tiếp.</li>
+        </ul>
+
+        <h5>2. Điều Khiển Âm Thanh & Tụng Đọc (Thanh Dưới Cùng)</h5>
+        <ul>
+            <li>Trình Phát Âm Thanh: Các nút điều khiển phát/tạm dừng và âm lượng tiêu chuẩn.
+                <ul>
+                    <li>Lưu ý: Khi một bản âm thanh kết thúc, trình phát sẽ tự động đặt lại về đầu (0:00).</li>
+                </ul>
+            </li>
+            <li>Nút Tụng Đọc (🎤):
+                <ul>
+                    <li>Nhấp để Bắt Đầu: Kích hoạt Chế độ Tụng Đọc. Chữ sẽ phóng to và từng dòng văn bản đồng bộ với âm thanh sẽ được làm nổi bật.</li>
+                    <li>Màu Trạng Thái:
+                        <ul>
+                            <li>Xanh Lá (Nhấp Nháy): Chế độ tự động phát đang hoạt động (đồng bộ).</li>
+                            <li>Xanh Dương: Chế độ thủ công/Tạm dừng.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li>Nút Điều Hướng (« »):
+                <ul>
+                    <li>« (Trước): Quay lại dòng văn bản trước đó và tua lại âm thanh.</li>
+                    <li>» (Tiếp): Chuyển tiếp đến dòng văn bản kế tiếp và tiến tới âm thanh.</li>
+                </ul>
+            </li>
+            <li>Thoát (✖): Chỉ xuất hiện trong Chế độ Tụng Đọc. Nhấp vào nút này để dừng chế độ và trở về chế độ xem toàn văn bản.</li>
+			</ul>
+               <h5>3. Từ Điển Pāli</h5>
+                <ul>
+                   <li><b>Bật/Tắt:</b> Sử dụng nút <b>📖</b> trên thanh điều khiển.</li>
+                   <li><b>Cách Tra Cứu:</b> Khi tính năng được bật, chỉ cần di chuột qua bất kỳ từ Pāli nào.</li>
+                   <li><b>Tính Năng:</b> Cho phép bạn tra cứu ý nghĩa của các từ Pāli ngay trong văn bản mà không cần rời khỏi trang. Cửa sổ giải nghĩa sẽ hiển thị ngay bên cạnh từ.</li>
+        </ul>
+        <h5>4. Cài Đặt & Công Cụ Ghi Nhớ (⚙️)</h5>
+        <p>Nhấp vào biểu tượng Bánh Răng (⚙️) để mở bảng cài đặt.</p>
+        
+        <h5>A. Bài Tập Ghi Nhớ (Ẩn Chữ)</h5>
+        <p>Tính năng này giúp kiểm tra trí nhớ của bạn bằng cách che khuất một số từ.</p>
+        <ul>
+            <li>Thanh Trượt Độ Khó: Kéo thanh trượt để chọn tỷ lệ phần trăm từ cần ẩn (10% đến 90%).</li>
+            <li>Nút Ẩn: Ẩn ngẫu nhiên các từ dựa trên tỷ lệ phần trăm đã chọn.</li>
+            <li>Tương Tác Hiển Thị: Nhấp vào bất kỳ từ bị ẩn nào (được đại diện bằng một hộp trống) để hiển thị nó ngay lập tức.</li>
+            <li>Nút Hiện: Đặt lại văn bản và hiển thị tất cả các từ.</li>
+        </ul>
+
+        <h5>B. Điều Chỉnh Tốc Độ</h5>
+        <ul>
+            <li>Mặc Định: Sử dụng thời gian cụ thể được viết trong mã (ví dụ: [5.0] giây) để đồng bộ hóa chính xác với âm thanh tụng.</li>
+            <li>Tuỳ Chỉnh (🕒): Cho phép bạn ghi đè thời gian mặc định.
+                <ul>
+                    <li>Đặt một khoảng thời gian cố định (ví dụ: 3.0 giây) cho mỗi dòng.</li>
+                    <li>Hữu ích cho việc thực hành tụng đọc ở tốc độ ổn định, chậm hơn hoặc nhanh hơn mà không cần đồng bộ âm thanh.</li>
+                </ul>
+            </li>
+        </ul>
+
+<h4>💾 Sử Dụng Ngoại Tuyến</h4>
+<p>
+    Để sử dụng ngoại tuyến, hãy tải xuống tệp Apk cho Android, tệp Zip cho PC và tệp ZIM cho tất cả các hệ điều hành và thiết bị. 
+    (Định dạng ZIM được mở bằng Kiwix, một ứng dụng miễn phí cung cấp khả năng truy cập ngoại tuyến vào các nội dung giáo dục. 
+    Để tìm hiểu thêm, xem tại đây: <a href="https://kiwix.org/en/about_us/" target="_blank">kiwix.org/en/about_us/</a>).
+</p>
+<p>Đường Link Tải xuống & Mã Nguồn: <a href="https://github.com/buddhanussati/loicuaducphat/"><b>tại đây.</b></a></p>
+
+<h4>⚖️ Giấy Phép & Sử Dụng</h4>
+<p>
+    Nội dung và mã nguồn của ứng dụng này được cấp phép theo Giấy phép Creative Commons Phi thương mại 4.0 Quốc tế. 
+    (<a href="https://creativecommons.org/licenses/by-nc/4.0/legalcode" target="_blank">CC BY-NC 4.0</a>).
+</p>
+<p>
+    Bạn được tự do Chia sẻ và Chuyển thể tài liệu này cho các mục đích <b>phi thương mại</b>. Mọi mục đích thương mại đều không được phép.
+</p>
+    </div>
+	<div id="recitation-dashboard">
+    <div id="dashboard-grid" class="dashboard-grid">
+        </div>
+    <div class="dashboard-stats">
+        <div class="progress-bar-container">
+            <span style="width: 120px; font-size: 12px;">Đã thuộc bài này:</span>
+            <div class="progress-track"><div id="bar-session" class="progress-fill" style="background-color: #3498db;"></div></div>
+            <span id="text-session" style="font-size: 12px;">0%</span>
+        </div>
+        <div class="progress-bar-container">
+            <span style="width: 120px; font-size: 12px;">Đã thuộc tất cả:</span>
+            <div class="progress-track"><div id="bar-total" class="progress-fill" style="background-color: #27ae60;"></div></div>
+            <span id="text-total" style="font-size: 12px;">0%</span>
+        </div>
+    </div>
+</div>
+    <h2 id="section-title">Loading...</h2>
+    <div id="display-area" class="text-content"></div>
+    <div id="vn-display-area" class="text-content" style="display:none; white-space: pre-line;"></div>
+</div>
+
+<div class="bottom-bar">
+    <div class="bar-main-row">
+        <audio id="audioPlayer" controls>Trình duyệt không hỗ trợ audio.</audio>
+
+        <div class="controls-cluster">
+		<button id="btn-vn-toggle" class="icon-btn" onclick="toggleVietnameseView()" title="Xem Tiếng Việt">VI</button>
+			<button id="btn-exit-recitation" class="icon-btn" onclick="exitRecitation()" title="Thoát Tụng Đọc">✖</button>
+            <button class="icon-btn" onclick="navigateRecitation(-1)" title="Lùi">«</button>
+            
+            <button id="recitation-toggle-btn" class="icon-btn btn-recitation" onclick="toggleRecitationAction()" title="Tụng Đọc">🎤</button>
+            
+
+            <button class="icon-btn" onclick="navigateRecitation(1)" title="Tiến">»</button>
+            <button id="settings-btn" class="icon-btn btn-settings" onclick="toggleSettings()" title="Cài đặt">⚙️</button>
+<button id="btn-dictionary" class="icon-btn" onclick="togglePaliLookup()" title="Từ điển Pali">📖</button>
+        </div>
+    </div>
+
+    <div id="settings-panel" class="settings-panel">
+        <div class="settings-content">
+            <div class="setting-group">
+                <span style="font-size:13px; font-weight:600">Ẩn chữ:</span>
+                <input type="range" id="difficulty" min="10" max="90" value="40" oninput="updateLabel(this.value)" style="width:80px">
+                <span id="difficulty-label" style="font-size:12px">40%</span>
+                <button class="btn-sm" onclick="hideRandomWords()" style="background:#d35400; color:white;">Ẩn</button>
+                <button class="btn-sm" onclick="resetText(true)" style="background:#7f8c8d; color:white;">Hiện</button>
+            </div>
+
+            <div class="setting-group">
+                <span style="font-size:13px; font-weight:600">Tốc độ:</span>
+                
+                <button id="btn-show-speed" class="btn-sm" onclick="toggleSpeedControl()" style="background:#2980b9; color:white;">🕒</button>
+
+                <div id="speed-control-area" style="display:none; align-items:center; gap:5px;">
+                    <input type="range" id="recitation-interval" min="1" max="10" step="0.5" value="3" oninput="updateRecitationInterval(this.value)" style="width:80px">
+                    <span id="recitation-interval-label" style="font-size:12px">3.0s</span>
+                    <button class="btn-sm" onclick="resetSpeedDefault()" style="background:#6a4c93; color:white;" title="Huỷ tuỳ chỉnh, dùng thời gian gốc">Về mặc định</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+/* =========================================
+   FULL PALI LOOKUP INTEGRATION
+   ========================================= */
+
+// Flag to satisfy the check in lookupWordHandler
+window.paliDictionary = true;
+var isLookupEnabled = false;
+// Thêm biến Timer để quản lý độ trễ cho sự kiện mouseenter
+var lookupTimer = null; 
+// Mặc định: Độ trễ 100ms
+const LOOKUP_DELAY_MS = 100; 
+
+function togglePaliLookup() {
+    isLookupEnabled = !isLookupEnabled;
+    const btn = document.getElementById('btn-dictionary');
+    
+    // --- SAVE TO LOCAL STORAGE ---
+    localStorage.setItem('dictionaryEnabled', isLookupEnabled);
+
+    if (isLookupEnabled) {
+        btn.style.backgroundColor = "#d35400"; // Active color (Orange)
+        enablePaliLookup();
+    } else {
+        btn.style.backgroundColor = ""; // Default color
+        disablePaliLookup();
+    }
+}
+
+function enablePaliLookup() {
+    // 1. Add visual indicator
+    $('.word').addClass('lookup-active');
+    
+    // 2. Gỡ bỏ các event handler cũ
+    $(document).off('mouseenter', '.word'); 
+    $(document).off('mouseleave', '.word'); 
+
+    // MOUSEENTER: Thiết lập độ trễ (delay)
+    $(document).on('mouseenter', '.word', function() {
+        var $word = $(this);
+        // Xóa bất kỳ timer nào đang chạy từ các từ khác
+        if (lookupTimer) {
+            clearTimeout(lookupTimer);
+        }
+        
+        // Thiết lập timer mới
+        lookupTimer = setTimeout(function() {
+            // Chỉ hiển thị popup nếu con trỏ vẫn còn trên từ
+            if ($word.is(':hover')) {
+                // Dùng .call() để đảm bảo 'this' trong lookupWordHandler là phần tử DOM hiện tại
+                lookupWordHandler.call($word[0]); 
+            }
+            lookupTimer = null; // Reset timer sau khi chạy
+        }, LOOKUP_DELAY_MS); 
+    });
+    
+    // MOUSELEAVE: Xóa timer và tắt popup ngay lập tức
+    $(document).on('mouseleave', '.word', function() {
+        // 1. Xóa timer hiện popup đang chờ (nếu có)
+        if (lookupTimer) {
+            clearTimeout(lookupTimer);
+            lookupTimer = null;
+        }
+        
+        // 2. Xóa popup đang hiển thị (nếu có)
+        $(this).find('span.meaning').remove();
+    });
+}
+
+function disablePaliLookup() {
+    // Đảm bảo xóa timer nếu nó đang chạy khi tắt tính năng
+    if (lookupTimer) {
+        clearTimeout(lookupTimer);
+        lookupTimer = null;
+    }
+    $('.word').removeClass('lookup-active');
+    $(document).off('mouseenter', '.word');
+    $(document).off('mouseleave', '.word');
+    $('.meaning').remove();
+}
+
+/* --- CORE HANDLER (Adapted from pali-lookup-standalone.js) --- */
+function lookupWordHandler(event) {
+    if (!window.paliDictionary) return;
+    if ($(this).children().is("span.meaning")) return;
+
+    // Get text
+    var rawText = $(this).text();
+    var word = rawText.toLowerCase().trim();
+
+    // --- CRITICAL FIX: Remove punctuation from edges ---
+    // The original script split text by punctuation. Since your HTML 
+    // includes punctuation in the span (e.g., "dhammo,"), we must strip it here.
+    word = word.replace(/^[“‘"(\[]+|[”’"),‚.\]?!:–;]+$/g, '');
+
+    // Standard replacements from original script
+    word = word.replace(/­/g, ''); // optional hyphen
+    // Fix specific Pali spelling variations handled in original script
+    word = word.replace(/ṁg/g, 'ṅg')
+               .replace(/ṁk/g, 'ṅk')
+               .replace(/ṁ/g, 'ṁ'); // (Original had this, keeping for safety)
+
+    // Perform Lookup
+    var meaning = lookupWord(word, rawText); // Pass rawText for display title
+    
+    if (meaning) {
+        var textBox = $('<span class="meaning">' + meaning + '</span>');
+        $(this).append(textBox);
+        
+        // Prevent popup from going off-screen (Right edge detection)
+        var offset = $(this).offset();
+        var width = 300; // approx max width
+        if (offset.left + width > $(window).width()) {
+             textBox.css({left: 'auto', right: 0});
+        }
+    }
+}
+
+/* --- LOOKUP LOGIC (Exact copy of logic from pali-lookup-standalone.js) --- */
+function lookupWord(word, displayTitle) {
+    // Safety check for data
+    if (typeof dpd_i2h === 'undefined') {
+        console.warn("Pali Data (dpd_i2h) not loaded!");
+        return "<i>Dictionary data not found.<br>Please check console.</i>";
+    }
+
+    let out = "";
+    
+    // Logic from original: replace quotes and normalize 'ṁ' to 'ṃ' for dictionary keys
+    const originalWord = word;
+    var lookupKey = word.replace(/[’”'"]/g, "").replace(/ṁ/g, "ṃ");
+
+    // 1. Dictionary Lookup (dpd_i2h)
+    if (lookupKey in dpd_i2h) {
+        out += `<strong>${originalWord}</strong>`;
+        out += `<ul style="line-height: 1.4em; padding-left: 15px; margin-top: 4px; list-style: disc inside;">`;
+        
+        for (const headword of dpd_i2h[lookupKey]) {
+            if (headword in dpd_ebts) {
+                // Formatting logic from original script
+                const match = headword.match(/^(.+?)\s(\d[\d.]*)$/);
+                let formattedHeadword;
+                if (match) {
+                    const wordPart = match[1].trim();
+                    const numberPart = match[2];
+                    formattedHeadword = `${wordPart}<sub style="font-size:60%; font-weight:bold;">${numberPart}</sub>`;
+                } else {
+                    formattedHeadword = headword;
+                }
+                out += `<li><b>${formattedHeadword}</b>: ${dpd_ebts[headword]}</li>`;
+            }
+        }
+        out += "</ul>";
+    }
+
+    // 2. Deconstructor Lookup (dpd_deconstructor)
+    if (typeof dpd_deconstructor !== 'undefined' && lookupKey in dpd_deconstructor) {
+        if(out === "") out += `<strong>${originalWord}</strong><br>`; // Header if not already added
+        out += `<div style="margin-top:8px; border-top:1px solid #555; padding-top:4px;">
+                <small style="color:#aaa"></small>
+                ${dpd_deconstructor[lookupKey]}
+                </div>`;
+    }
+
+    return out === "" ? null : out.replace(/ṁ/g, "ṃ");
+}
+</script>
+<script>
+    // --- DỮ LIỆU ---
+    const sections = [
+      {
+    id: 'Paritta', title: 'Paritta Parikamma', audio: '00-ParittaPalikamma.mp3',
+    vietnamese: `KỆ MỞ ĐẦU HỘ KINH
+Này hỡi các Thiên giả,
+Từ trong những Thiên hà
+Xin hãy đến nơi đây
+Và lắng nghe diệu pháp;
+Pháp Thiên lạc, giải thoát
+Của Hiền Vương Thích Ca.
+Này hỡi chư hiền giả,
+Giờ này xin nghe pháp
+Này hỡi chư hiền giả,
+Giờ này xin nghe pháp
+Này hỡi chư hiền giả,
+Giờ này xin nghe pháp
+Xin thành kính lễ Ngài
+Thế Tôn, A-La-Hán,
+Đấng Toàn Tri diệu giác
+Xin thành kính lễ Ngài
+Thế Tôn, A-La-Hán,
+Đấng Toàn Tri diệu giác
+Xin thành kính lễ Ngài
+Thế Tôn, A-La-Hán,
+Đấng Toàn Tri diệu giác
+Những hiền trí nào có tâm an tịnh,
+đã nương tựa vào ba ngôi báu,
+ở thế giới này hay thế giới khác,
+và chư địa tiên hay Thiên tiên,
+những vị thường tích lũy 
+vô vàn công đức;
+xin hãy đến nơi đây,
+những vị an lạc Thiên
+ngự ở núi chúa Mê-Ru
+bằng vàng ròng cao quý.
+Hãy đồng lòng lắng nghe
+những lời châu báu
+của Đức đại hiền 
+(Mâu-Ni) cao thượng
+là nguồn của sự an lạc.
+Từ trong tất cả các Thiên hà,
+chư Dạ Xoa, chư Thiên
+và chư Đại Phạm Thiên,
+Những công đức nào
+được làm bởi chúng tôi,
+khiến trọn vẹn tất cả
+những sự thành tựu,
+xin hãy tùy hỷ
+với tất cả những công đức ấy,
+tận tâm hòa hợp trong giáo pháp,
+Và cùng nhau bảo vệ 
+không xao lãng.
+Nguyện cầu những hưng thịnh,
+hằng hiện hữu cho thế giới
+và cho giáo pháp.
+Xin chư Thiên hằng hộ trì
+cho thế giới và giáo pháp.
+Nguyện cầu cho các sanh linh,
+cùng tất cả tùy tùng,
+họ hàng quyến thuộc,
+được an lạc, đẹp ý,
+và thoát khỏi mọi lụy phiền.
+Thoát tai họa từ hôn quân,
+đạo tặc, phàm nhân,
+phi nhân, hỏa hoạn,
+nước cuốn, cây đổ, ma quỷ;
+sao nạn, hung tinh,
+vật nhọn, đại dịch,
+tà giáo; tà kiến, hiểm nhân;
+voi, ngựa, hươu, bò;
+chó dữ, rắn, bò cạp;
+thủy xà, báo, gấu;
+linh cẩu, trâu, lợn rừng,
+quỷ thần, Dạ Xoa,…
+Xin bảo vệ sanh linh,
+Tránh khỏi bao tai họa
+Cùng bao nhiêu bệnh hoạn,
+Và mọi điều sợ hãi.`,
+    text: `Namo tassa Bhagavato Arahato Sammāsambuddhassa. [12.437]
+Namo tassa Bhagavato Arahato Sammāsambuddhassa. [7.939]
+Namo tassa Bhagavato Arahato Sammāsambuddhassa. [8.598]
+Samantā cakkavāḷesu, atrāgacchantu devatā, [7.882]
+Saddhammaṃ Munirājassa, suṇantu saggamokkhadaṃ: [7.479]
+Dhammassavanakālo ayaṃ bhadantā! [5.732]
+Dhammassavanakālo ayaṃ bhadantā! [4.725]
+Dhammassavanakālo ayaṃ bhadantā! [5.419]
+Namo tassa Bhagavato Arahato Sammāsambuddhassa. [6.986]
+Namo tassa Bhagavato Arahato Sammāsambuddhassa. [7.434]
+Namo tassa Bhagavato Arahato Sammāsambuddhassa. [7.815]
+Ye santā santacittā, tisaraṇasaraṇā, ettha lokantare vā, [9.673]
+Bhummā bhummā ca devā, guṇagaṇagahaṇa byāvaṭā sabbakālaṃ, [9.472]
+Ete āyantu devā, varakanakamaye, Merurāje vasanto, [8.867]
+Santo santo sahetuṃ, Munivaravacanaṃ, sotumaggaṃ samaggā. [9.942]
+Sabbesu cakkavāḷesu, yakkhā devā ca brahmano, [7.255]
+Yaṃ amhehi kataṃ puññaṃ, sabbasampattisādhakaṃ, [6.605]
+Sabbe taṃ anumoditvā, samaggā sāsane ratā, [6.852]
+Pamādarahitā hontu, ārakkhāsu visesato. [7.210]
+Sāsanassa ca lokassa, vuḍḍhī bhavatu sabbadā, [6.382]
+Sāsanampi ca lokañca, devā rakkhantu sabbadā. [7.568]
+Saddhiṃ hontu sukhī sabbe, parivārehi attano, [6.986]
+Anīghā sumanā hontu, saha sabbehi ñātibhi. [7.367]
+Rājato vā, corato vā, manussato vā, amanussato vā, [8.934]
+Aggito vā, udakato vā, pisācato vā, khāṇukato vā, [8.554]
+Kaṇṭakato vā, nakkhattato vā, janapadarogato vā, asaddhammato vā, [9.516]
+Asandiṭṭhito vā, asappurisato vā, [5.777]
+Caṇḍahatthī assa miga goṇa kukkura ahivicchikā maṇisappa dīpi  [10.524]
+Accha taraccha sūkara mahiṃsa yakkha rakkhasādīhi, [7.120]
+Nānā bhayato vā, nānā rogato vā, [5.105]
+Nānā upaddavato vā, ārakkhaṃ gaṇhantu. [8.8]`
+}, 
+	   
+	   
+	   {
+    id: 'MS', title: '1. Maṅgalasutta ', audio: '01-Mangalasutta.mp3',
+	 vietnamese: `KINH PHƯỚC LÀNH
+Những phước lành 
+mà hàng Thiên - nhân
+suốt mười hai năm đã suy nghĩ,
+họ cũng không biết được
+những điều cát tường
+gồm có ba mươi tám 
+điều phước lành,
+đã được thuyết bởi 
+Thiên chủ muôn Thiên
+(Đức Thế Tôn),
+nhằm hủy diệt mọi điều tội lỗi,
+và mang lại những điều lợi lạc
+cho tất cả thế gian.
+Hỡi chư hiền,
+hãy tụng lên 
+những điều phước lành này.
+Tôi là Ananda
+Đã được nghe như vầy.
+Một thuở Đức Thế Tôn,
+Ngự ở Sa-Vát-Thí,
+Tại đại tự Kỳ Viên
+Của trưởng giả tên là
+Anāthapiṇḍika
+(Tư-Đà Cấp-Cô-Độc),
+Khi đêm đã gần mãn,
+Có Thiên tử xuất hiện
+Với hào quang thù diệu
+Chiếu sáng cả Kỳ Viên
+Đến đảnh lễ Thế Tôn.
+Lễ xong đứng một bên,
+Vị Thiên bạch Thế Tôn,
+Bằng bài kệ như vầy:
+Nhiều chư Thiên nhân loại,
+Suy nghĩ về phước lành
+Mong ước điều cát tường
+Xin Ngài hãy nói lên
+Những phước lành cao thượng
+Thế Tôn tùy lời hỏi
+Rồi giảng giải như vầy.
+Không kết giao kẻ ngu
+Thân cận người thiện trí
+Kính lễ bậc đáng lễ
+Là phước lành cao thượng.
+Ở nơi chốn thích hợp,
+Công đức trước đã làm
+Giữ mình được tốt đẹp
+Là phước lành cao thượng
+Học nhiều, thực hành giỏi
+Thuần thục các giới điều
+Nói những lời lợi ích
+Là phước lành cao thượng
+Phụng dưỡng mẹ và cha
+Chăm sóc vợ và con
+Việc làm không lẫn lộn
+Là phước lành cao thượng
+Bố thí, hành thiện pháp
+Hộ độ thân quyến thuộc
+Hành xử không lỗi lầm
+Là phước lành cao thượng
+Bỏ và tránh điều ác
+Kiêng cữ các chất say
+Nỗ lực trong thiện nghiệp
+Là phước lành cao thượng
+Cung kính và khiêm nhường
+Tri túc và tri ân
+Đúng thời nghe chánh pháp
+Là phước lành cao thượng
+Kham nhẫn và nhu thuận
+Tiếp kiến các Sa Môn
+Đàm luận pháp tùy thời
+Là phước lành cao thượng
+Tận tâm, hành Phạm hạnh
+Tri kiến tứ Thánh đế
+Thực chứng được Niết Bàn
+Là phước lành cao thượng
+Xúc chạm pháp thế gian
+Tâm không động, không sầu
+Tự tại và vô nhiễm
+Là phước lành cao thượng
+Những sở hành như vậy,
+Bất bại ở mọi nơi
+Mọi nơi đến cát tường
+Đây phước lành cao thượng.`,
+    text: `Yaṃ maṅgalaṃ dvādasahi, cintayiṃsu sadevakā; [9.582]
+Sotthānaṃ nādhigacchanti, aṭṭhattiṃsañca maṅgalaṃ. [7.411]
+Desitaṃ devadevena, sabbapāpavināsanaṃ; [6.680]
+Sabbalokahitatthāya, maṅgalaṃ taṃ bhaṇāma he. [7.494]
+Evaṃ me sutaṃ - ekaṃ samayaṃ bhagavā sāvatthiyaṃ viharati [8.914]
+Jetavane anāthapiṇḍikassa ārāme. [5.858]
+Atha kho aññatarā devatā abhikkantāya rattiyā abhikkantavaṇṇā [9.725]
+Kevalakappaṃ jetavanaṃ obhāsetvā yena bhagavā tenupasaṅkami; [10.573]
+Upasaṅkamitvā bhagavantaṃ abhivādetvā ekamantaṃ aṭṭhāsi. [8.684]
+Ekamantaṃ ṭhitā kho sā devatā bhagavantaṃ gāthāya ajjhabhāsi: [11.690]
+“Bahū devā manussā ca, maṅgalāni acintayuṃ; [6.701]
+Ākaṅkhamānā sotthānaṃ, brūhi maṅgalamuttamaṃ”. [7.035]
+Asevanā ca bālānaṃ, paṇḍitānañca sevanā; [6.471]
+Pūjā ca pūjaneyyānaṃ‚ etaṃ maṅgalamuttamaṃ. [7.077]
+Patirūpadesavāso ca, pubbe ca katapuññatā; [7.056]
+Attasammāpaṇidhi ca, etaṃ maṅgalamuttamaṃ. [6.576]
+Bāhusaccañca sippañca, vinayo ca susikkhito; [6.722]
+Subhāsitā ca yā vācā, etaṃ maṅgalamuttamaṃ. [7.578]
+Mātāpitu upaṭṭhānaṃ, puttadārassa saṅgaho; [7.494]
+Anākulā ca kammantā, etaṃ maṅgalamuttamaṃ. [7.265]
+Dānañca dhammacariyā ca, ñātakānañca saṅgaho; [7.494]
+Anavajjāni kammāni, etaṃ maṅgalamuttamaṃ. [7.327]
+Aratī viratī pāpā, majjapānā ca saṃyamo; [7.766]
+Appamādo ca dhammesu, etaṃ maṅgalamuttamaṃ. [7.285]
+Gāravo ca nivāto ca, santuṭṭhi ca kataññutā; [7.327]
+Kālena dhammassavanaṃ‚ etaṃ maṅgalamuttamaṃ. [6.868]
+Khantī ca sovacassatā, samaṇānañca dassanaṃ; [6.743]
+Kālena dhammasākacchā, etaṃ maṅgalamuttamaṃ. [7.452]
+Tapo ca brahmacariyañca, ariyasaccāna dassanaṃ; [7.118]
+Nibbānasacchikiriyā ca, etaṃ maṅgalamuttamaṃ. [7.536]
+Phuṭṭhassa lokadhammehi, cittaṃ yassa na kampati; [7.014]
+Asokaṃ virajaṃ khemaṃ, etaṃ maṅgalamuttamaṃ. [8.308]
+Etādisāni katvāna, sabbatthamaparājitā; [7.953]
+Sabbattha sotthiṃ gacchanti, taṃ tesaṃ maṅgalamuttamaṃ. [9.781]`
+},
+
+ 
+
+
+{
+    Id: 'Ratana', title: '2. Ratanasutta', audio: '02-Ratanasutta.mp3',
+ vietnamese: `KINH CHÂU BÁU
+Tôn giả Ananda,
+Với từ tâm vô lượng
+Trì tụng kinh châu báu,
+Suốt trọn cả ba canh
+Ba vòng thành Vesali,
+Niệm tất cả ân đức
+Của Như Lai đại nguyện,
+Gồm ba mươi pháp độ
+Là mười ba-la-mật
+Mười thường ba-la-mật,
+Mười thắng ba-la-mật,
+Năm pháp đại xả thí,
+Và cả ba đại hạnh:
+Đại hạnh cho thế gian,
+Đại hạnh cho thân tộc,
+Đại hạnh quả vị Phật,
+Trong kiếp chót giáng trần
+Xuất gia tầm giải thoát,
+Sáu năm tu khổ hạnh
+Chiến thắng đại ma quân,
+Đạt Nhất Thiết Chủng Trí
+Chứng chín pháp siêu phàm
+Và chuyển vận Pháp luân.
+Mười muôn triệu thế giới,
+Chư Thiên khắp các cõi
+Uy lực kinh thọ trì,
+Tiêu trừ mọi tai ương
+Ðói khát và bệnh tật,
+Cùng phi nhân quấy nhiễu
+Trong thành Vesali,
+Thảy đều được tan biến.
+Này hỡi chư hiền giả,
+Chúng tôi sẽ tụng lên
+Hộ kinh châu báu ấy.
+Phàm những sanh linh nào,
+Đã tụ hội nơi đây
+Hoặc các hạng địa tiên
+Hay các hạng Thiên tiên
+Mong rằng mọi sanh linh,
+Được đẹp ý vui lòng,
+Rồi xin hãy thành tâm,
+Lắng nghe lời dạy này.
+Do vậy các sanh linh,
+Tất cả hãy lắng tâm,
+Rồi khởi lòng từ mẫn,
+Đối với thảy mọi loài,
+Ban ngày và ban đêm,
+Họ dâng lễ cúng dường,
+Vì vậy chớ xao lãng,
+Hãy hộ trì cho họ.
+Phàm có tài sản nào,
+Đời này hay đời sau,
+Hay ở tại Thiên giới,
+Có châu báu thù thắng,
+Không gì sánh bằng được,
+Với Như Lai Thiện Thệ,
+Như vậy, nơi Đức Phật,
+Là châu báu thù diệu,
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Pháp bất tử tối thượng,
+Ly dục diệt phiền não
+Đức Thích Ca Mâu Ni,
+Có định chứng pháp này
+Không có gì sánh bằng,
+Pháp thiền vi diệu ấy
+Như vậy, nơi chánh pháp,
+Có châu báu thù diệu
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Phật, Thanh Văn, Duyên Giác,
+Nói lên lời tán thán,
+Định thù diệu trong sạch,
+Liên tục không gián đoạn,
+Không gì sánh bằng được,
+Pháp thiền vi diệu ấy.
+Như vậy, nơi chánh pháp,
+Có châu báu thù diệu,
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Thánh tám vị bốn đôi,
+Là những bậc Ứng Cúng
+Ðệ tử Đấng Thiện Thệ,
+Được trí giả tán thán
+Cúng dường đến các Ngài,
+Được kết quả to lớn.
+Như vậy, nơi Tăng chúng,
+Có châu báu thù diệu
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Những vị đã li dục,
+Với ý thật kiên trì,
+Đã khéo léo phụng hành,
+Lời dạy Gotama.
+Họ đạt được quả vị,
+Họ thể nhập bất tử,
+Họ chứng đắc dễ dàng,
+Hưởng thọ sự tịch tịnh,
+Như vậy, nơi Tăng chúng,
+Có châu báu thù diệu,
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Ví như cột trụ đá,
+Được chôn chặt xuống đất
+Dầu bốn hướng cuồng phong,
+Cũng không hề lay động
+Ta nói bậc chân nhân,
+Thấu rõ tứ Thánh đế
+Cũng tự tại bất động,
+Trước tám pháp thế gian
+Như vậy, nơi Tăng chúng
+Có châu báu thù diệu
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Bậc thấu triệt Thánh đế,
+Đã được khéo thuyết giảng
+Bởi trí tuệ uyên thâm,
+Dù cho có bất cẩn
+Thì cũng không bao giờ,
+Tái sanh kiếp thứ tám
+Như vậy, nơi Tăng chúng,
+Có châu báu thù diệu
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Với đầy đủ tri kiến,
+Thanh Văn đạo quả tuệ
+Vị ấy đoạn trừ được
+Đồng thời ba kiết sử
+Thân kiến và hoài nghi,
+Luôn cả giới cấm thủ.
+Vị không thể nào phạm,
+Sáu trọng nghiệp bất thiện
+Vĩnh viễn giải thoát mình,
+Ra khỏi bốn đọa xứ.
+Như vậy, nơi Tăng chúng,
+Có châu báu thù diệu
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Thiện Thế tuyên bố rằng,
+Đối với bậc “kiến đạo”
+Dù vô tâm phạm lỗi
+Bằng thân, ý, hay lời
+Cũng không hề che dấu
+Lỗi lầm của vị ấy.
+Như vậy, nơi Tăng chúng
+Có châu báu thù diệu
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Đẹp là những cây rừng,
+Đội chồi non đầu ngọn.
+Trong tháng hạ nóng bức,
+Những ngày hạ đầu tiên.
+Pháp thù thắng Phật thuyết,
+Được ví dụ như vậy.
+Pháp đưa đến Niết Bàn,
+Pháp lợi ích tối thượng,
+Như vậy, nơi Đức Phật,
+Là châu báu thù diệu,
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Ðức Phật Bậc vô thượng,
+Liễu thông pháp vô thượng
+Ban bố pháp vô thượng
+Chuyển đạt pháp vô thượng
+Tuyên thuyết pháp vô thượng
+Như vậy, nơi Đức Phật
+Là châu báu thù diệu
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Nghiệp cũ đã đoạn tận,
+Nghiệp mới không sanh khởi,
+Tâm tư không kiết sử,
+Trong sanh hữu tương lai
+Bởi tham muốn đã đoạn,
+Các chủng tử không còn
+Ví như ngọn đèn tắt,
+Bậc trí chứng Niết Bàn
+Như vậy, nơi Tăng chúng,
+Là châu báu thù diệu
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Phàm những sanh linh nào
+Đã tụ hội nơi đây
+Hoặc trên mặt đất này,
+Hoặc chính giữa hư không,
+Hãy đảnh lễ Đức Phật,
+Đã như thực xuất hiện,
+Ðược loài trời, loài người,
+Đảnh lễ và cúng dường,
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Phàm những sanh linh nào
+Đã tụ hội nơi đây
+Hoặc trên mặt đất này,
+Hoặc chính giữa hư không,
+Hãy đảnh lễ chánh pháp,
+Đã như thực xuất hiện,
+Ðược loài trời, loài người,
+Đảnh lễ và cúng dường,
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Phàm những sanh linh nào,
+Đã tụ hội nơi đây
+Hoặc trên mặt đất này,
+Hoặc chính giữa hư không,
+Hãy đảnh lễ chúng Tăng,
+Đã như thật xuất hiện
+Ðược loài trời, loài người,
+Đảnh lễ và cúng dường,
+Mong với sự thật này,
+Mọi loài được hạnh phúc.`,
+    text: `Paṇidhānato paṭṭhāya tathāgatassa dasa pāramiyo, [10.128]
+Dasa upapāramiyo, dasa paramatthapāramiyoti, samatiṃsa pāramiyo, [10.446]
+Pañca mahapariccāge, lokatthacariyaṃ ñātatthacariyaṃ buddhatthacariyanti tisso cariyāyo [12.642]
+Pacchimabhave gabbhavokkantiṃ jātiṃ abhinikkhamanaṃ padhānacariyaṃ bodhipallaṅke māravijayaṃ [14.082]
+Sabbaññutaññāṇappativedhaṃ dhammacakkappavattanaṃ navalokuttaradhammeti [10.983]
+Sabbepime buddhaguṇe āvajjetvā vesāliyā tīsu pākarantaresu [10.275]
+Tiyāmarattiṃ parittaṃ karonto āyasmā ānandatthero viya kāruññacittaṃ upaṭṭhapetvā [12.325]
+Koṭīsahassesu, cakkavāḷesu devatā; [6.150]
+Yassānaṃ paṭiggaṇhanti, yañca vesāliyā pure. [7.297]
+Rogāmanussadubbhikkha sambhutaṃ tividhaṃ bhayaṃ; [6.931]
+Khippamantaradhāpesi, parittaṃ taṃ bhaṇāma he. [7.297]
+Yānīdha bhūtāni samāgatāni, bhummāni‚ vā yāni va antalikkhe. [9.494]
+Sabbeva bhūtā sumanā bhavantu, athopi sakkacca suṇantu bhāsitaṃ. [9.518]
+Tasmā hi bhūtā nisāmetha sabbe, mettaṃ karotha mānusiyā pajāya; [9.103]
+Divā ca ratto ca haranti ye baliṃ, tasmā hi ne rakkhatha appamattā. [9.347]
+Yaṃ kiñci vittaṃ idha vā huraṃ vā, saggesu vā yaṃ ratanaṃ paṇītaṃ; [10.202]
+Na no samaṃ atthi tathāgatena, idampi buddhe ratanaṃ paṇītaṃ; etena saccena suvatthi hotu. [14.180]
+Khayaṃ virāgaṃ amataṃ paṇītaṃ, yadajjhagā sakyamunī samāhito; [9.884]
+Na tena dhammena samatthi kiñci, idampi dhamme ratanaṃ paṇītaṃ; etena saccena suvatthi hotu. [14.570]
+Yaṃ buddhaseṭṭho  parivaṇṇayī suciṃ, samādhimānantarikaññamāhu; [9.103]
+Samādhinā tena samo na vijjati, idampi dhamme ratanaṃ paṇītaṃ; etena saccena suvatthi hotu. [14.277]
+Ye puggalā aṭṭha sataṃ pasatthā, cattāri etāni yugāni honti; [9.250]
+Te dakkhiṇeyyā sugatassa sāvakā, etesu dinnāni mahapphalāni; [8.981]
+Idampi saṅghe ratanaṃ paṇītaṃ, etena saccena suvatthi hotu. [9.811]
+Ye suppayuttā manasā daḷhena, nikkāmino gotamasāsanamhi; [9.128]
+Te pattipattā amataṃ vigayha, laddhā mudhā nibbutiṃ bhuñjamānā. [10.202]
+Idampi saṅghe ratanaṃ paṇītaṃ, etena saccena suvatthi hotu. [9.689]
+Yathindakhīlo pathavissito siyā, catubbhi vātehi asampakampiyo. [9.713]
+Tathūpamaṃ sappurisaṃ vadāmi, yo ariyasaccāni avecca passati; [8.933]
+Idampi saṅghe ratanaṃ paṇītaṃ,  etena saccena suvatthi hotu. [10.006]
+Ye ariyasaccāni vibhāvayanti, gambhīrapaññena sudesitāni; [8.664]
+Kiñcāpi te honti bhusaṃ pamattā, na te bhavaṃ aṭṭhamamādiyanti; [9.103]
+Idampi saṅghe ratanaṃ paṇītaṃ, etena saccena suvatthi hotu. [9.909]
+Sahāvassa dassanasampadāya, tayassu dhammā jahitā bhavanti. [8.371]
+Sakkāyadiṭṭhī vicikicchitañca, sīlabbataṃ vāpi yadatthi kiñci. [9.006]
+Catūhapāyehi ca vippamutto, chaccābhiṭhānāni abhabba kātuṃ. [8.884]
+Idampi saṅghe ratanaṃ paṇītaṃ, etena saccena suvatthi hotu. [9.836]
+Kiñcāpi so kamma karoti pāpakaṃ, kāyena vācā uda cetasā vā. [10.177]
+Abhabba so tassa paṭicchadāya, abhabbatā diṭṭhapadassa vuttā. [8.615]
+Idampi saṅghe ratanaṃ paṇītaṃ, etena saccena suvatthi hotu. [9.225]
+Vanappagumbe yatha phussitagge, gimhānamāse paṭhamasmiṃ gimhe. [9.030]
+Tathūpamaṃ dhammavaraṃ adesayi, nibbānagāmiṃ paramaṃ hitāya. [8.396]
+Idampi buddhe ratanaṃ paṇītaṃ, etena saccena suvatthi hotu. [9.421]
+Varo varaññū varado varāharo, anuttaro dhammavaraṃ adesayi; [8.298]
+Idampi buddhe ratanaṃ paṇītaṃ, etena saccena suvatthi hotu. [9.323]
+Khīṇaṃ purāṇaṃ nava natthi sambhavaṃ,  virattacittāyatike bhavasmiṃ; [9.713]
+Te khīṇabījā avirūḷhichandā,  nibbanti dhīrā yathāyaṃ padīpo. [9.543]
+Idampi saṅghe ratanaṃ paṇītaṃ, etena saccena suvatthi hotu. [9.445]
+Yānīdha bhūtāni samāgatāni, bhummāni vā yāni va antalikkhe; [9.177]
+Tathāgataṃ devamanussapūjitaṃ, buddhaṃ namassāma suvatthi hotu. [9.152]
+Yānīdha bhūtāni samāgatāni, bhummāni vā yāni va antalikkhe; [9.128]
+Tathāgataṃ devamanussapūjitaṃ, dhammaṃ namassāma suvatthi hotu. [8.566]
+Yānīdha bhūtāni samāgatāni, bhummāni vā yāni va antalikkhe; [9.274]
+Tathāgataṃ devamanussapūjitaṃ, saṅghaṃ namassāma suvatthi hotu. [10.500]`
+},
+{
+    id: 'Metta', title: '3. Mettasutta', audio: '03-Mettasutta.mp3',
+	vietnamese: `KINH LÒNG TỪ
+Nhờ uy lực kinh này,
+Khiến những loài Dạ Xoa
+Không hiện hình ghê sợ.
+Những ai ngày và đêm
+Thường siêng năng tụng trì,
+Ngủ ngon, không ác mộng.
+Này hỡi các tôn giả,
+Xin chư vị lắng nghe
+Chúng tôi sẽ tụng lên,
+Hộ kinh lòng từ này.
+Hiền nhân cầu an lạc
+Nên huân tu pháp lành
+Có nghị lực chân chất,
+Ngay thẳng và nhu thuận
+Hiền hòa không kiêu mạn
+Sống dễ dàng tri túc
+Thanh đạm không rộn ràng
+Lục căn luôn trong sáng
+Trí tuệ càng hiển minh
+Tự trọng không quyến niệm
+Không làm việc ác nhỏ
+Mà bậc trí hiền chê
+Nguyện thái bình an lạc
+Nguyện tất cả sanh linh
+Tràn đầy muôn hạnh phúc
+Với muôn loài chúng sanh
+Không phân phàm hay Thánh
+Lớn nhỏ hoặc trung bình
+Thấp cao hay dài ngắn
+Tế thô không đồng đẳng
+Hữu hình hoặc vô hình
+Ðã sanh hoặc chưa sanh
+Gần xa không kể xiết
+Nguyện tất cả sanh linh
+Tràn đầy muôn hạnh phúc
+Ðừng làm hại lẫn nhau
+Chớ khinh rẻ người nào
+Ở bất cứ nơi đâu
+Ðừng vì niệm sân si
+Hoặc hiềm hận trong lòng
+Mà mong người đau khổ
+Hãy mở rộng tình thương
+Hy sinh như từ mẫu
+Suốt đời lo che chở
+Ðứa con một của mình
+Hãy phát tâm vô lượng
+Ðến tất cả sanh linh
+Từ bi gieo cùng khắp
+Cả thế gian khổ hải
+Trên dưới và quanh mình
+Không hẹp hòi oan trái
+Không hờn giận căm thù
+Khi đi đứng ngồi nằm
+Bao giờ còn tỉnh thức
+An trú chánh niệm nầy
+Phạm hạnh chính là đây
+Ai từ bỏ kiến chấp
+Khéo nghiêm trì giới hạnh
+Thành tựu được chánh trí
+Không ái nhiễm dục trần
+Không còn thai sanh nữa.`,
+    text: `Yassānubhāvato yakkhā, nevadassenti bhīsanaṃ; [10.475]
+Yamhi cevānuyuñjanto, rattindivamatandito. [7.643]
+Sukhaṃ supati sutto ca, pāpaṃ kiñci na passati; [7.061]
+Evamādi guṇūpetaṃ, parittaṃ taṃ bhaṇāma he. [8.419]
+Karaṇīyamatthakusalena, yanta santaṃ padaṃ abhisamecca; [8.186]
+Sakko ujū ca suhujū ca, suvaco cassa mudu anatimānī. [8.768]
+Santussako ca subharo ca, appakicco ca sallahukavutti; [7.565]
+Santindriyo ca nipako ca, appagabbho kulesvananugiddho. [8.419]
+Na ca khuddamācare kiñci, yena viññū pare upavadeyyuṃ; [8.846]
+Sukhino va khemino hontu, sabbasattā bhavantu sukhitattā. [8.807]
+Ye keci pāṇabhūtatthi, tasā vā thāvarā vanavasesā; [8.419]
+Dīghā vā yeva mahantā, majjhimā rassakā aṇukathūlā. [8.419]
+Diṭṭhā vā yeva adiṭṭhā, ye va dūre vasanti avidūre. [8.380]
+Bhūtā va sambhavesī va, sabbasattā bhavantu sukhitattā. [8.264]
+Na paro paraṃ nikubbetha, nātimaññetha katthaci na kiñci‚ [8.264]
+Byārosanā paṭighasaññā, nāññamaññassa dukkhamiccheyya. [8.186]
+Mātā yathā niyaṃ puttamāyusā ekaputtamanurakkhe; [8.225]
+Evampi sabbabhūtesu, mānasaṃ bhāvaye aparimāṇaṃ. [8.341]
+Mettañca sabbalokasmi, mānasaṃ bhāvaye aparimāṇaṃ; [7.837]
+Uddhaṃ adho ca tiriyañca, asambādhaṃ averamasapattaṃ. [9.040]
+Tiṭṭhaṃ caraṃ nisinno va, sayāno yāvatāssa vitamiddho‚ [8.147]
+Etaṃ satiṃ adhiṭṭheyya, brahmametaṃ vihāramidhamāhu. [8.807]
+Diṭṭhiñca anupaggamma, sīlavā dassanena sampanno; [7.682]
+Kāmesu vineyya gedhaṃ, na hi jātuggabbhaseyya punareti. [11.709]`
+},	
+
+{
+    id: 'Khandha', title: '4. Khandhasutta', audio: '04-Khandhasutta.mp3',
+	vietnamese: `HỘ KINH KHANDHA
+Này hỡi các hiền giả
+Xin chư vị lắng nghe
+Chúng tôi sẽ tụng lên
+Hộ kinh Khandha này
+Như một món Thiên được,
+Như bài linh chú hay,
+Khiến cho các nọc độc,
+Hay những lúc nguy nan
+Từ thú dữ, độc trùng,
+Gây hại đến chúng sanh,
+Do tụng hộ kinh này,
+Thời nhanh chóng vô hiệu.
+Rải tâm từ của tôi,
+Ðến với dòng rắn chúa,
+Tên Vi-rù-pak-kha.
+Rải tâm từ của tôi,
+Ðến với dòng rắn chúa,
+Tên E-rà-pa-tha.
+Rải tâm từ của tôi,
+Ðến với dòng rắn chúa,
+Tên Chab-yà-put-ta.
+Rải tâm từ của tôi,
+Ðến với dòng rắn chúa,
+Kan-hà-go-ta-ma.
+Rải tâm từ của tôi,
+Ðến chúng sinh không chân.
+Rải tâm từ của tôi,
+Ðến chúng sinh hai chân.
+Rải tâm từ của tôi,
+Ðến chúng sinh bốn chân.
+Rải tâm từ của tôi,
+Ðến chúng sinh nhiều chân.
+Loài chúng sinh không chân,
+Xin đừng làm khổ tôi.
+Loài chúng sinh hai chân,
+Xin đừng làm khổ tôi.
+Loài chúng sinh bốn chân,
+Xin đừng làm khổ tôi.
+Loài chúng sinh nhiều chân,
+Xin đừng làm khổ tôi.
+Tôi xin rải tâm từ,
+Ðến tất cả chúng sinh,
+Tất cả mọi sinh mạng,
+Mọi chúng sinh hiện hữu.
+Tất cả chúng sinh ấy,
+Thấy những cảnh tốt đẹp,
+Cầu mong không một ai,
+Gặp phải cảnh khổ đau.
+Tôi thường luôn niệm tưởng
+Ân đức Phật vô lượng,
+Ân đức Pháp vô lượng,
+Ân đức Tăng vô lượng,
+Niệm ân đức Tam Bảo,
+Hàng đêm ngày cầu nguyện,
+Các loại chúng sinh là:
+Rắn, bò cạp, rết, nhện,
+Tắc kè, chuột, vân vân...
+Các loài bò sát ấy,
+Có tính hay hung dữ,
+Xin đừng làm hại tôi
+Con đảnh lễ chư Phật,
+Hiện tại đến quá khứ,
+Gồm bảy Đức Chánh Giác.
+Tôi có nơi hộ trì,
+Tôi có nơi bảo hộ,
+Xin tất cả chúng sinh,
+Tránh xa đừng hại tôi.`,
+    text: `Sabbāsīvisajātīnaṃ, dibbamantāgadaṃ viya; [10.975]
+Yaṃ nāseti visaṃ ghoraṃ, sesañcāpi parissayaṃ. [7.946]
+Aṇākkhettamhi sabbattha, sabbadā sabbapāṇinaṃ; [7.499]
+Sabbassopi nivāreti, parittaṃ taṃ bhaṇāma he. [7.896]
+Virūpakkhehi me mettaṃ, mettaṃ erāpathehi me; [7.300]
+Chabyāputtehi me mettaṃ, mettaṃ kaṇhāgotamakehi ca. [8.095]
+Apādakehi me mettaṃ, mettaṃ dvipādakehi me. [7.002]
+Catuppadehi me mettaṃ, mettaṃ bahuppadehi me. [6.654]
+Mā maṃ apādako hiṃsi, mā maṃ hiṃsi dvipādako [7.052]
+Mā maṃ catuppado hiṃsi, mā maṃ hiṃsi bahuppado. [7.548]
+Sabbe sattā sabbe pāṇā, sabbe bhūtā ca kevalā; [8.045]
+Sabbe bhadrāni passantu, mā kañci pāpamāgamā. [7.995]
+Appamāṇo buddho, appamāṇo dhammo; appamāṇo saṅgho, [8.194]
+Pamāṇavantāni sarīsapāni; ahivicchikā satapadī, uṇṇanābhī sarabū mūsikā. [12.316]
+Katā me rakkhā katā me parittā paṭikkamantu bhūtāni. [8.492]
+Sohaṃ namo bhagavato, namo sattannaṃ sammāsambuddhānaṃ. [10.952]`
+},	
+
+{
+    id: 'Mora', title: '5. Morasutta', audio: '05-Morasutta.mp3',
+	vietnamese: `KINH KHỔNG TƯỚC
+Vào thời bổ túc các pháp độ,
+Bồ Tát sanh làm loài khổng tước
+Bậc đại sỹ sinh sống ở trong rừng,
+Nhờ bài chú này được bảo vệ
+Bảy đời thợ săn dù nỗ lực
+Cũng không thể 
+bắt được khổng tước.
+Này chư hiền, hãy tụng bài hộ kinh
+Được cho là bài chú 
+của Phạm Thiên.
+Vị vua duy nhất 
+cho mắt này đang mọc lên,
+Với sắc màu vàng chói,
+Chiếu sáng cả đất liền
+Vậy, ta đảnh lễ Ngài,
+Vị sáng soi mặt đất,
+Nhờ Ngài bảo hộ ta,
+Sống an toàn trọn ngày.
+Các vị Thánh, chân nhân,
+Bậc tuệ tri mọi pháp,
+Con đảnh lễ các Ngài,
+Hãy hộ trì cho con.
+Đảnh lễ chư Phật-Đà,
+Đảnh lễ Bồ-Đề vị,
+Đảnh lễ Bậc giải thoát,
+Đảnh lễ giải thoát vị.
+Sau khi đọc lên chú bảo hộ này,
+Chim khổng tước đi kiếm mồi.
+Vị vua duy nhất 
+cho mắt này đang lặn mất,
+Với sắc màu vàng chói,
+Chiếu sáng cả đất liền;
+Vậy ta đảnh lễ Ngài,
+Vị sáng soi mặt đất,
+Nhờ Ngài bảo vệ ta,
+Sống an toàn trọ đêm.
+Chư vị Thánh, chân nhân,
+Bậc tuệ trí mọi pháp,
+Con đảnh lễ các Ngài,
+Hãy hộ trì cho con.
+Đảnh lễ chư Phật-Đà,
+Đảnh lễ Bồ-Đề vị,
+Đảnh lễ Bậc giải thoát,
+Đảnh lễ giải thoát vị.
+Sau khi đọc lên chú bảo hộ này,
+Chim khổng tước đi ngủ.`,
+    text: `Pūrentaṃ bodhisambhāre, nibbattaṃ morayoniyaṃ; [10.284]
+Yena saṃvihitārakkhaṃ, mahāsattaṃ vanecarā. [6.639]
+Cirassaṃ vāyamantāpi, neva sakkhiṃsu gaṇhituṃ; [6.466]
+“Brahmamantan”ti akkhātaṃ, parittaṃ taṃ bhaṇāma he. [7.551]
+Udetayaṃ cakkhumā ekarājā, harissavaṇṇo pathavippabhāso; [9.048]
+Taṃ taṃ namassāmi harissavaṇṇaṃ pathavippabhāsaṃ, tayājja guttā viharemu divasaṃ. [11.087]
+Ye brāhmaṇā vedagū sabbadhamme, te me namo te ca maṃ pālayantu; [9.135]
+Namatthu buddhānaṃ namatthu bodhiyā, namo vimuttānaṃ namo vimuttiyā; [9.221]
+Imaṃ so parittaṃ katvā, moro carati esanā. [7.572]
+Apetayaṃ cakkhumā ekarājā, harissavaṇṇo pathavippabhāso; [8.288]
+Taṃ taṃ namassāmi harissavaṇṇaṃ pathavippabhāsaṃ, tayājja guttā viharemu rattiṃ. [10.436]
+Ye brāhmaṇā vedagū sabbadhamme, te me namo te ca maṃ pālayantu; [8.787]
+Namatthu buddhānaṃ namatthu bodhiyā, namo vimuttānaṃ namo vimuttiyā; [9.004]
+Imaṃ so parittaṃ katvā, moro vāsamakappayi. [7.925]`
+},
+
+{
+    id: 'Vaṭṭa', title: '6. Vaṭṭasutta', audio: '06-Vattasutta.mp3',
+	vietnamese: `KINH CHIM CÚT
+Vào thời bổ túc các pháp độ,
+Bồ Tát tái sanh làm chim cút
+Thông qua uy lực của kinh này
+Đại sỹ thoát được ngọn lửa rừng
+Do duyên ngài Xá Lợi Phất hỏi
+Đức Thế Tôn đã thuyết bài kinh
+Có uy lực trụ đến mãn kiếp
+Ta hãy cùng tụng hộ kinh này:
+Ở đời có giới đức,
+Chân thật, tịnh, từ bi,
+Chính với chân thật ấy,
+Ta sẽ làm một hạnh,
+Hạnh chân thật vô thượng.
+Rồi hướng niệm pháp lực,
+Niệm chư Phật quá khứ
+Dựa sức mạnh chân thật,
+Ta làm hạnh chân thật.
+Có cánh không bay được,
+Có chân không thể đi
+Cha mẹ đã bỏ ta,
+Hỡi lửa, hãy lui đi.
+Ta làm hạnh chân thật,
+Màn lửa lớn lửa ngọn,
+Đi lui mười sáu tầm,
+Như ngọn đuốc gặp nước.
+Không ai sánh kịp ta,
+Hạnh chân thật hoàn hảo.`,
+    text: `Pūrentaṃ bodhisambhāre, nibbattaṃ vaṭṭajātiyaṃ; [10.597]
+Yassa tejena dāvaggi, mahāsattaṃ vivajjayi. [6.696]
+Therassa Sāriputtassa, lokanāthena bhāsitaṃ; [6.172]
+Kappaṭṭhāyiṃ mahātejaṃ, parittaṃ taṃ bhaṇāma he. [7.492]
+Atthi loke sīlaguṇo, saccaṃ soceyyanuddayā; [6.774]
+Tena saccena kāhāmi, saccakiriyamuttamaṃ. [6.327]
+Avajjetvā dhammabalaṃ, saritvā pubbake jine; [6.289]
+Saccabalamavassāya, saccakiriyamakāsahaṃ. [6.677]
+Santi pakkhā apatanā, santi pādā avañcanā; [6.735]
+Mātāpitā ca nikkhantā, jātaveda paṭikkama [6.871]
+Saha sacce kate mayhaṃ, mahāpajjalito sikhī; [6.890]
+Vajjesi soḷasakarīsāni, udakaṃ patvā yathā sikhī; [7.880]
+Saccena me samo natthi, esā me saccapāramī. [7.922]`
+},
+{
+    id: 'Dhajagga', title: '7. Dhajaggasutta', audio: '07-Dhajaggasutta.mp3',
+	vietnamese: `KINH ĐẦU LÁ CỜ 
+Chỉ mới nghĩ đến 
+bài hộ kinh này, 
+mà các chúng sanh 
+trong khắp các phương, 
+ở trong hư không 
+cũng như trên đất, 
+đều được hộ trì 
+thoát lưới tai ương, 
+từ cướp, dạ xoa.., 
+vô số không xuể, 
+chư hiền, chúng ta hãy 
+tụng lên Hộ Kinh này. 
+Tôi được nghe như vầy- 
+Một thời Đức Thế Tôn 
+trú ở Sāvatthi, Jetavana, 
+tại vườn ông Anāthapiṇḍika. 
+Rồi Thế Tôn gọi các Tỳ-khưu: 
+"-Này các Tỳ-khưu." 
+"-Thưa vâng, bạch Thế Tôn." 
+Các Tỳ-khưu ấy vâng đáp Thế Tôn. 
+Thế Tôn nói như sau: 
+“Thuở xưa, này các Tỳ-khưu, 
+đã xảy ra một cuộc chiến 
+dữ dội khởi lên giữa 
+chư Thiên và các Asūra. 
+Rồi này các Tỳ-khưu, 
+Thiên chủ Sakka gọi chư Thiên 
+ở Tam thập tam thiên:
+"-Này thân hữu, khi các Ông 
+lâm chiến, nếu sợ hãi, 
+hoảng hốt hay lông tóc 
+dựng ngược có khởi lên; 
+khi ấy, các Ông hãy nhìn 
+nơi đầu ngọn cờ của ta. 
+Khi các Ông nhìn lên 
+đầu ngọn cờ của ta, 
+thì sợ hãi, hoảng hốt hay 
+lông tóc dựng ngược sẽ tiêu diệt. 
+Nếu các Ông không ngó lên 
+đầu ngọn cờ của ta,
+thì hãy ngó lên đầu ngọn cờ 
+của Thiên vương Pajāpati. 
+Khi các Ông ngó lên đầu ngọn cờ 
+của Thiên vương Pajāpati, 
+thì sợ hãi, hoảng hốt hay 
+lông tóc dựng ngược có khởi lên, 
+cũng sẽ tiêu diệt. 
+Nếu các Ông không ngó lên 
+đầu ngọn cờ của Thiên vương 
+Pajāpati, hãy ngó lên đầu ngọn cờ 
+của Thiên vương Varuṇa. 
+Khi các Ông ngó lên đầu ngọn cờ 
+của Thiên vương Varuṇa, thì sợ hãi, 
+hoảng hốt hay lông tóc dựng ngược 
+có khởi lên cũng sẽ tiêu diệt. 
+Nếu các Ông không ngó lên 
+đầu ngọn cờ của Thiên vương 
+Varuṇa, hãy ngó lên đầu ngọn cờ 
+của Thiên vương Isāna. 
+Khi các Ông ngó lên đầu ngọn cờ 
+của Thiên vương Isāna, thì sợ hãi,
+hoảng hốt hay lông tóc dựng ngược 
+có khởi lên, cũng sẽ tiêu diệt." 
+Này các Tỳ-khưu, khi họ nhìn lên 
+đầu ngọn cờ của Thiên chủ Sakka, 
+hay khi họ nhìn lên đầu ngọn cờ 
+của Thiên vương Pajāpati, 
+hay khi họ nhìn lên đầu ngọn cờ 
+của Thiên vương Varuṇa, 
+hay khi họ nhìn lên đầu ngọn cờ 
+của Thiên vương Isāna, thì sợ hãi, 
+hoảng hốt hay lông tóc dựng ngược 
+được khởi lên, có thể sẽ biến mất 
+hoặc sẽ không biến mất. 
+Vì cớ sao? Này các Tỳ-khưu, 
+vì Thiên chủ Sakka chưa đoạn 
+diệt tham, chưa đoạn diệt sân, 
+chưa đoạn diệt si, còn nhát gan, 
+hoảng hốt, hoảng sợ, hoảng chạy. 
+Và này các Tỳ-khưu, Ta nói như sau: 
+Này các Tỳ-khưu, khi các ông 
+đi vào rừng, đi đến gốc cây 
+hay đi đến nhà trống, 
+nếu run sợ, hoảng hốt, 
+hay lông tóc dựng ngược 
+có khởi lên, trong khi ấy 
+hãy chỉ nhớ đến Như lai như vầy: 
+Ngài là Thế Tôn, Ứng Cúng, 
+Chánh Biến Tri, Minh Hạnh Túc, 
+Thiện Thệ, Thế Gian Giải,
+Vô Thượng Sĩ, 
+Điều Ngự Trượng Phu,
+Thiên Nhân Sư, Phật, Thế Tôn.
+Ðây là Pháp do 
+Thế Tôn khéo thuyết,
+Thiết thực hiện tại, 
+cho quả lập tức,
+Đến để mà thấy, 
+có khả năng hướng thượng,
+Do người trí tự mình kinh nghiệm.
+Thực hành thiện lành
+Là chúng Tăng đệ tử Đức Thế Tôn,
+Thực hành ngay thẳng
+Là chúng Tăng đệ tử Đức Thế Tôn,
+Ứng lý thực hành
+Là chúng Tăng đệ tử Đức Thế Tôn,
+Cung kính thực hành
+Là chúng Tăng đệ tử Đức Thế Tôn,
+Tức là bốn đôi, tám chúng.
+Chúng Tăng đệ tử này 
+của Đức Thế Tôn
+Đáng được tôn trọng,
+Đáng được tiếp rước,
+Đáng được cúng dường,
+Đáng được chấp tay,
+Là vô thượng phước điền 
+ở trên đời.`,
+    text: `Yassānussaranenāpi, antalikkhepi pāṇino; [8.264]
+Patiṭṭhamadhigacchanti, bhūmiyaṃ viya sabbathā. [6.225]
+Sabbupaddavajālamhā, yakkhacorādisambhavā; [6.442]
+Gaṇanā na ca muttānaṃ, parittaṃ taṃ bhaṇāma he. [8.308]
+Evaṃ me sutaṃ - ekaṃ samayaṃ bhagavā sāvatthiyaṃ viharati. [8.199]
+Jetavane anāthapiṇḍikassa ārāme. [5.640]
+Tatra kho bhagavā bhikkhū āmantesi: “bhikkhavo”ti. [6.269]
+“Bhadante”ti te bhikkhū bhagavato paccassosuṃ. Bhagavā etadavoca: [9.588]
+“Bhūtapubbaṃ, bhikkhave, devāsurasaṅgāmo samupabyūḷho ahosi. [9.110]
+Atha kho, bhikkhave, sakko devānamindo deve tāvatiṃse āmantesi [9.436]
+‘Sace, mārisā, devānaṃ saṅgāmagatānaṃ [5.705]
+Uppajjeyya bhayaṃ vā chambhitattaṃ vā lomahaṃso vā, [7.050]
+Mameva tasmiṃ samaye dhajaggaṃ ullokeyyātha. [6.356]
+Mamaṃ hi vo dhajaggaṃ ullokayataṃ [5.293]
+Yaṃ bhavissati bhayaṃ vā chambhitattaṃ vā lomahaṃso vā, so pahīyissati. [8.980]
+No ce me dhajaggaṃ ullokeyyātha, atha pajāpatissa devarājassa dhajaggaṃ ullokeyyātha. [10.390]
+Pajāpatissa hi vo devarājassa dhajaggaṃ ullokayataṃ [6.941]
+Yaṃ bhavissati bhayaṃ vā chambhitattaṃ vā lomahaṃso vā, so pahīyissati. [8.503]
+No ce pajāpatissa devarājassa dhajaggaṃ ullokeyyātha, [6.659]
+Atha varuṇassa devarājassa dhajaggaṃ ullokeyyātha. [6.139]
+Varuṇassa hi vo devarājassa dhajaggaṃ ullokayataṃ [6.681]
+Yaṃ bhavissati bhayaṃ vā chambhitattaṃ vā lomahaṃso vā, so pahīyissati. [9.436]
+No ce varuṇassa devarājassa dhajaggaṃ ullokeyyātha, [6.312]
+Atha īsānassa devarājassa dhajaggaṃ ullokeyyātha. [6.030]
+Īsānassa hi vo devarājassa dhajaggaṃ ullokayataṃ [6.898]
+Yaṃ bhavissati bhayaṃ vā chambhitattaṃ vā lomahaṃso vā, so pahīyissatī’ti. [9.327]
+Taṃ kho pana, bhikkhave, sakkassa vā devānamindassa dhajaggaṃ ullokayataṃ, [8.742]
+Pajāpatissa vā devarājassa dhajaggaṃ ullokayataṃ, [6.139]
+Varuṇassa vā devarājassa dhajaggaṃ ullokayataṃ, [6.182]
+Īsānassa vā devarājassa dhajaggaṃ ullokayataṃ [6.247]
+Yaṃ bhavissati bhayaṃ vā chambhitattaṃ vā lomahaṃso vā, [6.442]
+So pahīyethāpi nopi pahīyetha. Taṃ kissa hetu? [6.312]
+Sakko hi, bhikkhave, devānamindo avītarāgo avītadoso avītamoho [9.284]
+Bhīru chambhī utrāsī palāyīti. [5.358]
+Ahañca kho, bhikkhave, evaṃ vadāmi ‘sace tumhākaṃ, bhikkhave, [7.332]
+Araññagatānaṃ vā rukkhamūlagatānaṃ vā suññāgāragatānaṃ vā [7.418]
+Uppajjeyya bhayaṃ vā chambhitattaṃ vā lomahaṃso vā, [6.247]
+Mameva tasmiṃ samaye anussareyyātha [5.163]
+‘Itipi so bhagavā arahaṃ sammāsambuddho [6.182]
+Vijjācaraṇasampanno sugato lokavidū [5.726]
+Anuttaro purisadammasārathi satthā devamanussānaṃ buddho bhagavā’ti. [10.108]
+Mamaṃ hi vo, bhikkhave, anussarataṃ [4.685]
+Yaṃ bhavissati bhayaṃ vā chambhitattaṃ vā lomahaṃso vā, so pahīyissati. [8.742]
+No ce maṃ anussareyyātha, atha dhammaṃ anussareyyātha [6.681]
+‘Svākkhāto bhagavatā dhammo [4.165]
+Sandiṭṭhiko akāliko ehipassiko opaneyyiko [7.505]
+Paccattaṃ veditabbo viññūhī’ti. [4.924]
+Dhammaṃ hi vo, bhikkhave, anussarataṃ [4.620]
+Yaṃ bhavissati bhayaṃ vā chambhitattaṃ vā lomahaṃso vā, so pahīyissati. [8.676]
+No ce dhammaṃ anussareyyātha, atha saṅghaṃ anussareyyātha [7.136]
+‘Suppaṭipanno bhagavato sāvakasaṅgho [4.967]
+Ujuppaṭipanno bhagavato sāvakasaṅgho [4.967]
+Ñāyappaṭipanno bhagavato sāvakasaṅgho [5.141]
+Sāmīcippaṭipanno bhagavato sāvakasaṅgho, [5.488]
+Yadidaṃ cattāri purisayugāni aṭṭha purisapuggalā [6.399]
+Esa bhagavato sāvakasaṅgho, [4.056]
+Āhuneyyo pāhuneyyo dakkhiṇeyyo añjalikaraṇīyo [7.397]
+Anuttaraṃ puññakkhettaṃ lokassā’ti. [4.881]
+Saṅghaṃ hi vo, bhikkhave, anussarataṃ [4.382]
+Yaṃ bhavissati bhayaṃ vā chambhitattaṃ vā lomahaṃso vā, so pahīyissati. [8.416]
+Taṃ kissa hetu? Tathāgato hi, bhikkhave, arahaṃ sammāsambuddho [7.223]
+Vītarāgo vītadoso vītamoho abhīru acchambhī anutrāsī apalāyī”ti. [11.258]
+Idamavoca bhagavā. Idaṃ vatvāna sugato athāparaṃ etadavoca satthā [9.327]
+“Araññe rukkhamūle vā, suññāgāreva bhikkhavo; [6.074]
+Anussaretha sambuddhaṃ, bhayaṃ tumhāka no siyā. [6.182]
+“No ce buddhaṃ sareyyātha, lokajeṭṭhaṃ narāsabhaṃ; [6.182]
+Atha dhammaṃ sareyyātha, niyyānikaṃ sudesitaṃ. [6.507]
+“No ce dhammaṃ sareyyātha, niyyānikaṃ sudesitaṃ; [6.421]
+Atha saṅghaṃ sareyyātha, puññakkhettaṃ anuttaraṃ. [6.421]
+“Evaṃ buddhaṃ sarantānaṃ, dhammaṃ saṅghañca bhikkhavo; [7.136]
+Bhayaṃ vā chambhitattaṃ vā, lomahaṃso na hessati. [8.505]`
+},
+
+{
+    id: 'Āṭānāṭiya', title: '8. Āṭānāṭiyasutta', audio: '08-Atanatiyasutta.mp3',
+	vietnamese: `KINH ĀṬĀNĀṬIYA
+Vì khiến kẻ vô tín,
+Hàng phi nhân tàn ác,
+Những ai hay phạm tội,
+Phải tôn kính Phật Pháp.
+Khiến hộ trì vô hại,
+Cho bốn đôi Tăng chúng
+Chúng ta hãy tụng lên
+Kinh của Đấng đại hùng.
+Ðảnh lễ Vipassi ,
+Sáng suốt và huy hoàng!
+Ðảnh lễ Đấng Sikhi ,
+Có lòng thương muôn loài!
+Ðảnh lễ Vessabha,
+Thanh tịnh, tu khổ hạnh!
+Ðảnh lễ Kakusandha ,
+Vị nhiếp phục ma quân!
+Ðảnh lễ Koṇāgamana,,
+Bà-la-môn viên mãn!
+Ðảnh lễ Kassapa,
+Vị giải thoát muôn mặt!
+Ðảnh lễ Angirasa,
+Vị thích tử huy hoàng,
+Ðã thuyết chân diệu pháp,
+Diệt trừ mọi khổ đau!
+Ai yểm ly thế giới,
+Nhìn đời đúng như chân,
+Vị ấy không hai lưỡi,
+Bậc vĩ đại thanh thoát.
+Cùng đảnh lễ gotama,
+Lo an lạc nhân Thiên
+Trì giới đức viên mãn!
+Bậc vĩ đại thanh thoát!
+Ngài cùng chư Chánh Giác,
+Ngàn vạn vị như thế,
+Tất cả lực chư Phật,
+Thảy tương đồng như nhau.
+Chư Phật có mười lực,
+Các Ngài đều tuyên thuyết,
+Đạt đến nơi không sợ,
+Nơi tối thượng Ngưu Vương.
+Các Ngài giữa hội chúng,
+Rống lên tiếng sư tử,
+Chuyển vận tại thế gian,
+Bánh xe Pháp bất thối.
+Các Đức Đạo Sư ấy,
+Đủ mười tám Pháp Phật
+Ba mươi hai tướng tốt,
+Cùng tám mươi tướng phụ.
+Hào quang tỏa một tầm,
+Các Ngài dòng Mu-Ni,
+Bậc có tất cả trí,
+Đã chiến thắng, lậu tận.
+Sáng ngời uy lực lớn,
+Trí tuệ cùng từ bi,
+Lực ấy lớn rộng khắp,
+Các vị Đấng phúc lành!
+Là hải đảo lánh nạn,
+Là dòng tộc đại an,
+Là nơi dừng nhiêu ích,
+Chúng sanh quay về nương,
+Con đê đầu lễ kính,
+Dưới chân Bậc thượng sĩ,
+Các Đức Phật đều là,
+Nơi nhân Thiên nương tựa.
+Trong tất cả mọi thời,
+Đi, đứng hay nằm ngồi,
+Thông qua ý cùng lời,
+Lễ kính chư Như Lai.
+Nguyện chư Phật tịch tịnh,
+Gia hộ con bình an,
+Nguyện các Ngài bảo hộ,
+Con thoát điều sợ hãi.
+Tất cả tật bệnh hết,
+Lánh xa điều phiền não
+Chinh phục các oán hận,
+Mong con sống tĩnh an.
+Con dùng lời chân thật,
+Nhờ sức nhẫn, từ bi,
+Nguyện các Ngài gia hộ
+Con bình an, hạnh phúc.
+Ở về nơi hướng đông,
+Có quỷ thần đại lực,
+Nguyện các vị hộ trì,
+Con bình an, hạnh phúc.
+Ở về nơi hướng tây,
+Có chư Thiên đại lực,
+Nguyện các vị hộ trì,
+Con bình an, hạnh phúc.
+Ở về nơi hướng nam,
+Có chư rồng đại lực,
+Nguyện các vị hộ trì,
+Con bình an, hạnh phúc.
+Ở về nơi hướng bắc,
+Có Dạ Xoa đại lực,
+Nguyện các vị hộ trì,
+Con bình an, hạnh phúc.
+Đông: Thiên vương Trì Quốc 
+Nam: Thiên vương Tăng Trưởng 
+Tây: Thiên vương Quảng Mục 
+Bắc: Thiên vương Kuvera
+Bốn vị đại Thiên vương,
+Có danh hộ thế gian
+Nguyện các vị hộ trì,
+Con bình an hạnh phúc.
+Chư Thiên, long đại lực,
+Nơi hư không mặt đất,
+Nguyện các vị hộ trì,
+Con bình an hạnh phúc.
+Chư Thiên có thần thông,
+Sống trong giáo pháp này,
+Nguyện các vị hộ trì,
+Con bình an hạnh phúc.
+Nguyện tai họa lánh xa,
+Tật bệnh, ưu sầu hết,
+Nguyện con không chướng ngại,
+Được an ổn, sống lâu.
+Ai thường hay kính lễ,
+Đến những bậc đáng kính,
+Được tăng trưởng bốn pháp,
+Vui, đẹp, khỏe và thọ.`,
+    text: `Appasannehi Nāthassa, sāsane sādhusammate; [11.791]
+Amanussehi caṇḍehi, sadā kibbisakāribhi. [7.675]
+Parisānaṃ catassannaṃ, ahiṃsāya ca guttiyā; [7.397]
+Yaṃ desesi Mahāviro, parittaṃ taṃ bhaṇāma he. [8.115]
+Vipassissa ca namatthu, cakkhumantassa sirīmato; [6.407]
+Sikhissapi ca namatthu, sabbabhūtānukampino. [6.220]
+Vessabhussa ca namatthu, nhātakassa tapassino; [5.799]
+Namatthu kakusandhassa, mārasenāpamaddino. [6.361]
+Koṇāgamanassa namatthu, brāhmaṇassa vusīmato; [6.155]
+Kassapassa ca namatthu, vippamuttassa sabbadhi. [5.753]
+Aṅgīrasassa namatthu, sakyaputtassa sirīmato; [6.314]
+Yo imaṃ dhammaṃ desesi, sabbadukkhāpanūdanaṃ. [7.389]
+Ye cāpi nibbutā loke, yathābhūtaṃ vipassisuṃ; [7.226]
+Te janā apisuṇātha mahantā vītasāradā. [6.828]
+Hitaṃ devamanussānaṃ yaṃ namassanti Gotamaṃ; [6.477]
+Vijjācaraṇasampannaṃ mahantaṃ vītasāradaṃ. [6.618]
+Ete caññe ca sambuddhā, anekasatakoṭiyo; [6.828]
+Sabbe Buddhā samasamā, sabbe Buddhā mahiddhikā. [6.805]
+Sabbe dasabalūpetā, vesārajjehupāgatā; [6.384]
+Sabbe te paṭijānanti, āsabhaṃ ṭhānamuttamaṃ. [6.898]
+Sīhanādaṃ nadantete, parisāsu visāradā; [6.244]
+Brahmacakkaṃ pavattenti, loke appaṭivattiyaṃ. [6.477]
+Upetā Buddha dhammehi, aṭṭhārasahi nāyakā; [6.477]
+Bāttiṃsalakkhaṇupeta, sītānubyañjanādharā. [6.968]
+Byāmappabhāya suppabhā, sabbe te munikuñjarā; [6.992]
+Buddhā sabbaññuno ete, sabbe khīṇāsavā jinā. [7.343]
+Mahāpabhā mahātejā, mahāpaññā mahabbalā; [6.454]
+Mahākāruṇikā dhīrā, sabbesānaṃ sukhāvahā. [6.688]
+Dīpā nāthā patiṭṭhā ca, tāṇā leṇā ca pāṇinaṃ; [7.039]
+Gatī bandhu mahassāsā, saraṇā ca hitesino. [7.647]
+Sadevakassa lokassa, sabbe ete parāyaṇā; [6.781]
+Tesāhaṃ sirasā pāde, vandāmi purisuttame. [7.460]
+Vacasā manasā ceva, vandāmete Tathāgate; [6.665]
+Sayane āsane ṭhāne, gamane cāpi sabbadā. [6.898]
+Sadā sukkhena rakkhantu, Buddhā santikarā tuvaṃ; [6.594]
+Tehi tvaṃ rakkhito santo, mutto sabbabhayehi ca. [7.202]
+Sabbarogā vinīmutto, sabbasantāpa vajjito; [6.898]
+Sabbaveramatikkanto, nibbuto ca tuvaṃ bhava. [7.015]
+Tesaṃ saccena sīlena, khantimettābalena ca; [7.061]
+Tepi amhenurakkhantu, arogena sukhena ca. [7.269]
+Puratthimasmiṃ disābhāge, santi bhūtā mahiddhikā; [7.231]
+Tepi amhenurakkhantu, arogena sukhena ca. [7.202]
+Dakkhiṇasmim disābhāge, santi devā mahiddhikā; [7.008]
+Tepi amhenurakkhantu, arogena sukhena ca. [7.620]
+Pacchimasmiṃ disābhāge, santi nāgā mahiddhikā; [7.397]
+Tepi amhenurakkhantu, arogena sukhena ca. [7.147]
+Uttarasmiṃ disābhāge, santi yakkhā mahiddhikā; [7.008]
+Tepi amhenurakkhantu, arogena sukhena ca. [7.286]
+Puratthimena Dhataraṭṭho, dakkhiṇena Virūḷhako; [6.785]
+Pacchimena Virūpakkho, Kuvero uttaraṃ disaṃ. [6.618]
+Cattāro te mahārājā, lokapālā yasassino; [7.147]
+Tepi amhenurakkhantu, arogena sukhena ca. [7.063]
+Ākāsaṭṭhā ca bhūmaṭṭha, devā nāgā mahiddhikā; [7.230]
+Tepi amhenurakkhantu, arogena sukhena ca. [7.008]
+Iddhimanto ca ye devā, vasantā idha sāsane; [6.507]
+Tepi amhenurakkhantu, arogena sukhena ca. [7.063]
+Sabbītiyo vivajjantu, soko rogo vinassatu; [6.674]
+Mā te bhavantvantarāyā, sukhī dīghāyuko bhava. [7.453]
+Abhivādanasīlissa, niccaṃ vuḍḍhāpacāyino; [6.702]
+Cattāro dhammā vaḍḍhanti, āyu vaṇṇo sukhaṃ balaṃ. [8.698]`
+},
+
+{
+    id: 'Aṅgulimāla', title: '9. Aṅgulimālasutta', audio: '09-Angulimalasutta.mp3',
+	vietnamese: `KINH AṄGULIMĀLA
+Ngay cả nước để rửa chỗ ngồi
+vị đã nói lên hộ kinh này
+cũng có thể làm tiêu tan 
+tất cả những tai ương
+và đem lại tức thì 
+sự khai nở dễ dàng cho sanh phụ.
+Này các hiền giả, chúng ta hãy 
+tụng lên bài hộ kinh,
+được Đấng bảo hộ dạy cho 
+tôn giả Aṅgulimāla,
+có oai lực cho đến mãn kiếp.
+"Hỡi hiền tỷ! 
+Từ khi tôi được sanh, 
+vào dòng Thánh đến nay,
+tôi chưa bao giờ cố ý giết hại 
+mạng sống của chúng sanh.
+Mong với sự thật này,
+Hiền tỷ được an lành,
+Khai sản được an lành".`,
+    text: `Parittaṃ yaṃ bhaṇantassa, nisinnaṭṭhānadhovanaṃ; [8.098]
+Udakampi vināseti, sabbameva parissayaṃ. [5.501]
+Sotthinā gabbhavuṭṭhānaṃ, yañca sādheti taṅkhaṇe; [6.204]
+Therassaṅgulimalassa, Lokanāthena bhāsitaṃ; [5.653]
+Kappaṭṭhāyiṃ mahātejaṃ, parittaṃ taṃ bhaṇāma he. [7.304]
+“Yatohaṃ, bhagini, ariyāya jātiyā jāto, [5.929]
+Nābhijānāmi sañcicca pāṇaṃ jīvitā voropetā, [6.754]
+Tena saccena sotthi te hotu, sotthi gabbhassa.” [6.648]`
+},
+
+{
+    id: 'Bojjhaṅga', title: '10. Bojjhaṅgasutta', audio: '10-Bojjhangasutta.mp3',
+	vietnamese: `KINH GIÁC CHI
+Này hỡi các hiền giả,
+Cùng chúng tôi trì tụng,
+Bài hộ kinh giác chi,
+Tập hợp vô số đức,
+Những đức ấy ví như:
+Phương thảo dược quý báu,
+Như bài linh chú hay.
+Các pháp thất giác chi
+Của những vị hiền trí,
+Luân lưu trong luân hồi
+Tất cả những vị ấy,
+Sau khi đã liễu thông,
+Bảy chi pháp giác ngộ,
+Đã hủy diệt binh ma,
+Đã hủy diệt mọi khổ,
+Và vượt thoát tam hữu,
+Đạt vô úy bất tử
+Không sanh-già-bệnh-chết.
+Các pháp thất giác chi,
+Gồm có niệm giác chi,
+Trạch pháp, và tinh tấn,
+Hỷ cùng với khinh an,
+Thêm nữa là định - xả,
+Được Đại Hiền Toàn Giác,
+Khéo giảng, khéo tuyên thuyết,
+Bảy pháp giác chi ấy,
+Nếu được khéo thực hành,
+Thực hành cho thuần thục,
+Mang lại các thắng trí,
+Niết Bàn, đạo quả tuệ.
+Mong lời chân thật này,
+Người hằng được an lành.
+Một thuở, Bậc Đạo Sư
+Thấy hai vị trưởng lão,
+Ngài Moggallāna và ngài Kassapa
+Lâm bệnh nặng khổ thân,
+Phật bèn thuyết giác chi
+Các tôn giả hoan hỷ,
+Thất giác chi được thuyết,
+Bệnh tức khắc lành ngay,
+Mong lời chân thật này,
+Người hằng được an lành.
+Một thuở Đấng Pháp Vương,
+Thọ khổ thân trầm trọng
+Cũng vậy đức Cunda,
+Cung kính tụng giác chi,
+Khiến Phật-Đà hoan hỷ,
+Bệnh liền khỏi tức thì
+Mong lời chân thật này,
+Người hằng được an lành.
+Phiền não nào đoạn tuyệt,
+Bởi đạo tuệ nào rồi,
+Không còn sinh trở lại.
+Cũng vậy với Đức Phật,
+Và hai vị trưởng lão,
+Bệnh hoàn toàn dứt hẳn
+Mong lời chân thật này,
+Người hằng được an lành.`,
+    text: `Saṃsāre saṃsarantānaṃ, sabbadukkhavināsane; [9.683]
+Satta dhamme ca bojjhaṅge, mārasenāpamaddane. [6.617]
+Bujjhitvā ye cime sattā, tibhavā muttakuttamā; [6.213]
+Ajātimajarābyādhiṃ, amataṃ nibbhayaṃ gatā. [6.899]
+Evamādi guṇūpetaṃ, anekaguṇasaṅgahaṃ; [6.334]
+Osadhañca imaṃ mantaṃ, bojjhaṅgañca bhaṇāma he. [6.859]
+Bojjhaṅgo sati saṅkhāto, dhammānaṃ vicayo tathā; [6.576]
+Vīriyaṃ pīti passaddhi, bojjhaṅgā ca tathāpare. [6.738]
+Samādhupekkhā bojjhaṅgā, sattete sabbadassinā; [7.101]
+Muninā sammadakkhātā, bhāvitā bahulīkatā. [6.536]
+Saṃvattanti abhiññāya, nibbānāya ca bodhiyā; [6.576]
+Etena saccavajjena, sotthi te hotu sabbadā. [6.576]
+Ekasmiṃ samaye Nātho, Moggallānañca Kassapaṃ; [6.193]
+Gilāne dukkhite disvā, bojjhaṅge satta desayi. [6.576]
+Te ca taṃ abhinanditvā, rogā mucciṃsu taṅkhaṇe; [6.819]
+Etena saccavajjena, sotthi te hotu sabbadā. [6.758]
+Ekadā Dhammarājāpi, gelaññenābhipīḷito; [6.375]
+Cundattherena taṃyeva, bhaṇāpetvāna sādaraṃ. [6.819]
+Sammoditvāna ābādhā, tamhā vuṭṭhāsi ṭhānaso, [6.980]
+Etena saccavajjena, sotthi te hotu sabbadā. [6.597]
+Pahīnā te ca ābādhā, tiṇṇannampi mahesinaṃ; [6.718]
+Maggahatā kilesāva, pattānuppattidhammataṃ; [6.617]
+Etena saccavajjena, sotthi te hotu sabbadā. [7.806]`
+},
+
+{
+    id: 'Pubbaṇha', title: '11. Pubbaṇhasutta', audio: '11-Pubbanhasutta.mp3',
+	vietnamese: `KINH BAN MAI
+Nhờ uy linh Phật bảo,
+Ngăn ngừa mọi tai ương;
+Những điềm triệu bất tường,
+Những mộng mị chẳng lành,
+Tiếng điểu thú bi ai,
+Các nghịch duyên trở ngại,
+Mong những nguy hại ấy,
+Thảy đều mau tan biến.
+Nhờ uy linh Pháp bảo,
+Ngăn ngừa mọi tai ương;
+Những điềm triệu bất tường,
+Những mộng mị chẳng lành,
+Tiếng điểu thú bi ai,
+Các nghịch duyên trở ngại,
+Mong những nguy hại ấy,
+Thảy đều mau tan biến.
+Nhờ uy linh Tăng bảo,
+Ngăn ngừa mọi tai ương;
+Những điềm triệu bất tường,
+Những mộng mị chẳng lành,
+Tiếng điểu thú bi ai,
+Các nghịch duyên trở ngại,
+Mong những nguy hại ấy,
+Thảy đều mau tan biến.
+Nguyện cầu cho muôn loài,
+Đang khổ xin hết khổ
+Đang nguy dứt hiểm nguy,
+Đang sầu hết sầu bi
+Nguyện tất cả Thiên thần,
+Tựu thành mọi Thiên lạc
+Do nói lời tán thán,
+Công đức của chúng tôi.
+Hãy cho với niềm tin,
+(Nghiệp-quả và Tam Bảo)
+Giới hạnh năng nghiêm trì,
+Hoan hỉ Pháp tăng thượng.
+Thiên giả nào đã đến,
+Lắng nghe hộ kinh này
+Tùy hỷ công đức rồi,
+Xin phản hồi Thiên sứ.
+Chư Toàn Giác đại lực,
+Chư Độc Giác đại lực,
+Thinh Văn Giác đại lực,
+Nguyện tổng trì uy đức
+Gia hộ con an lành.
+Phàm có tài sản gì,
+Ðời này hay đời sau,
+Hay ở tại Thiên giới,
+Có châu báu thù thắng,
+Không gì sánh bằng được,
+Với Như Lai Thiện Thệ,
+Như vậy, nơi Đức Phật,
+Là châu báu thù diệu,
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Phàm có tài sản gì,
+Ðời này hay đời sau,
+Hay ở tại Thiên giới,
+Có châu báu thù thắng,
+Không gì sánh bằng được,
+Với Như Lai Thiện Thệ,
+Như vậy, nơi đức Pháp,
+Là châu báu thù diệu,
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Phàm có tài sản gì,
+Ðời này hay đời sau,
+Hay ở tại Thiên giới,
+Có châu báu thù thắng,
+Không gì sánh bằng được,
+Với Như Lai Thiện Thệ,
+Như vậy, nơi đức Tăng,
+Là châu báu thù diệu,
+Mong với sự thật này,
+Mọi loài được hạnh phúc.
+Ðấng đại bi cứu khổ
+Vì lợi ích chúng sanh,
+Huân tu ba la mật
+Chứng Vô Thượng Chánh Giác,
+Nhờ với chân ngôn nầy
+Mong người được an lành.
+Vị đạt đến tối thắng,
+Khiến vương tộc Thích Ca,
+Tăng trưởng niềm hoan hỷ;
+Vị đại thắng binh ma,
+Bên cội cây Bồ Đề,
+Trên bồ đoàn bất thối,
+Nơi Chư Phật lên ngôi,
+Địa cầu Liên Hoa đỉnh.
+Mong người cũng chiến thắng,
+Và khải hoàn như vậy.
+Ngày nào hành thập thiện,
+Ba hạnh nghiệp thanh tịnh
+Đó là ngày cát tường
+Ngày có sao vận lành
+Có bình minh tốt đẹp
+Có thức giấc an lành,
+Mỗi giờ phút hưng thịnh
+Mỗi giây khắc hanh thông,
+Cúng dường bậc phạm hạnh
+Là tế tự nhiệm mầu.
+Trong những ngày như vậy
+Có hành động chân chánh,
+Có lời nói an lành,
+Trong sáng là ý nghĩ,
+Ba nghiệp được tốt đẹp,
+Thực hành điều tốt đẹp,
+Thời đạt nhiều lợi ích.
+Nguyện cầu đến cho người
+Cùng thân bằng quyến thuộc
+Đạt lợi ích an vui
+Vô bệnh được an lạc
+Tấn tu trong Pháp Phật.
+Nguyện người trọn hạnh phúc,
+Và chư Thiên che chở
+Nhờ tất cả uy Phật,
+Mong người hằng an lành
+Nguyện người trọn hạnh phúc,
+Và chư Thiên che chở
+Nhờ tất cả uy Pháp,
+Mong người hằng an lành
+Nguyện người trọn hạnh phúc
+Và chư Thiên che chở
+Nhờ tất cả uy Tăng,
+Mong người hằng an lành.`,
+    text: `Yaṃ dunnimittaṃ avamaṅgalañca, yo cāmanāpo sakuṇassa saddo; [11.880]
+Pāpaggaho dussupinaṃ akantaṃ, Buddhānubhāvena vināsamentu [9.306]
+Yaṃ dunnimittaṃ avamaṅgalañca, yo cāmanāpo sakuṇassa saddo; [8.147]
+Pāpaggaho dussupinaṃ akantaṃ, Dhammānubhāvena vināsamentu [9.052]
+Yaṃ dunnimittaṃ avamaṅgalañca, yo cāmanāpo sakuṇassa saddo; [8.090]
+Pāpaggaho dussupinaṃ akantaṃ, Saṅghānubhāvena vināsamentu [9.363]
+Dukkhappattā ca nidukkhā, bhayappattā ca nibbhayā; [6.308]
+Sokappattā ca nissokā, hontu sabbepi pāṇino. [6.647]
+Ettāvatā ca amhehi sambhataṃ puññasampadaṃ; [6.619]
+Sabbe devānumodantu sabbasampattisiddhiyā. [6.327]
+Dānaṃ dadantu saddhāya, sīlaṃ rakkhantu sabbadā; [6.674]
+Bhāvanābhiratā hontu, gacchantu devatāgatā. [6.541]
+Sabbe Buddhā balappattā, paccekānañca yaṃ balaṃ; [6.922]
+Arahantānañca tejena, rakkhaṃ bandhāmi sabbaso. [7.493]
+Yaṃ kiñci vittaṃ idha vā huraṃ vā, saggesu vā yaṃ ratanaṃ paṇītaṃ; [9.300]
+Na no samaṃ atthi tathāgatena, [4.662]
+Idampi Buddhe ratanaṃ paṇītaṃ; etena saccena suvatthi hotu. [8.991]
+Yaṃ kiñci vittaṃ idha vā huraṃ vā, saggesu vā yaṃ ratanaṃ paṇītaṃ; [9.039]
+Na no samaṃ atthi tathāgatena, [4.329]
+Idampi Dhamme ratanaṃ paṇītaṃ; etena saccena suvatthi hotu. [8.634]
+Yaṃ kiñci vittaṃ idha vā huraṃ vā, saggesu vā yaṃ ratanaṃ paṇītaṃ; [9.015]
+Na no samaṃ atthi tathāgatena, [4.353]
+Idampi Saṅghe ratanaṃ paṇītaṃ; etena saccena suvatthi hotu. [8.991]
+Bhavatu sabbamaṅgalaṃ, rakkhantu sabbadevatā; [5.614]
+Sabba Buddhānubhāvena, sadā sukhī bhavantu te. [6.946]
+Bhavatu sabbamaṅgalaṃ, rakkhantu sabbadevatā; [5.471]
+Sabba Dhammānubhāvena, sadā sukhī bhavantu te. [6.850]
+Bhavatu sabbamaṅgalaṃ, rakkhantu sabbadevatā; [5.471]
+Sabba Saṅghānubhāvena, sadā sukhī bhavantu te. [7.231]
+Mahākāruṇiko Nātho, hitāya sabbapāṇinaṃ; [6.327]
+Pūretvā pāramī sabbā, patto sambodhimuttamaṃ; [5.851]
+Etena saccavajjena, sotthi te hotu sabbadā. [7.017]
+Jayanto bodhiyā mūle, Sakyānaṃ nandivaḍḍhano, [6.565]
+Evameva jayo hotu, jayassu jayamaṅgale. [6.184]
+Aparājitapallaṅke, sīse puthuvipukkhale, [6.042]
+Abhiseke sabbabuddhānaṃ, aggappatto pamodati. [6.660]
+Sunakkhattaṃ sumaṅgalaṃ suppabhātaṃ suhuṭṭhitaṃ; [6.755]
+Sukhaṇo sumuhutto ca, suyiṭṭhaṃ brahmacārisu. [6.589]
+Padakkhiṇaṃ kāyakammaṃ vācākammaṃ padakkhiṇaṃ [6.303]
+Padakkhiṇaṃ manokammaṃ paṇīdhi te padakkhiṇe. [6.280]
+Padakkhiṇāni katvāna, labhantatthe padakkhiṇe. [6.042]
+Te atthaladdhā sukhitā viruḷhā Buddhasāsane; [7.112]
+Arogā sukhitā hotha, saha sabbehi ñātibhi. [8.455]`
+},
+
+{
+    id: 'Anekajati', title: 'Anekajāti Pāḷi ', audio: '12-Anekajati.mp3',
+	vietnamese: `KỆ KHẢI HOÀN 
+Thành kính đảnh lễ Ngài, 
+Thế Tôn, A-la-hán, 
+Đấng Toàn Tri Diệu Giác.
+Thành kính đảnh lễ Ngài, 
+Thế Tôn, A-la-hán, 
+Đấng Toàn Tri Diệu Giác.
+Thành kính đảnh lễ Ngài, 
+Thế Tôn, A-la-hán, 
+Đấng Toàn Tri Diệu Giác. 
+Luân hồi bao kiếp sống, 
+tìm người làm nhà này, 
+tìm mãi mà không gặp, 
+tái sanh hoài khổ thay. 
+Này hỡi người thợ kia, 
+ngươi bị nhận diện rồi, . 
+nhà xây sao được nữa, 
+rường cột ngươi bị gãy, 
+rui mè đã tiêu vong, 
+tâm ta chứng vô vi, 
+mọi tham ái tận diệt. 
+Do cái này có, 
+cái kia hiện hữu. 
+Do cái này sanh, 
+cái kia sanh. Tức là- 
+duyên vô minh, có các hành; 
+duyên các hành, có thức; 
+duyên thức, có danh sắc; 
+duyên danh sắc, có sáu xứ; 
+duyên sáu xứ, có xúc; 
+duyên xúc, có thọ; 
+duyên thọ, có ái; 
+duyên ái, có thủ; 
+duyên thủ, có hữu; 
+duyên hữu, có sanh; 
+duyên sanh, có lão, tử, 
+sầu, bi, khổ, ưu, não. 
+Như vậy là sự tập khởi 
+của toàn bộ khổ uẩn này. 
+Thật sự, khi các pháp, 
+có mặt, hiện khởi lên, 
+cho vị Bà-la-môn, 
+nhiệt tâm hành thiền định, 
+Khi ấy, với vị ấy, 
+các nghi hoặc tiêu trừ, 
+Vì biết rõ hoàn toàn, 
+Pháp cùng với các nhân. 
+Do cái này không có, 
+cái kia không hiện hữu. 
+Do cái này diệt, 
+cái kia diệt. Tức là- 
+do vô minh diệt nên hành diệt; 
+do hành diệt, nên thức diệt; 
+do thức diệt nên danh sắc diệt; 
+do danh sắc diệt nên sáu xứ diệt; 
+do sáu xứ diệt nên xúc diệt, 
+do xúc diệt nên thọ diệt, 
+do thọ diệt nên ái diệt; 
+do ái diệt nên thủ diệt; 
+do thủ diệt nên hữu diệt; 
+do hữu diệt nên sanh diệt; 
+do sanh diệt nên lão, tử, 
+sầu, bi, khổ, ưu, não diệt. 
+Như vậy là đoạn diệt 
+của toàn bộ khổ uẩn này. 
+Thật sự khi các pháp, 
+có mặt, hiện khởi lên, 
+cho vị Bà-la-môn, 
+nhiệt tâm hành thiền định, 
+Khi ấy, với vị ấy, 
+các nghi hoặc tiêu trừ, 
+Vì đã biết hoàn toàn, 
+sự chấm dứt các duyên. 
+Do cái này có, 
+cái kia hiện hữu. 
+Do cái này sanh, cái kia sanh. 
+Do cái này không có, 
+cái kia không hiện hữu. 
+Do cái này diệt, 
+cái kia diệt. Tức là- 
+duyên vô minh, có các hành; 
+duyên các hành, có thức; 
+duyên thức, có danh sắc; 
+duyên danh sắc, có sáu xứ; 
+duyên sáu xứ, có xúc; 
+duyên xúc, có thọ; 
+duyên thọ, có ái; 
+duyên ái, có thủ; 
+duyên thủ, có hữu; 
+duyên hữu, có sanh; 
+duyên sanh, có lão, tử, 
+sầu, bi, khổ, ưu, não. 
+Như vậy là sự tập khởi 
+của toàn bộ khổ uẩn này. 
+Nhờ đoạn diệt viễn li 
+mọi dục tham 
+do vô minh diệt nên hành diệt; 
+do hành diệt, nên thức diệt; 
+do thức diệt nên danh sắc diệt; 
+do danh sắc diệt nên sáu xứ diệt; 
+do sáu xứ diệt nên xúc diệt, 
+do xúc diệt nên thọ diệt, 
+do thọ diệt nên ái diệt; 
+do ái diệt nên thủ diệt; 
+do thủ diệt nên hữu diệt; 
+do hữu diệt nên sanh diệt; 
+do sanh diệt nên lão, tử, 
+sầu, bi, khổ, ưu, não diệt. 
+Như vậy là đoạn diệt 
+của toàn bộ khổ uẩn này. 
+Thật sự khi các pháp, 
+có mặt, hiện khởi lên, 
+cho vị Bà-la-môn, 
+nhiệt tâm hành thiền định, 
+quét sạch các ma quân, 
+vị ấy đứng, an trú, 
+như ánh sáng mặt trời, 
+chói sáng khắp hư không. 
+Nhân duyên, Cảnh duyên, 
+Trưởng duyên, Vô Gián duyên, 
+Ðẳng Vô Gián duyên, 
+Ðồng Sinh duyên, 
+Hỗ Tương duyên, 
+Y Chỉ duyên, 
+Cận Y duyên, 
+Tiền Sinh Y duyên, 
+Hậu Sinh duyên, 
+Tập Hành duyên, 
+Nghiệp duyên, 
+Dị Thục duyên, 
+Vật Thực duyên, 
+Căn Quyền duyên, 
+Thiền Na duyên, 
+Ðạo duyên, 
+Tương Ưng duyên, 
+Bất Tương Ưng duyên, 
+Hiện Hữu duyên, 
+Vô Hữu duyên, 
+Ly duyên, 
+Bất Ly duyên. 
+Vị đạt đến tối thắng, 
+khiến vương tộc Thích ca, 
+tăng trưởng niềm hoan hỷ; 
+đã đại thắng binh Ma, 
+bên cội cây Bồ đề, 
+trên bồ đoàn bất thối, 
+nơi Chư Phật lên ngôi, 
+địa cầu Liên Hoa đỉnh. 
+Mong người cũng chiến thắng, 
+và khải hoàn như vậy. 
+Ngày nào hành thập thiện, 
+ba hạnh nghiệp thanh tịnh
+đó là ngày cát tường 
+ngày có sao vận lành, 
+có bình minh tốt đẹp, 
+có tỉnh giấc an vui, 
+mỗi giờ phút hưng thịnh, 
+mỗi giây khắc hanh thông, 
+cúng dường vào phạm hạnh 
+là tế tự nhiệm mầu. 
+Trong những ngày như vậy
+có hành động chân chánh, 
+có lời nói an lành, 
+trong sáng là ý nghĩ, 
+ba nghiệp được tốt đẹp, 
+thực hành điều tốt đẹp, 
+thời đạt nhiều lợi ích. 
+Nguyện cầu đến cho người 
+cùng thân bằng quyến thuộc 
+đạt lợi ích an vui
+vô bệnh được an lạc
+tấn tu trong Pháp Phật. 
+Nguyện người trọn hạnh phúc, 
+và chư thiên che chở 
+Nhờ tất cả Uy Phật, 
+mong người hằng an lành. 
+Nguyện người trọn hạnh phúc, 
+và chư thiên che chở 
+Nhờ tất cả Uy Pháp, 
+mong người hằng an lành. 
+Nguyện người trọn hạnh phúc 
+và chư thiên che chở 
+Nhờ tất cả Uy Tăng, 
+mong người hằng an lành.`,
+    text: `Namo tassa bhagavato arahato sammāsambuddhassa. [11.002]
+Namo tassa bhagavato arahato sammāsambuddhassa. [11.596]
+Namo tassa bhagavato arahato sammāsambuddhassa. [11.299]
+Anekajātisaṃsāraṃ, sandhāvissaṃ anibbisaṃ; [7.582]
+gahakāraṃ gavesanto, dukkhā jāti punappunaṃ. [7.211]
+gahakāraka diṭṭhosi, puna gehaṃ na kāhasi; [6.467]
+sabbā te phāsukā bhaggā, gahakūṭaṃ visaṅkhataṃ; [6.765]
+visaṅkhāragataṃ cittaṃ, taṇhānaṃ khayamajjhagā. [7.359]
+Anekajātisaṃsāraṃ, sandhāvissaṃ anibbisaṃ; [6.839]
+gahakāraṃ gavesanto, dukkhā jāti punappunaṃ. [6.542]
+gahakāraka diṭṭhosi, puna gehaṃ na kāhasi; [5.872]
+sabbā te phāsukā bhaggā, gahakūṭaṃ visaṅkhataṃ; [6.467]
+visaṅkhāragataṃ cittaṃ, taṇhānaṃ khayamajjhagā. [6.839]
+Anekajātisaṃsāraṃ, sandhāvissaṃ anibbisaṃ; [6.170]
+gahakāraṃ gavesanto, dukkhā jāti punappunaṃ. [6.557]
+gahakāraka diṭṭhosi, puna gehaṃ na kāhasi; [5.569]
+sabbā te phāsukā bhaggā, gahakūṭaṃ visaṅkhataṃ; [6.188]
+visaṅkhāragataṃ cittaṃ, taṇhānaṃ khayamajjhagā. [6.895]
+Iti imasmiṃ sati idaṃ hoti, imassuppādā idaṃ uppajjati, [10.254]
+yadidaṃ – avijjāpaccayā saṅkhārā, saṅkhārapaccayā viññāṇaṃ, [7.205]
+viññāṇapaccayā nāmarūpaṃ, nāmarūpapaccayā saḷāyatanaṃ, [7.116]
+saḷāyatanapaccayā phasso, phassapaccayā vedanā, [6.055]
+vedanāpaccayā taṇhā, taṇhāpaccayā upādānaṃ, [6.100]
+upādānapaccayā bhavo, bhavapaccayā jāti, [5.569]
+jātipaccayā jarāmaraṇaṃ sokaparidevadukkhadomanassupāyāsā sambhavanti. [8.707]
+Evametassa kevalassa dukkhakkhandhassa samudayo hoti. [7.558]
+Yadā have pātubhavanti dhammā; ātāpino jhāyato brāhmaṇassa; [7.823]
+athassa kaṅkhā vapayanti sabbā; yato pajānāti sahetudhammaṃ. [8.707]
+Iti imasmiṃ asati idaṃ na hoti, imassa nirodhā idaṃ nirujjhati, [9.989]
+yadidaṃ – avijjānirodhā saṅkhāranirodho, [5.437]
+saṅkhāranirodhā viññāṇanirodho, [4.420]
+viññāṇanirodhā nāmarūpanirodho, [4.420]
+nāmarūpanirodhā saḷāyatananirodho, [5.171]
+saḷāyatananirodhā phassanirodho, [4.243]
+phassanirodhā vedanānirodho, [3.845]
+vedanānirodhā taṇhānirodho, [4.022]
+taṇhānirodhā upādānanirodho, [4.199]
+upādānanirodhā bhavanirodho, [4.376]
+bhavanirodhā jātinirodho, [3.669]
+jātinirodhā jarāmaraṇaṃ sokaparidevadukkhadomanassupāyāsā nirujjhanti. [7.823]
+Evametassa kevalassa dukkhakkhandhassa nirodho hoti. [6.763]
+Yadā have pātubhavanti dhammā; ātāpino jhāyato brāhmaṇassa; [6.984]
+athassa kaṅkhā vapayanti sabbā; yato khayaṃ paccayānaṃ avedi. [7.691]
+Iti imasmiṃ sati idaṃ hoti, imassuppādā idaṃ uppajjati, [9.459]
+imasmiṃ asati idaṃ na hoti, imassa nirodhā idaṃ nirujjhati, [9.238]
+yadidaṃ – avijjāpaccayā saṅkhārā, saṅkhārapaccayā viññāṇaṃ, [6.807]
+viññāṇapaccayā nāmarūpaṃ, nāmarūpapaccayā saḷāyatanaṃ, [6.674]
+saḷāyatanapaccayā phasso, phassapaccayā vedanā, [5.613]
+vedanāpaccayā taṇhā, taṇhāpaccayā upādānaṃ, [5.702]
+upādānapaccayā bhavo, bhavapaccayā jāti, [5.171]
+jātipaccayā jarāmaraṇaṃ sokaparidevadukkhadomanassupāyāsā sambhavanti. [7.868]
+Evametassa kevalassa dukkhakkhandhassa samudayo hoti. [6.497]
+Avijjāya tveva asesavirāganirodhā saṅkhāranirodho, [6.674]
+saṅkhāranirodhā viññāṇanirodho, [4.420]
+viññāṇanirodhā nāmarūpanirodho, [4.464]
+nāmarūpanirodhā saḷāyatananirodho, [4.774]
+saḷāyatananirodhā phassanirodho, [4.022]
+phassanirodhā vedanānirodho, [3.713]
+vedanānirodhā taṇhānirodho, [3.978]
+taṇhānirodhā upādānanirodho, [4.022]
+upādānanirodhā bhavanirodho, [3.757]
+bhavanirodhā jātinirodho, [3.934]
+jātinirodhā jarāmaraṇaṃ sokaparidevadukkhadomanassupāyāsā nirujjhanti. [8.531]
+Evametassa kevalassa dukkhakkhandhassa nirodho hoti. [6.674]
+Yadā have pātubhavanti dhammā; ātāpino jhāyato brāhmaṇassa; [7.072]
+vidhūpayaṃ tiṭṭhati mārasenaṃ; sūriyova obhāsayamantalikkhaṃ. [7.956]
+Hetupaccayo, ārammaṇapaccayo, [4.685]
+adhipatipaccayo, anantarapaccayo, [4.155]
+samanantarapaccayo, sahajātapaccayo, [4.597]
+aññamaññapaccayo, nissayapaccayo, [4.376]
+upanissayapaccayo, purejātapaccayo, [4.553]
+pacchājātapaccayo, āsevanapaccayo, [4.553]
+kammapaccayo, vipākapaccayo, [4.155]
+āhārapaccayo, indriyapaccayo, [4.199]
+jhānapaccayo, maggapaccayo, [3.713]
+sampayuttapaccayo, vippayuttapaccayo, [4.243]
+atthipaccayo, natthipaccayo, [3.536]
+vigatapaccayo, avigatapaccayoti. [5.486]
+Jayanto bodhiyā mūle, Sakyānaṃ nandivaḍḍhano, [6.000]
+Evameva jayo hotu, jayassu jayamaṅgale. [5.426]
+Aparājitapallaṅke, sīse puthuvipukkhale, [5.018]
+Abhiseke sabbabuddhānaṃ, aggappatto pamodati. [5.501]
+Sunakkhattaṃ sumaṅgalaṃ suppabhātaṃ suhuṭṭhitaṃ; [5.241]
+sukhaṇo sumuhutto ca, suyiṭṭhaṃ brahmacārisu. [5.241]
+Padakkhiṇaṃ kāyakammaṃ vācākammaṃ padakkhiṇaṃ [4.869]
+Padakkhiṇaṃ manokammaṃ paṇīdhi te padakkhiṇe. [4.609]
+Padakkhiṇāni katvāna, labhantatthe padakkhiṇe. [5.241]
+Te atthaladdhā sukhitā viruḷhā Buddhasāsane; [4.795]
+Arogā sukhitā hotha, saha sabbehi ñātibhi. [5.687]
+Bhavatu sabbamaṅgalaṃ, rakkhantu sabbadevatā; [4.980]
+Sabba Buddhānubhāvena, sadā sukhī bhavantu te. [5.612]
+Bhavatu sabbamaṅgalaṃ, rakkhantu sabbadevatā; [4.795]
+Sabba Dhammānubhāvena, sadā sukhī bhavantu te. [5.538]
+Bhavatu sabbamaṅgalaṃ, rakkhantu sabbadevatā; [4.720]
+Sabba Saṅghānubhāvena, sadā sukhī bhavantu te. [6.802]
+Sādhu Sādhu Sādhu. [7.451]`
+},
+
+{
+    id: 'Paccavekkhaṇā', title: 'Paccavekkhaṇā', audio: '13-Paccavekkhana.mp3',
+	vietnamese: `QUÁN TƯỞNG (TỨ VẬT DỤNG) 
+Chân chánh quán tưởng rằng: 
+Ta thọ dụng y phục, 
+để ngăn ngừa nóng lạnh, 
+bảo vệ khỏi muỗi mòng, 
+gió sương và mưa nắng, 
+cùng rắn rết côn trùng, 
+Và chỉ để che thân, 
+tránh những điều hổ thẹn. 
+Chân chánh quán tưởng rằng: 
+Ta thọ dụng vật thực 
+không phải để vui đùa, 
+không ham mê vô độ 
+không phải để trang sức, 
+không tự làm đẹp mình, 
+mà chỉ để thân này,
+được bảo trì mạnh khỏe, 
+để tránh sự tổn thương,
+để trợ duyên phạm hạnh, 
+cảm thọ cũ được trừ, 
+thọ mới không sinh khởi, 
+và sẽ không lầm lỗi, 
+ta sống được an lành. 
+Chân chánh quán tưởng rằng: 
+ta thọ dụng liêu thất, 
+để ngăn ngừa nóng lạnh, 
+bảo vệ khỏi muỗi mòng, 
+gió sương và mưa nắng, 
+cùng rắn rết côn trùng, 
+để giải trừ nguy hiểm, 
+do phong thổ tứ thời, 
+và chỉ với mục đích, 
+sống độc cư an tịnh. 
+Chân chánh quán tưởng rằng: 
+Ta thọ dụng y dược, 
+dành cho người bệnh dùng, 
+để ngăn ngừa cảm thọ, 
+tàn hại đã phát sanh, 
+được hoàn toàn bình phục.`,
+    text: `Paṭisaṅkhā yoniso cīvaraṃ paṭisevāmi [6.660]
+yāvadeva sītassa paṭighātāya, uṇhassa paṭighātāya, [9.429]
+ḍaṃsa makasa vātātapa sarīsapa samphassānaṃ paṭighātāya, [8.022]
+yāvadeva hirikopīnappaṭicchādanatthaṃ. [6.560]
+Paṭisaṅkhā yoniso piṇḍapātaṃ paṭisevāmi [5.939]
+neva davāya, na madāya, na maṇḍanāya, na vibhūsanāya, [7.269]
+yāvadeva imassa kāyassa ṭhitiyā [6.072]
+yāpanāya, vihiṃsūparatiyā, brahmacariyānuggahāya, [6.737]
+iti purāṇañca vedanaṃ paṭihaṅkhāmi [5.008]
+navañca vedanaṃ na uppādessāmi, [4.388]
+yātrā ca me bhavissati anavajjatā ca phāsuvihāro ca. [7.491]
+Paṭisaṅkhā yoniso senāsanaṃ paṭisevāmi [5.673]
+yāvadeva sītassa paṭighātāya, uṇhassa paṭighātāya, [8.466]
+ḍaṃsa makasa vātātapa sarīsapa samphassānaṃ paṭighātāya, [6.914]
+yāvadeva utuparissaya vinodana paṭisallānārāmatthaṃ. [7.446]
+Paṭisaṅkhā yoniso gilānappaccaya bhesajja parikkhāraṃ paṭisevāmi [7.047]
+yāvadeva uppannānaṃ veyyābādhikānaṃ vedanānaṃ paṭighātāya, [7.136]
+abyāpajjaparamatāya. [4.234]`
+},
+{
+    id: 'Pabbajita', title: 'Pabbajita-abhiṇhasutta', audio: '14-Pabbajita-abhiṇhasutta.mp3',
+	vietnamese: `KINH PHÁP SA MÔN THƯỜNG QUÁN 
+Này các Tỳ-khưu, có mười pháp này, 
+vị xuất gia phải luôn luôn quán sát. Thế nào là mười? 
+	1. Người xuất gia phải luôn luôn quán sát: 
+	"Ta nay đi đến tình trạng là người không có giai cấp" (mất hết giai cấp). 
+2. Người xuất gia phải luôn luôn quán sát: 
+"Ðời sống của ta tùy thuộc vào người khác." 
+3. Vị xuất gia cần phải luôn luôn quán sát: 
+"Nay cử chỉ uy nghi của ta cần phải thay đổi!" 
+4. Vị xuất gia cần phải luôn luôn quán sát: 
+"Không biết tự ngã có chỉ trích ta về giới hạnh không?" 
+5. Vị xuất gia cần phải luôn luôn quán sát: 
+"Không biết các đồng Phạm hạnh có trí, sau khi tìm hiểu, 
+có chỉ trích ta về giới hạnh không?" 
+6. Vị xuất gia cần phải luôn luôn quán sát: 
+"Mọi sự vật khả ái, khả ý của ta bị đổi khác, bị biến hoại". 
+7. Vị xuất gia cần phải luôn luôn quán sát: 
+"Ta là chủ của nghiệp, là thừa tự của nghiệp, là thai tạng của nghiệp, 
+là bà con của nghiệp, là chỗ quy hướng của nghiệp; 
+phàm nghiệp gì ta sẽ làm, thiện hay ác ta sẽ thừa tự nghiệp ấy". 
+8. Vị xuất gia cần phải luôn quán sát: 
+"Ðêm ngày trôi qua bên ta và nay ta đã thành người như thế nào?" 
+9. Vị xuất gia cần phải luôn luôn quán sát: 
+"Ta có cố gắng hoan hỷ trong ngôi nhà trống không hay không?" 
+10. Vị xuất gia cần phải luôn luôn quán sát: 
+"Ta có chứng được pháp Thượng nhân, tri kiến thù thắng xứng đáng bậc Thánh không, 
+để đến những ngày cuối cùng, các đồng Phạm hạnh có hỏi, ta sẽ không có xấu hổ?" 
+Này các Tỳ-khưu, mười pháp này, vị xuất gia cần phải luôn luôn quán sát.`, 
+    text: `Dasayime, bhikkhave, dhammā pabbajitena abhiṇhaṃ paccavekkhitabbā. [7.811]
+Katame dasa? [3.007]
+1. Vevaṇṇiyamhi ajjhupagato"ti [4.151]
+pabbajitena abhiṇhaṃ paccavekkhitabbaṃ; [4.738]
+2. Parapaṭibaddhā me jīvikā"ti [4.025]
+pabbajitena abhiṇhaṃ paccavekkhitabbaṃ; [4.948]
+3. Añño me ākappo karaṇīyo"ti [4.235]
+pabbajitena abhiṇhaṃ paccavekkhitabbaṃ; [4.738]
+4. Kacci nu kho me attā sīlato na upavadatī"ti [5.660]
+pabbajitena abhiṇhaṃ paccavekkhitabbaṃ; [4.864]
+5. Kacci nu kho maṃ anuvicca viññū sabrahmacārī [5.241]
+sīlato na upavadantī"ti [3.857]
+pabbajitena abhiṇhaṃ paccavekkhitabbaṃ; [5.073]
+6. Sabbehi me piyehi manāpehi [4.151]
+nānābhāvo vinābhāvo"ti [3.732]
+pabbajitena abhiṇhaṃ paccavekkhitabbaṃ; [4.822]
+7. Kammassakomhi kammadāyādo kammayoni kammabandhu [7.925]
+kammapaṭisaraṇo, yaṃ kammaṃ karissāmi kalyāṇaṃ vā pāpakaṃ vā [7.547]
+tassa dāyādo bhavissāmī"ti [3.606]
+pabbajitena abhiṇhaṃ paccavekkhitabbaṃ; [5.367]
+8. Kathaṃbhūtassa me rattindivā vītivattantī"ti [5.283]
+pabbajitena abhiṇhaṃ paccavekkhitabbaṃ; [5.451]
+9. Kacci nu kho ahaṃ suññāgāre abhiramāmī"ti [5.283]
+pabbajitena abhiṇhaṃ paccavekkhitabbaṃ; [4.780]
+10. Atthi nu kho me uttari manussadhammo [4.696]
+alamariyañāṇadassanaviseso adhigato, [4.864]
+yenāhaṃ pacchime kāle sabrahmacārīhi puṭṭho [5.493]
+na maṅku bhavissāmī"ti [3.103]
+pabbajitena abhiṇhaṃ paccavekkhitabbaṃ. [5.241]
+Ime kho, bhikkhave, dasa dhammā [3.774]
+pabbajitena abhiṇhaṃ paccavekkhitabbā. [5.710]`
+},
+
+{
+    id: 'Pattidana', title: 'Mettābhāvanā', audio: '15-Pattidana.mp3',
+	vietnamese: `NGUYỆN CẦU-CHIA PHƯỚC 
+Nguyện cho 
+tất cả chúng sinh, 
+tất cả hữu tình, 
+tất cả sanh loại, 
+tất cả cá nhân, 
+tất cả cá thể, 
+tất cả nữ giới, 
+tất cả nam giới, 
+tất cả thánh nhân, 
+tất cả phàm nhân, 
+tất cả chư thiên, 
+tất cả nhân loại, 
+tất cả chúng sanh 
+nơi bốn đoạ xứ - 
+không còn oan trái, 
+không còn ác ý, 
+không còn muộn phiền, 
+giữ mình được an vui. 
+mong cho tất cả 
+thoát khổ đau, 
+những gì đã thành tựu 
+xin đừng mất, 
+chỉ có Nghiệp 
+là tài sản mà thôi. 
+trong hướng Đông, 
+trong hướng Tây, 
+trong hướng Bắc, 
+trong hướng Nam, 
+trong hướng Đông-Nam, 
+trong hướng Tây-Bắc, 
+trong hướng Đông- Bắc, 
+trong hướng Tây-Nam, 
+Ở dưới, ở trên. 
+Nguyện cho 
+tất cả chúng sinh, 
+tất cả hữu tình, 
+tất cả sanh loại, 
+tất cả cá nhân, 
+tất cả cá thể, 
+tất cả nữ giới, 
+tất cả nam giới, 
+tất cả thánh nhân, 
+tất cả phàm nhân, 
+tất cả chư thiên, 
+tất cả nhân loại, 
+tất cả chúng sanh 
+nơi bốn đoạ xứ - 
+không còn oan trái, 
+không còn ác ý, 
+không còn muộn phiền, 
+giữ mình được an vui. 
+mong cho tất cả 
+thoát khổ đau, 
+những gì đã thành tựu 
+xin đừng mất, 
+chỉ có Nghiệp 
+là tài sản mà thôi. 
+Phía trên 
+lên mãi đến vô cùng, 
+phía dưới 
+đến tận A-tỳ ngục, 
+Trong toàn khắp 
+thiên hà vũ trụ, 
+những sanh linh nào 
+sống trên đất 
+nguyện cho tất cả 
+không còn ác ý, 
+nguyện cho tất cả
+không còn oan trái, 
+thoát khổ đau 
+và thoát mọi hiểm nguy 
+Phía trên 
+lên mãi đến vô cùng, 
+phía dưới 
+đến tận A-tỳ ngục, 
+Trong toàn khắp 
+thiên hà vũ trụ, 
+những sanh linh nào 
+sống dưới nước – 
+nguyện cho tất cả 
+không còn ác ý, 
+nguyện cho tất cả
+không còn oan trái, 
+thoát khổ đau 
+và thoát mọi hiểm nguy 
+Phía trên 
+lên mãi đến vô cùng, 
+phía dưới 
+đến tận A-tỳ ngục, 
+Trong toàn khắp 
+thiên hà vũ trụ, 
+những sanh linh nào 
+sống trên không – 
+nguyện cho tất cả 
+không còn ác ý, 
+nguyện cho tất cả
+không còn oan trái, 
+thoát khổ đau 
+và thoát mọi hiểm nguy 
+Nhờ oai lực 
+thiện nghiệp đã thành tựu, 
+nguyện cho 
+tất cả mọi sanh linh 
+hay biết Diệu Pháp 
+mang lại an vui 
+của Đấng Pháp Vương, 
+với sự hành trì 
+an lạc, thanh tịnh, 
+không còn sầu khổ và bất mãn, 
+thành tựu được Niết bàn- 
+lạc tối thượng. 
+ngưỡng mong sanh linh 
+thành kính Pháp, 
+nguyện cầu Diệu Pháp 
+mãi trường tồn. 
+xin Chư thiên 
+thường làm mưa thuận gió hoà, 
+giống các vị 
+Hiền vương xa xưa 
+đã bảo vệ chúng dân 
+đúng theo Pháp, 
+như bảo vệ dòng dõi 
+của chính mình. 
+với sự hành Pháp tuần tự này, 
+con xin cúng dường Phật. 
+với sự hành Pháp tuần tự này, 
+con xin cúng dường Pháp. 
+với sự hành Pháp tuần tự này, 
+con xin cúng dường Tăng. 
+Nhất định, nhờ sự hành Pháp 
+tuần tự này, 
+con sẽ thoát khỏi 
+sanh-già-bệnh-chết 
+Phước lành này của con, 
+nguyện đoạn trừ 
+các lậu hoặc-trầm luân 
+Phước lành này của con, 
+nguyện là duyên 
+thành tựu được Niết bàn. 
+Phần phước của con, 
+xin chia đều 
+đến tất cả sanh linh, 
+Mong tất cả hãy thọ nhận 
+phần phước ấy được đều nhau. 
+(Sādhu! Sādhu! Lành thay!)`,
+    text: `Sabbe sattā, sabbe pāṇā, [3.709]
+sabbe bhūtā, sabbe puggalā, [3.398]
+sabbe attabhāvapariyāpannā, [3.832]
+sabbā itthiyo, sabbe purisā, [3.934]
+sabbe ariyā, sabbe anariyā, [3.461]
+sabbe devā, sabbe manussā, [3.177]
+sabbe vinipātikā [3.238]
+averā hontu, abyāpajjā hontu, [4.470]
+anīghā hontu, sukhī attānaṃ pariharantu. [4.959]
+Dukkhā muccantu, yathāladdhasampattito [4.371]
+māvigacchantu kammassakā. [4.039]
+Puratthimāya disāya, pacchimāya disāya, [5.343]
+uttarāya disāya, dakkhiṇāya disāya, [4.882]
+puratthimāya anudisāya, pacchimāya anudisāya, [5.419]
+uttarāya anudisāya, dakkhiṇāya anudisāya, [5.189]
+heṭṭhimāya disāya, uparimāya disāya. [5.010]
+Sabbe sattā, sabbe pāṇā, [3.604]
+sabbe bhūtā, sabbe puggalā, [3.144]
+sabbe attabhāvapariyāpannā, [3.604]
+sabbā itthiyo, sabbe purisā, [3.655]
+sabbe ariyā, sabbe anariyā, [3.528]
+sabbe devā, sabbe manussā, [3.093]
+sabbe vinipātikā [3.144]
+averā hontu, abyāpajjā hontu, [4.473]
+anīghā hontu, sukhī attānaṃ pariharantu. [4.985]
+Dukkhā muccantu, yathāladdhasampattito [4.473]
+māvigacchantu kammassakā. [3.834]
+Uddhaṃ yāva bhavaggā ca, adho yāva avīcito; [5.700]
+Samantā cakkavāḷesu, ye sattā pathavīcarā; [5.470]
+Abyāpajjā niverā ca, niddukkhā cā"nuppaddavā. [5.547]
+Uddhaṃ yāva bhavaggā ca, adho yāva avīcito; [5.394]
+Samantā cakkavāḷesu, ye sattā udakecarā; [5.521]
+Abyāpajjā niverā ca, niddukkhā cā"nuppaddavā. [5.649]
+Uddhaṃ yāva bhavaggā ca, adho yāva avīcito; [5.343]
+Samantā cakkavāḷesu, ye sattā ākāsecarā; [5.189]
+Abyāpajjā niverā ca, niddukkhā cā"nuppaddavā. [5.496]
+Yaṃ pattaṃ kusalaṃ tassa, ānubhāvena pāṇino; [5.343]
+sabbe saddhammarājassa, ñatvā dhammaṃ sukhāvahaṃ. [5.573]
+Pāpuṇantu visuddhāya, sukhāya paṭipattiyā; [5.445]
+asokamanupāyāsaṃ, nibbānasukhamuttamaṃ. [5.598]
+Ciraṃ tiṭṭhatu saddhammo, dhamme hontu sagāravā; [5.700]
+sabbepi sattā kālena, sammā devo pavassatu. [5.445]
+Yathā rakkhiṃsu porāṇā, surājāno tathevimaṃ; [5.675]
+rājā rakkhatu dhammena, attanova pajaṃ pajaṃ. [5.521]
+Imāya dhammānudhammapaṭipattiyā Buddhaṃ pūjemi. [5.726]
+Imāya dhammānudhammapaṭipattiyā Dhammaṃ pūjemi. [6.058]
+Imāya dhammānudhammapaṭipattiyā Saṃghaṃ pūjemi. [6.186]
+Addhā imāya paṭipattiyā jātijarābyādhimaraṇamhā parimuccissāmi. [7.618]
+Idaṃ me puññaṃ āsavakkhayā"vahaṃ hotu. [4.959]
+Idaṃ me puññaṃ nibbānassa paccayo hotu. [4.831]
+Mama puññabhāgaṃ sabbasattānaṃ bhājemi; [5.112]
+Te sabbe me samaṃ puññabhāgaṃ labhantu. [6.186]
+Sādhu Sādhu Sādhu [11.800]`
+}, 
+    ];
+
+
+    // --- BIẾN ---
+    let globalInterval = 3000; 
+    let recitationTimeout = null;
+    let currentRecitationLine = 0;
+    let allLines = [];
+    let currentSectionIndex = 0;
+    
+    // Khai báo các phần tử DOM
+    const displayArea = document.getElementById('display-area');
+    const titleArea = document.getElementById('section-title');
+    const sectionSelect = document.getElementById('section-select');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const recitationToggleBtn = document.getElementById('recitation-toggle-btn');
+    const settingsPanel = document.getElementById('settings-panel');
+    const helpButton = document.getElementById('help-toggle');
+    const helpContainer = document.getElementById('help-container');
+    const symbolInfo = '&#9432;'; // Information symbol
+    const symbolClose = '✖'; // Close symbol
+
+    function toggleHelp() {
+        const isVisible = helpContainer.style.display !== 'none';
+        
+        if (isVisible) {
+            // Hide the container
+            helpContainer.style.display = 'none';
+            helpButton.innerHTML = symbolInfo; // Change back to Information symbol
+            helpButton.setAttribute('aria-expanded', 'false');
+        } else {
+            // Show the container
+            helpContainer.style.display = 'block';
+            helpButton.innerHTML = symbolClose; // Change to Close symbol
+            helpButton.setAttribute('aria-expanded', 'true');
+        }
+    }
+
+    // Attach the function to the button's click event
+    // This runs once when the script loads
+    if (helpButton) {
+        helpButton.addEventListener('click', toggleHelp);
+    }
+    // --- INIT ---
+    function init() {
+        
+        // --- 1. TẢI CÀI ĐẶT GIAO DIỆN VÀ TỐC ĐỘ BAN ĐẦU ---
+        const savedTheme = localStorage.getItem('themePreference');
+        const body = document.body;
+        const btn = document.querySelector('.btn-darkmode');
+
+        if (savedTheme === 'dark') {
+            body.setAttribute('data-theme', 'dark');
+            if (btn) btn.innerHTML = "☀️";
+        } else {
+             body.removeAttribute('data-theme');
+             if (btn) btn.innerHTML = "🌙";
+        }
+        const savedDictState = localStorage.getItem('dictionaryEnabled');
+        // If it is 'true' OR null (first time user), turn it ON
+        if (savedDictState === 'true' || savedDictState === null) {
+            isLookupEnabled = true;
+            const dictBtn = document.getElementById('btn-dictionary');
+            if (dictBtn) dictBtn.style.backgroundColor = "#d35400";
+            // Wait slightly or call directly
+            enablePaliLookup(); 
+        } else {
+            // Explicitly 'false'
+            isLookupEnabled = false;
+            // No need to set color, default is none
+        }
+        const savedInterval = localStorage.getItem('overrideInterval');
+        const intervalInput = document.getElementById('recitation-interval');
+        const speedControlArea = document.getElementById('speed-control-area');
+        const btnShowSpeed = document.getElementById('btn-show-speed');
+
+        if (savedInterval !== null) {
+            const parsedInterval = parseFloat(savedInterval);
+            globalInterval = parsedInterval * 1000; 
+            intervalInput.value = parsedInterval.toFixed(1);
+            document.getElementById('recitation-interval-label').innerText = parsedInterval.toFixed(1) + "s";
+            
+            speedControlArea.style.display = 'flex';
+            btnShowSpeed.style.display = 'none';
+        } else {
+            globalInterval = 3000;
+            intervalInput.value = 3;
+            speedControlArea.style.display = 'none';
+            btnShowSpeed.style.display = 'inline-block';
+        }
+
+        // --- 2. SETUP PHẦN CÒN LẠI ---
+        sections.forEach((sec, index) => {
+            let option = document.createElement("option");
+            option.value = index; option.text = sec.title;
+            sectionSelect.appendChild(option);
+        });
+// BỔ SUNG: Xử lý đồng bộ khi người dùng tua (scrub) audio
+        audioPlayer.addEventListener('seeked', () => {
+            // Nếu đang trong chế độ Tuỳ chỉnh thời gian (Override Interval), không đồng bộ theo audio
+            if (localStorage.getItem('overrideInterval')) return;
+
+            // Chỉ chạy logic này khi đang trong chế độ Tụng Đọc
+            if (displayArea.classList.contains('recitation-active')) {
+                
+                // 1. Tìm dòng văn bản mới tương ứng với thời gian audio hiện tại
+                const newRecitationLine = findRecitationLine(audioPlayer.currentTime);
+                
+                // 2. Nếu dòng mới khác dòng cũ, tiến hành đồng bộ
+                if (newRecitationLine !== currentRecitationLine) {
+                    currentRecitationLine = newRecitationLine;
+                    showRecitationLine(currentRecitationLine);
+                }
+                
+                // 3. Xóa timer cũ và tạo timer mới (dựa trên thời gian còn lại của dòng mới)
+                if (!audioPlayer.paused) {
+                    // Khi audio đang chạy, runRecitationStep sẽ tự tính toán thời gian còn lại
+                    // của dòng mới và đặt timer chính xác.
+                    runRecitationStep();
+                } else {
+                    // Nếu audio đang dừng, chỉ cần xóa timer cũ và cập nhật visuals
+                    if (recitationTimeout) {
+                        clearTimeout(recitationTimeout);
+                        recitationTimeout = null;
+                    }
+                    updateButtonVisuals('manual');
+                }
+            }
+        });        
+// Change this block:
+audioPlayer.addEventListener('play', () => {
+    // OLD: if (displayArea.classList.contains('recitation-active') && !recitationTimeout) runRecitationStep();
+    
+    // NEW: Only start the timer if in recitation mode AND the user didn't just click 'PLAY'
+    // where a timer was already calculated and set in toggleRecitationAction.
+    // If recitationTimeout is null, it means the audio player's 'play' event is the first one 
+    // after a change (like a new section load or the end of a previous sequence).
+    if (displayArea.classList.contains('recitation-active') && !recitationTimeout) {
+        runRecitationStep();
+    }
+});
+        
+// CẬP NHẬT MỚI: Chỉ dừng timer nếu user bấm pause, không dừng nếu audio tự hết
+        audioPlayer.addEventListener('pause', () => {
+            // Chỉ chạy logic này khi đang trong chế độ Tụng Đọc
+            if (displayArea.classList.contains('recitation-active')) {
+                
+                // Nếu audio dừng vì đã hết bài (ended), THOÁT NGAY.
+                if (audioPlayer.ended) return; 
+
+                // Nếu audio dừng do người dùng bấm pause (dù là nút Recitation hay nút Audio Player)
+                if(recitationTimeout) {
+                    clearTimeout(recitationTimeout); 
+                    recitationTimeout = null;
+                }
+                updateButtonVisuals('manual');
+            }
+        });
+// --- ADD THIS NEW CODE ---
+        // Sự kiện khi audio chạy hết bài: Reset về 0:00 và thoát chế độ Recitation
+        audioPlayer.addEventListener('ended', () => {
+            audioPlayer.currentTime = 0; // Trả audio về 0:00
+        });
+        // -------------------------
+        let initialIndex = 0;
+        const savedIndex = localStorage.getItem('lastSectionIndex');
+        if (savedIndex !== null) {
+            const parsedIndex = parseInt(savedIndex);
+            if (parsedIndex >= 0 && parsedIndex < sections.length) {
+                initialIndex = parsedIndex;
+            }
+        }
+        
+        loadSection(initialIndex);
+    }
+
+    // --- LOGIC GIAO DIỆN & PERSISTENCE ---
+    // NEW VARIABLES
+    let isVnMode = false;
+
+    // NEW FUNCTION: TOGGLE VIETNAMESE
+   function toggleVietnameseView() {
+    isVnMode = !isVnMode;
+    const btn = document.getElementById('btn-vn-toggle');
+    const paliDiv = document.getElementById('display-area');
+    const vnDiv = document.getElementById('vn-display-area');
+
+    if (isVnMode) {
+        paliDiv.style.display = 'none';
+        vnDiv.style.display = 'block';
+        // Use class for styling instead of inline styles
+        btn.classList.add('active-vn'); 
+    } else {
+        paliDiv.style.display = 'block';
+        vnDiv.style.display = 'none';
+        btn.classList.remove('active-vn');
+    }
+}
+
+    function loadSection(index) {
+    // 1. Check if Recitation Mode is CURRENTLY active
+    const wasRecitationActive = document.body.classList.contains('recitation-active-mode');
+
+    // 2. Stop audio if playing
+    if (!audioPlayer.paused) audioPlayer.pause();
+    
+    // 3. Handle Index wrapping
+    if (index < 0) index = sections.length - 1;
+    if (index >= sections.length) index = 0;
+    currentSectionIndex = index;
+    
+    // 4. Save preference
+    localStorage.setItem('lastSectionIndex', index);
+
+    // 5. Update UI Basics
+     sectionSelect.value = index;
+        titleArea.innerText = sections[index].title;
+        audioPlayer.src = 'audio2/' + sections[index].audio;
+        renderText(sections[index].text);
+
+        // --- NEW CODE START: Load Vietnamese Text ---
+        const vnDiv = document.getElementById('vn-display-area');
+        vnDiv.innerText = sections[index].vietnamese || "Chưa có bản dịch cho phần này."; 
+        // --- NEW CODE END ---
+
+    // 7. RECITAION MODE PERSISTENCE CHECK
+    if (wasRecitationActive) {
+        // If mode was on, RESTART it for the new section immediately.
+        // We do NOT call exitRecitation().
+        
+        // a. Re-initialize dashboard for new section
+        startRecitationMode(); 
+        
+        // b. Reset audio position to 0
+        audioPlayer.currentTime = 0;
+        
+        // c. Ensure visuals are set to "Manual" (Paused) start
+        updateButtonVisuals('manual');
+    } else {
+        // If mode was off, ensure we clean up any remnants
+        exitRecitation();
+    }
+}
+
+    function selectSection() { loadSection(parseInt(sectionSelect.value)); }
+    function changeSection(d) { loadSection(currentSectionIndex + d); }
+
+    function renderText(rawText) {
+        displayArea.innerHTML = '';
+        allLines = [];
+        const lines = rawText.split('\n').filter(line => line.trim() !== '');
+        
+        let cumulativeStartTimeMs = 0;
+        
+        const overrideIntervalMs = localStorage.getItem('overrideInterval') ? parseFloat(localStorage.getItem('overrideInterval')) * 1000 : null;
+
+        lines.forEach(line => {
+            let cleanLine = line.trim();
+            let customDuration = null; 
+
+            const timeMatch = cleanLine.match(/\s*\[(\d+(\.\d+)?)\]\s*$/);
+            if (timeMatch) {
+                customDuration = parseFloat(timeMatch[1]) * 1000;
+                cleanLine = cleanLine.replace(timeMatch[0], '');
+            }
+
+            const lineDiv = document.createElement('div');
+            lineDiv.className = 'line-break';
+            
+            let currentLineDuration; 
+
+            if (overrideIntervalMs !== null) {
+                currentLineDuration = overrideIntervalMs;
+            } else {
+                currentLineDuration = customDuration || 3000; 
+            }
+
+            lineDiv.dataset.startTime = cumulativeStartTimeMs / 1000;
+            lineDiv.dataset.duration = currentLineDuration;
+            
+            if (overrideIntervalMs === null && customDuration) {
+                lineDiv.dataset.hasCustomTime = "true";
+            } else if (overrideIntervalMs !== null) {
+                lineDiv.dataset.hasCustomTime = "false"; 
+            }
+
+            cumulativeStartTimeMs += currentLineDuration;
+
+            cleanLine.split(/\s+/).forEach(wordStr => {
+                if (wordStr.trim() === '') return;
+                const span = document.createElement('span');
+                span.className = 'word';
+                span.innerText = wordStr;
+                span.onclick = function() {
+                    if (this.classList.contains('hidden')) {
+                        this.classList.remove('hidden');
+                        this.classList.add('revealed');
+                    }
+                };
+                lineDiv.appendChild(span);
+            });
+            displayArea.appendChild(lineDiv);
+            allLines.push(lineDiv);
+        });
+    }
+
+    function updateButtonVisuals(state) {
+        recitationToggleBtn.classList.remove('active-auto', 'active-manual');
+        if (state === 'auto') {
+            recitationToggleBtn.classList.add('active-auto'); recitationToggleBtn.innerHTML = "❚❚";
+        } else if (state === 'manual') {
+            recitationToggleBtn.classList.add('active-manual'); recitationToggleBtn.innerHTML = "▶";
+        } else {
+            recitationToggleBtn.innerHTML = "🎤";
+        }
+    }
+
+   /* =========================================
+   MEMORIZATION DASHBOARD LOGIC
+   ========================================= */
+
+// Create a unique key for local storage: score_SectionID_LineIndex
+function getScoreKey(lineIdx) {
+    const sectionId = sections[currentSectionIndex].id;
+    return `memo_score_${sectionId}_${lineIdx}`;
+}
+
+function getLineScore(lineIdx) {
+    const val = localStorage.getItem(getScoreKey(lineIdx));
+    return val ? parseInt(val) : 0;
+}
+
+function saveLineScore(lineIdx, score) {
+    localStorage.setItem(getScoreKey(lineIdx), score);
+    updateDashboardBox(lineIdx, score);
+    updateOverallStats();
+}
+
+// Render the grid of boxes
+function renderDashboard() {
+    const grid = document.getElementById('dashboard-grid');
+    grid.innerHTML = ''; // Clear old
+
+    allLines.forEach((line, idx) => {
+        const score = getLineScore(idx);
+        const box = document.createElement('div');
+        box.className = `progress-box ${getHeatmapClass(score)}`;
+        box.innerText = idx + 1;
+        box.id = `box-${idx}`;
+        
+        // Click box to jump to line
+        box.onclick = function() {
+            jumpToLine(idx);
+        };
+
+        grid.appendChild(box);
+    });
+
+    updateOverallStats();
+}
+
+// Determine color class based on score
+function getHeatmapClass(score) {
+    if (score === 0) return 'heatmap-0';
+    if (score <= 25) return 'heatmap-1';
+    if (score <= 50) return 'heatmap-2';
+    if (score <= 75) return 'heatmap-3';
+    return 'heatmap-4';
+}
+
+function updateDashboardBox(idx, score) {
+    const box = document.getElementById(`box-${idx}`);
+    if (box) {
+        // Remove old heatmap classes
+        box.classList.remove('heatmap-0', 'heatmap-1', 'heatmap-2', 'heatmap-3', 'heatmap-4');
+        // Add new
+        box.classList.add(getHeatmapClass(score));
+    }
+}
+
+/* --- UPDATED STATISTICS LOGIC --- */
+
+function updateOverallStats() {
+    // --- 1. SESSION PROGRESS (Current Section Only) ---
+    let sessionTotalScore = 0;
+    let sessionMaxScore = allLines.length * 100; // 100% per line
+
+    allLines.forEach((_, idx) => {
+        const s = getLineScore(idx); // Get score for current section line
+        sessionTotalScore += s;
+    });
+
+    // Calculate Session %
+    // Avoid division by zero if section is empty
+    const sessionPct = sessionMaxScore === 0 ? 0 : Math.round((sessionTotalScore / sessionMaxScore) * 100);
+    
+    document.getElementById('bar-session').style.width = sessionPct + '%';
+    document.getElementById('text-session').innerText = sessionPct + '%';
+
+
+    // --- 2. GLOBAL PROGRESS (All Sections) ---
+    const globalStats = calculateGlobalStats();
+    
+    // Calculate Global %
+    const globalPct = globalStats.maxScore === 0 ? 0 : Math.round((globalStats.currentScore / globalStats.maxScore) * 100);
+
+    document.getElementById('bar-total').style.width = globalPct + '%';
+    document.getElementById('text-total').innerText = globalPct + '%';
+}
+
+// Helper: Iterates through ALL sections data to calculate total mastery
+function calculateGlobalStats() {
+    let totalScore = 0;
+    let maxScore = 0;
+
+    // Loop through every section defined in your data
+    sections.forEach(section => {
+        // We need to parse the text to find how many "audio lines" exist
+        // Regex to match lines ending in time marker [x.x]
+        const lines = section.text.split('\n');
+        let lineIndex = 0;
+
+        lines.forEach(rawLine => {
+            const line = rawLine.trim();
+            if (line === '') return;
+
+            // Check if it's a valid recitation line (has time marker)
+            if (/\s*\[(\d+(\.\d+)?)\]\s*$/.test(line)) {
+                
+                // Reconstruct the storage key: memo_score_SECTIONID_LINEINDEX
+                // Note: lineIndex increments only for valid audio lines
+                const key = `memo_score_${section.id}_${lineIndex}`;
+                const savedScore = localStorage.getItem(key);
+                
+                totalScore += savedScore ? parseInt(savedScore) : 0;
+                maxScore += 100; // Each line is worth 100%
+                
+                lineIndex++;
+            }
+        });
+    });
+
+    return { currentScore: totalScore, maxScore: maxScore };
+}
+
+// Function to handle clicking a box
+function jumpToLine(idx) {
+    // Stop auto-play timer
+    if (recitationTimeout) { clearTimeout(recitationTimeout); recitationTimeout = null; }
+    
+    currentRecitationLine = idx;
+    showRecitationLine(idx);
+    
+    // Sync Audio
+    const targetEl = allLines[idx];
+    const startTime = parseFloat(targetEl.dataset.startTime || 0);
+    audioPlayer.currentTime = startTime;
+
+    // Visuals
+    updateButtonVisuals('manual');
+    if (!audioPlayer.paused) audioPlayer.pause();
+}    
+function toggleRecitationAction() {
+    const isActive = displayArea.classList.contains('recitation-active');
+    const isRunning = !!recitationTimeout;
+
+    if (!isActive) {
+        // Action: START RECITATION MODE (Manual Start)
+        
+        startRecitationMode();
+        
+        // --- CHANGE HERE: REMOVED audioPlayer.play() ---
+        // By removing audioPlayer.play(), the mode starts but the audio remains paused.
+        // startRecitationMode() already sets the initial line and the 'manual' visual state.
+        
+        return;
+    }
+
+    // We are already in Recitation Mode
+    if (isRunning || !audioPlayer.paused) {
+        // Action: PAUSE
+        // This handles pausing when in auto-play or manual-play state.
+        if (!audioPlayer.paused) audioPlayer.pause();
+    } else {
+        // Action: PLAY / RESUME
+        if (audioPlayer.ended) {
+            // If audio ended, reset, and start from the beginning
+            audioPlayer.currentTime = 0;
+            currentRecitationLine = 0;
+            showRecitationLine(0);
+        }
+        // Simply call play. The 'play' event listener will trigger the self-correcting runRecitationStep.
+        audioPlayer.play();
+    }
+}
+function findRecitationLine(currentTime) {
+        // Iterate backwards for slightly more efficient search, 
+        // especially if seeking near the end.
+        for (let i = allLines.length - 1; i >= 0; i--) {
+            const line = allLines[i];
+            const startTime = parseFloat(line.dataset.startTime || 0);
+            const duration = parseFloat(line.dataset.duration || 0) / 1000;
+            const endTime = startTime + duration;
+
+            // If the current audio time is within this line's window
+            if (currentTime >= startTime && currentTime < endTime) {
+                return i;
+            }
+        }
+        // If the current time is before the first line, return the first line (0)
+        return 0;
+    }
+    function startRecitationMode() {
+	if (isVnMode) {
+        toggleVietnameseView(); // Switch back to Pali
+    }
+    resetText();
+    displayArea.classList.add('recitation-active');
+    document.body.classList.add('recitation-active-mode');
+    
+    // --- NEW: GENERATE DASHBOARD ---
+    renderDashboard(); 
+    // -------------------------------
+
+    currentRecitationLine = 0;
+    showRecitationLine(0);
+    updateButtonVisuals('manual');
+}
+
+    function exitRecitation() {
+        if(recitationTimeout) clearTimeout(recitationTimeout); recitationTimeout = null;
+        if(!audioPlayer.paused) audioPlayer.pause();
+
+        displayArea.classList.remove('recitation-active');
+        document.body.classList.remove('recitation-active-mode');
+        document.querySelector('.line-recitation-show')?.classList.remove('line-recitation-show');
+        
+        // --- FIX: Remove all slider containers from the text ---
+        document.querySelectorAll('.memorize-slider-container').forEach(el => el.remove());
+        // -------------------------------------------------------
+
+        updateButtonVisuals('inactive');
+    }
+
+    function runRecitationStep() {
+        if (recitationTimeout) clearTimeout(recitationTimeout);
+        if (currentRecitationLine >= allLines.length) { exitRecitation(); return; }
+
+        showRecitationLine(currentRecitationLine);
+        updateButtonVisuals('auto'); 
+
+        const el = allLines[currentRecitationLine];
+        const dur = parseFloat(el.dataset.duration); // Full duration in ms
+        const startTimeSeconds = parseFloat(el.dataset.startTime); // Start time in seconds
+
+        let timeToNextStep = dur; // Default to full duration
+
+        // --- NEW: Check if Custom Speed is OFF before syncing ---
+        // Only sync with audio time if we are NOT in adjusted/override mode
+        const isCustomSpeed = localStorage.getItem('overrideInterval') !== null;
+        
+        if (!isCustomSpeed && !audioPlayer.paused) {
+        // --------------------------------------------------------
+            const lineDurationSeconds = dur / 1000;
+            const elapsedTimeSeconds = audioPlayer.currentTime - startTimeSeconds;
+            
+            // Remaining time in milliseconds
+            const remainingDurationMs = (lineDurationSeconds - elapsedTimeSeconds) * 1000;
+            
+            if (remainingDurationMs > 50) {
+                // If there's significant time left, use it for the timer
+                timeToNextStep = remainingDurationMs;
+            } else if (elapsedTimeSeconds >= lineDurationSeconds) {
+                // If the audio is already past this line, advance immediately
+                currentRecitationLine += 1;
+                // If we advanced past the end, exit, otherwise re-run the step for the next line
+                if (currentRecitationLine < allLines.length) {
+                    runRecitationStep();
+                    return; // Stop here, the recursive call handles the next step
+                } else {
+                    exitRecitation();
+                    return;
+                }
+            }
+            // If remainingDurationMs is <= 50, it uses that small amount for a quick jump.
+        }
+
+        const nextIdx = currentRecitationLine + 1;
+        if (nextIdx < allLines.length) {
+            recitationTimeout = setTimeout(() => {
+                currentRecitationLine = nextIdx; 
+                runRecitationStep();
+            }, timeToNextStep);
+        } else {
+             recitationTimeout = setTimeout(() => { exitRecitation(); }, timeToNextStep);
+        }
+    }
+
+    function showRecitationLine(idx) {
+    // 1. Remove highlight from previous line
+    document.querySelector('.line-recitation-show')?.classList.remove('line-recitation-show');
+    
+    // 2. Remove highlight from previous dashboard box
+    document.querySelector('.progress-box.active-box')?.classList.remove('active-box');
+
+    // 3. Highlight new line & new box
+    if (allLines[idx]) {
+        const lineDiv = allLines[idx];
+        lineDiv.classList.add('line-recitation-show');
+        lineDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Highlight box in dashboard
+        const box = document.getElementById(`box-${idx}`);
+        if(box) box.classList.add('active-box');
+
+        // --- NEW: INJECT SLIDER ---
+        injectSlider(lineDiv, idx);
+    }
+}
+
+// Function to create/update slider
+function injectSlider(lineElement, idx) {
+    // Check if slider container already exists in this line
+    let sliderContainer = lineElement.querySelector('.memorize-slider-container');
+    
+    if (!sliderContainer) {
+        // Create container
+        sliderContainer = document.createElement('div');
+        sliderContainer.className = 'memorize-slider-container';
+        
+        // Create Label
+        const label = document.createElement('label');
+        label.id = `label-slider-${idx}`;
+        
+        // Create Input
+        const input = document.createElement('input');
+        input.type = 'range';
+        input.min = 0;
+        input.max = 100;
+		input.step = 10;
+        input.className = 'memorize-slider';
+        
+        // Logic
+        input.oninput = function() {
+            const val = this.value;
+            label.innerText = `Đã thuộc: ${val}%`;
+            // Save and update dashboard immediately
+            saveLineScore(idx, parseInt(val));
+        };
+
+        // Append
+        sliderContainer.appendChild(label);
+        sliderContainer.appendChild(input);
+        lineElement.appendChild(sliderContainer);
+    }
+
+    // Set current values
+    const currentScore = getLineScore(idx);
+    const input = sliderContainer.querySelector('input');
+    const label = sliderContainer.querySelector('label');
+    
+    input.value = currentScore;
+    label.innerText = `Đã thuộc: ${currentScore}%`;
+}
+
+function navigateRecitation(d) {
+        // 1. Check if audio is currently playing before we do anything
+        const isPlaying = !audioPlayer.paused && !audioPlayer.ended;
+        
+        // 2. Clear the existing timer so we don't have overlapping jumps
+        if (recitationTimeout) { clearTimeout(recitationTimeout); recitationTimeout = null; }
+        
+        // 3. Activate recitation mode if it wasn't already (Edge case)
+        if (!displayArea.classList.contains('recitation-active')) { 
+            startRecitationMode();
+        }
+        
+        // 4. Update the line index
+        currentRecitationLine += d;
+        if (currentRecitationLine < 0) currentRecitationLine = 0;
+        if (currentRecitationLine >= allLines.length) currentRecitationLine = allLines.length - 1;
+
+        // 5. Show the new line visually
+        showRecitationLine(currentRecitationLine);
+
+        // 6. Sync the audio to the start time of the new line
+        const targetEl = allLines[currentRecitationLine];
+        const startTimeSeconds = parseFloat(targetEl.dataset.startTime || 0);
+        audioPlayer.currentTime = startTimeSeconds; 
+        
+        // 7. Decide logic based on previous state
+        if (isPlaying) {
+            // If it was playing:
+            // We do NOT pause. We just restart the sync timer (runRecitationStep)
+            // so it counts down the duration of this new line correctly.
+            runRecitationStep();
+        } else {
+            // If it was paused:
+            // Keep it paused and show the "Manual" (Play button) state.
+            updateButtonVisuals('manual');
+        }
+    }
+
+    // --- CÁC HÀM PHỤ ---
+    function hideRandomWords() {
+        const wasActive = displayArea.classList.contains('recitation-active');
+        resetText(true);
+        const words = document.querySelectorAll('.word');
+        const count = Math.floor(words.length * (document.getElementById('difficulty').value / 100));
+        Array.from({length: words.length}, (_, i) => i).sort(() => Math.random()-.5).slice(0, count).forEach(i => words[i].classList.add('hidden'));
+        
+        if (wasActive) {
+            displayArea.classList.add('recitation-active');
+            updateButtonVisuals('manual');
+        }
+    }
+    
+    function resetText(keep = false) {
+        if (!keep) exitRecitation();
+        document.querySelectorAll('.word').forEach(w => w.classList.remove('hidden', 'revealed'));
+    }
+
+    function toggleSettings() { settingsPanel.classList.toggle('open'); }
+    function updateLabel(v) { document.getElementById('difficulty-label').innerText = v + "%"; }
+    
+    // --- CÁC HÀM MỚI CHO TỐC ĐỘ ---
+
+    function toggleSpeedControl() {
+        document.getElementById('btn-show-speed').style.display = 'none';
+        document.getElementById('speed-control-area').style.display = 'flex';
+    }
+
+    function updateRecitationInterval(v) { 
+        const newIntervalSeconds = parseFloat(v);
+        localStorage.setItem('overrideInterval', newIntervalSeconds.toFixed(1)); 
+        
+        document.getElementById('recitation-interval-label').innerText = newIntervalSeconds.toFixed(1) + "s";
+        loadSection(currentSectionIndex); 
+        if(!audioPlayer.paused && displayArea.classList.contains('recitation-active')) audioPlayer.pause();
+    }
+
+    function resetSpeedDefault() {
+        localStorage.removeItem('overrideInterval');
+        document.getElementById('recitation-interval').value = 3;
+        document.getElementById('recitation-interval-label').innerText = "3.0s";
+        document.getElementById('speed-control-area').style.display = 'none';
+        document.getElementById('btn-show-speed').style.display = 'inline-block';
+        loadSection(currentSectionIndex);
+    }
+    
+    function toggleTheme() {
+        const body = document.body;
+        const btn = document.querySelector('.btn-darkmode');
+        const isDark = body.getAttribute('data-theme') === 'dark';
+
+        if (isDark) {
+            body.removeAttribute('data-theme');
+            btn.innerHTML = "🌙";
+            localStorage.setItem('themePreference', 'light');
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            btn.innerHTML = "☀️";
+            localStorage.setItem('themePreference', 'dark');
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>	
