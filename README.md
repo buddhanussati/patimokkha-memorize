@@ -4,7 +4,7 @@ This is a web-based app & tool designed to assist Bhikkhus and students in memor
 
 #### 🚀 How to Start
 
-This application is hosted online and can be accessed directly by clicking the link: [loicuaducphat.org/congcu/patimokkha-memorize](https://[loicuaducphat.org/congcu/patimokkha-memorize). It is compatible with any modern web browser (Chrome, Firefox, Edge, Safari).
+This application is hosted online and can be accessed directly by clicking the link: [loicuaducphat.org/congcu/patimokkha-memorize](https://loicuaducphat.org/congcu/patimokkha-memorize). It is compatible with any modern web browser (Chrome, Firefox, Edge, Safari).
 
 #### 📖 User Guide
 
