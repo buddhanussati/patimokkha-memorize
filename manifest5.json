@@ -1,0 +1,21 @@
+{
+  "name": "Kinh Hộ Trì - Paritta",
+  "short_name": "Kinh Hộ Trì Paritta",
+  "start_url": "./kinhhotri.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#8b5cf6",
+  "description": "Ứng dụng Kinh Hộ Trì Paritta",
+  "icons": [
+    {
+      "src": "./images/icon-192-paritta.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./images/icon-512-paritta.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

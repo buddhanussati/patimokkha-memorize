@@ -1,0 +1,21 @@
+{
+  "name": "Pātimokkha Memorize",
+  "short_name": "Pātimokkha Memorize",
+  "start_url": "./patimokkha-memorize.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#8b5cf6",
+  "description": "Web-based app & tool to assist memorizing the Bhikkhu Pātimokkha",
+  "icons": [
+    {
+      "src": "./images/icon-192-patimokkha.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./images/icon-512-patimokkha.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

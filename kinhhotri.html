@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" type="image/x-icon" href="./images/favicon3.ico">
+	<link rel="manifest" href="./manifest5.json">
+	<meta name="theme-color" content="#8b5cf6">
+	<link rel="apple-touch-icon" href="./images/icon-192-paritta.png">
     <title>Kinh Hộ Trì</title>
  	<script src="./js/jquery-1.10.2.min.js"></script>
     <script src="./js/prdpd_i2h.js"></script>
@@ -424,6 +428,35 @@ gap: 3px; /* Tighter gap for the rightmost controls */
     max-width: 300px;
     cursor: pointer;
 }
+/* --- BUTTON VISIBILITY LOGIC --- */
+        
+        /* 1. Default State (Normal Mode) */
+        #btn-loop, #btn-exit-recitation { 
+            display: none; 
+        }
+        #btn-dictionary, #btn-vn-toggle { 
+            display: flex; 
+        }
+
+        /* 2. Recitation Mode Active */
+        .recitation-active-mode #btn-loop,
+        .recitation-active-mode #btn-exit-recitation,
+        .recitation-active-mode .btn-nav-recitation {
+            display: flex; /* Show these */
+        }
+
+        .recitation-active-mode #btn-dictionary,
+        .recitation-active-mode #btn-vn-toggle {
+            display: none; /* Hide these to save space */
+        }
+        
+        /* Loop Button Active State */
+       #btn-loop.active-loop {
+    background-color: #9b59b6 !important; /* Gold/Orange */
+    color: #fff;
+    box-shadow: 0 0 8px rgba(243, 156, 18, 0.6);
+    border: 1px solid #fff;
+}
     </style>
 </head>
 <body>
@@ -567,6 +600,15 @@ gap: 3px; /* Tighter gap for the rightmost controls */
             
 
             <button class="icon-btn" onclick="navigateRecitation(1)" title="Tiến">»</button>
+			<button id="btn-loop" class="icon-btn" onclick="toggleLoopSentence()" title="Lặp câu hiện tại">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="17 1 21 5 17 9"></polyline>
+        <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+        <polyline points="7 23 3 19 7 15"></polyline>
+        <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+        <text id="loop-count" x="12" y="15.5" font-family="Tahoma" font-size="8" font-weight="100" fill="currentColor" text-anchor="middle" style="display:none;">1</text>
+    </svg>
+</button>
             <button id="settings-btn" class="icon-btn btn-settings" onclick="toggleSettings()" title="Cài đặt">⚙️</button>
 <button id="btn-dictionary" class="icon-btn" onclick="togglePaliLookup()" title="Từ điển Pali">📖</button>
         </div>
@@ -1678,7 +1720,7 @@ của Đức Thế Tôn
 Đáng được chấp tay,
 Là vô thượng phước điền 
 ở trên đời.`,
-    text: `Yassānussaranenāpi, antalikkhepi pāṇino; [8.264]
+    text: `Yassānussaranenāpi, antalikkhepi pāṇino. [8.263]
 Patiṭṭhamadhigacchanti, bhūmiyaṃ viya sabbathā. [6.225]
 Sabbupaddavajālamhā, yakkhacorādisambhavā; [6.442]
 Gaṇanā na ca muttānaṃ, parittaṃ taṃ bhaṇāma he. [8.308]
@@ -1748,7 +1790,7 @@ Atha dhammaṃ sareyyātha, niyyānikaṃ sudesitaṃ. [6.507]
 “No ce dhammaṃ sareyyātha, niyyānikaṃ sudesitaṃ; [6.421]
 Atha saṅghaṃ sareyyātha, puññakkhettaṃ anuttaraṃ. [6.421]
 “Evaṃ buddhaṃ sarantānaṃ, dhammaṃ saṅghañca bhikkhavo; [7.136]
-Bhayaṃ vā chambhitattaṃ vā, lomahaṃso na hessati. [8.505]`
+Bhayaṃ vā chambhitattaṃ vā, lomahaṃso na hessati. [8.705]`
 },
 
 {
@@ -2846,7 +2888,21 @@ Sādhu Sādhu Sādhu [11.800]`
     let allLines = [];
     let currentSectionIndex = 0;
     
-    // Khai báo các phần tử DOM
+    let isLoopActive = false;
+
+function toggleLoopSentence() {
+    isLoopActive = !isLoopActive;
+    const btn = document.getElementById('btn-loop');
+    const loopOne = document.getElementById('loop-count');
+
+    if (isLoopActive) {
+        btn.classList.add('active-loop');
+        loopOne.style.display = 'block'; // Show the "1"
+    } else {
+        btn.classList.remove('active-loop');
+        loopOne.style.display = 'none'; // Hide the "1"
+    }
+}
     const displayArea = document.getElementById('display-area');
     const titleArea = document.getElementById('section-title');
     const sectionSelect = document.getElementById('section-select');
@@ -3056,7 +3112,8 @@ audioPlayer.addEventListener('play', () => {
         audioPlayer.src = 'audio2/' + sections[index].audio;
         renderText(sections[index].text);
 
-        // --- NEW CODE START: Load Vietnamese Text ---
+        isLoopActive = false;
+        document.getElementById('btn-loop').classList.remove('active-loop');
         const vnDiv = document.getElementById('vn-display-area');
         vnDiv.innerText = sections[index].vietnamese || "Chưa có bản dịch cho phần này."; 
         // --- NEW CODE END ---
@@ -3391,14 +3448,12 @@ function findRecitationLine(currentTime) {
         const dur = parseFloat(el.dataset.duration); // Full duration in ms
         const startTimeSeconds = parseFloat(el.dataset.startTime); // Start time in seconds
 
-        let timeToNextStep = dur; // Default to full duration
+        let timeToNextStep = dur; 
 
-        // --- NEW: Check if Custom Speed is OFF before syncing ---
-        // Only sync with audio time if we are NOT in adjusted/override mode
+        // Check if Custom Speed is OFF
         const isCustomSpeed = localStorage.getItem('overrideInterval') !== null;
         
         if (!isCustomSpeed && !audioPlayer.paused) {
-        // --------------------------------------------------------
             const lineDurationSeconds = dur / 1000;
             const elapsedTimeSeconds = audioPlayer.currentTime - startTimeSeconds;
             
@@ -3406,27 +3461,45 @@ function findRecitationLine(currentTime) {
             const remainingDurationMs = (lineDurationSeconds - elapsedTimeSeconds) * 1000;
             
             if (remainingDurationMs > 50) {
-                // If there's significant time left, use it for the timer
                 timeToNextStep = remainingDurationMs;
             } else if (elapsedTimeSeconds >= lineDurationSeconds) {
-                // If the audio is already past this line, advance immediately
+                // === LOOP LOGIC HERE ===
+                if (isLoopActive) {
+                    // Reset audio to start of THIS sentence
+                    audioPlayer.currentTime = startTimeSeconds;
+                    // Do not increment index
+                    runRecitationStep();
+                    return;
+                }
+                // =======================
+
+                // Normal progression
                 currentRecitationLine += 1;
-                // If we advanced past the end, exit, otherwise re-run the step for the next line
+                
                 if (currentRecitationLine < allLines.length) {
                     runRecitationStep();
-                    return; // Stop here, the recursive call handles the next step
+                    return; 
                 } else {
                     exitRecitation();
                     return;
                 }
             }
-            // If remainingDurationMs is <= 50, it uses that small amount for a quick jump.
         }
 
-        const nextIdx = currentRecitationLine + 1;
+        // Logic for Custom Speed or Timed Step
+        const nextIdx = isLoopActive ? currentRecitationLine : currentRecitationLine + 1; // If looping, stay on same index
+        
+        // Handling the Timeout (Logic for Loop within Timeout)
         if (nextIdx < allLines.length) {
             recitationTimeout = setTimeout(() => {
-                currentRecitationLine = nextIdx; 
+                if (isLoopActive) {
+                     // For custom speed mode or general timeout fallback
+                     // Reset audio if needed (optional for custom speed, but good for sync)
+                     if (!isCustomSpeed) audioPlayer.currentTime = startTimeSeconds; 
+                     currentRecitationLine = currentRecitationLine; // Stay
+                } else {
+                     currentRecitationLine = nextIdx; // Advance
+                }
                 runRecitationStep();
             }, timeToNextStep);
         } else {
