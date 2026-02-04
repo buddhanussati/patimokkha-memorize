@@ -457,6 +457,21 @@ gap: 3px; /* Tighter gap for the rightmost controls */
     box-shadow: 0 0 8px rgba(243, 156, 18, 0.6);
     border: 1px solid #fff;
 }
+/* --- MULTI-LOOP SELECTION STYLE --- */
+.progress-box.multi-loop-selected {
+    border: 2px solid #e74c3c !important; /* Red Border */
+    box-shadow: 0 0 6px rgba(231, 76, 60, 0.6);
+    background-color: rgba(231, 76, 60, 0.1);
+    transform: scale(1.05);
+    z-index: 5; /* Ensure it sits above others */
+}
+
+/* Dark mode adjustment */
+[data-theme="dark"] .progress-box.multi-loop-selected {
+    border-color: #ff6b6b !important;
+    background-color: rgba(255, 107, 107, 0.2);
+}
+
     </style>
 </head>
 <body>
@@ -2887,7 +2902,7 @@ Sādhu Sādhu Sādhu [11.800]`
     let currentRecitationLine = 0;
     let allLines = [];
     let currentSectionIndex = 0;
-    
+    let selectedLoopIndices = new Set();
     let isLoopActive = false;
 
 function toggleLoopSentence() {
@@ -3105,7 +3120,7 @@ audioPlayer.addEventListener('play', () => {
     
     // 4. Save preference
     localStorage.setItem('lastSectionIndex', index);
-
+selectedLoopIndices.clear();
     // 5. Update UI Basics
      sectionSelect.value = index;
         titleArea.innerText = sections[index].title;
@@ -3232,6 +3247,8 @@ function saveLineScore(lineIdx, score) {
 }
 
 // Render the grid of boxes
+// --- UPDATED DASHBOARD LOGIC WITH LONG PRESS ---
+
 function renderDashboard() {
     const grid = document.getElementById('dashboard-grid');
     grid.innerHTML = ''; // Clear old
@@ -3239,19 +3256,82 @@ function renderDashboard() {
     allLines.forEach((line, idx) => {
         const score = getLineScore(idx);
         const box = document.createElement('div');
+        
+        // Add heatmap class
         box.className = `progress-box ${getHeatmapClass(score)}`;
+        
+        // Restore selection state if re-rendering
+        if (selectedLoopIndices.has(idx)) {
+            box.classList.add('multi-loop-selected');
+        }
+
         box.innerText = idx + 1;
         box.id = `box-${idx}`;
         
-        // Click box to jump to line
-        box.onclick = function() {
-            jumpToLine(idx);
-        };
+        // ATTACH LONG PRESS EVENTS
+        attachBoxEvents(box, idx);
 
         grid.appendChild(box);
     });
 
     updateOverallStats();
+}
+
+function attachBoxEvents(box, idx) {
+    let longPressTimer;
+    let isLongPress = false;
+
+    const startPress = (e) => {
+        isLongPress = false;
+        longPressTimer = setTimeout(() => {
+            isLongPress = true;
+            toggleBoxSelection(idx);
+            // Optional: Vibrate mobile device for feedback
+            if (navigator.vibrate) navigator.vibrate(50);
+        }, 500); // 500ms threshold for long press
+    };
+
+    const cancelPress = () => {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+        }
+    };
+
+    // Mouse Events
+    box.addEventListener('mousedown', startPress);
+    box.addEventListener('mouseup', cancelPress);
+    box.addEventListener('mouseleave', cancelPress);
+
+    // Touch Events
+    box.addEventListener('touchstart', (e) => {
+        // We do not preventDefault here to allow scrolling
+        startPress(e);
+    }, { passive: true });
+    
+    box.addEventListener('touchend', cancelPress);
+    box.addEventListener('touchmove', cancelPress);
+
+    // Click Event (Standard Jump)
+    box.onclick = function(e) {
+        // If it was a long press, ignore the click (don't jump)
+        if (isLongPress) {
+            e.stopPropagation();
+            return;
+        }
+        jumpToLine(idx);
+    };
+}
+
+function toggleBoxSelection(idx) {
+    const box = document.getElementById(`box-${idx}`);
+    if (selectedLoopIndices.has(idx)) {
+        selectedLoopIndices.delete(idx);
+        box.classList.remove('multi-loop-selected');
+    } else {
+        selectedLoopIndices.add(idx);
+        box.classList.add('multi-loop-selected');
+    }
 }
 
 // Determine color class based on score
@@ -3438,74 +3518,81 @@ function findRecitationLine(currentTime) {
     }
 
     function runRecitationStep() {
-        if (recitationTimeout) clearTimeout(recitationTimeout);
-        if (currentRecitationLine >= allLines.length) { exitRecitation(); return; }
+    if (recitationTimeout) clearTimeout(recitationTimeout);
+    
+    // Safety check
+    if (currentRecitationLine >= allLines.length) { exitRecitation(); return; }
 
-        showRecitationLine(currentRecitationLine);
-        updateButtonVisuals('auto'); 
+    showRecitationLine(currentRecitationLine);
+    updateButtonVisuals('auto'); 
 
-        const el = allLines[currentRecitationLine];
-        const dur = parseFloat(el.dataset.duration); // Full duration in ms
-        const startTimeSeconds = parseFloat(el.dataset.startTime); // Start time in seconds
+    const el = allLines[currentRecitationLine];
+    const dur = parseFloat(el.dataset.duration);
+    const startTimeSeconds = parseFloat(el.dataset.startTime);
 
-        let timeToNextStep = dur; 
-
-        // Check if Custom Speed is OFF
-        const isCustomSpeed = localStorage.getItem('overrideInterval') !== null;
+    let timeToNextStep = dur; 
+    const isCustomSpeed = localStorage.getItem('overrideInterval') !== null;
+    
+    // --- 1. Calculate time remaining for current line ---
+    if (!isCustomSpeed && !audioPlayer.paused) {
+        const lineDurationSeconds = dur / 1000;
+        const elapsedTimeSeconds = audioPlayer.currentTime - startTimeSeconds;
+        const remainingDurationMs = (lineDurationSeconds - elapsedTimeSeconds) * 1000;
         
-        if (!isCustomSpeed && !audioPlayer.paused) {
-            const lineDurationSeconds = dur / 1000;
-            const elapsedTimeSeconds = audioPlayer.currentTime - startTimeSeconds;
-            
-            // Remaining time in milliseconds
-            const remainingDurationMs = (lineDurationSeconds - elapsedTimeSeconds) * 1000;
-            
-            if (remainingDurationMs > 50) {
-                timeToNextStep = remainingDurationMs;
-            } else if (elapsedTimeSeconds >= lineDurationSeconds) {
-                // === LOOP LOGIC HERE ===
-                if (isLoopActive) {
-                    // Reset audio to start of THIS sentence
-                    audioPlayer.currentTime = startTimeSeconds;
-                    // Do not increment index
-                    runRecitationStep();
-                    return;
-                }
-                // =======================
-
-                // Normal progression
-                currentRecitationLine += 1;
-                
-                if (currentRecitationLine < allLines.length) {
-                    runRecitationStep();
-                    return; 
-                } else {
-                    exitRecitation();
-                    return;
-                }
-            }
-        }
-
-        // Logic for Custom Speed or Timed Step
-        const nextIdx = isLoopActive ? currentRecitationLine : currentRecitationLine + 1; // If looping, stay on same index
-        
-        // Handling the Timeout (Logic for Loop within Timeout)
-        if (nextIdx < allLines.length) {
-            recitationTimeout = setTimeout(() => {
-                if (isLoopActive) {
-                     // For custom speed mode or general timeout fallback
-                     // Reset audio if needed (optional for custom speed, but good for sync)
-                     if (!isCustomSpeed) audioPlayer.currentTime = startTimeSeconds; 
-                     currentRecitationLine = currentRecitationLine; // Stay
-                } else {
-                     currentRecitationLine = nextIdx; // Advance
-                }
-                runRecitationStep();
-            }, timeToNextStep);
+        if (remainingDurationMs > 50) {
+            timeToNextStep = remainingDurationMs;
         } else {
-             recitationTimeout = setTimeout(() => { exitRecitation(); }, timeToNextStep);
+            // If we are already past the time, force a tiny delay to trigger the transition immediately
+            timeToNextStep = 10;
         }
     }
+
+    // --- 2. Determine the Next Index (The Sequence Logic) ---
+    recitationTimeout = setTimeout(() => {
+        let nextIdx;
+
+        if (isLoopActive) {
+            // === LOOP MODE ACTIVE ===
+            if (selectedLoopIndices.size > 0) {
+                // A. MULTI-LOOP (Selected Boxes: 1, 5, 8...)
+                const sortedIndices = Array.from(selectedLoopIndices).sort((a, b) => a - b);
+                
+                // Find the first selected index that is GREATER than current line
+                const nextInSequence = sortedIndices.find(i => i > currentRecitationLine);
+                
+                if (nextInSequence !== undefined) {
+                    nextIdx = nextInSequence; // Go to next selected
+                } else {
+                    nextIdx = sortedIndices[0]; // Wrap back to first selected
+                }
+            } else {
+                // B. SINGLE LOOP (Current sentence only)
+                nextIdx = currentRecitationLine; 
+            }
+        } else {
+            // === NORMAL MODE ===
+            nextIdx = currentRecitationLine + 1;
+        }
+
+        // --- 3. Execute Transition ---
+        if (nextIdx < allLines.length) {
+            currentRecitationLine = nextIdx;
+            
+            // CRITICAL: If we are looping (single or multi), we MUST seek the audio
+            // to the start of the target line.
+            if (isLoopActive && !isCustomSpeed) {
+                const targetLine = allLines[currentRecitationLine];
+                const newStart = parseFloat(targetLine.dataset.startTime);
+                audioPlayer.currentTime = newStart;
+            }
+
+            runRecitationStep(); // Recursive call
+        } else {
+            exitRecitation(); // End of chant
+        }
+
+    }, timeToNextStep);
+}
 
     function showRecitationLine(idx) {
     // 1. Remove highlight from previous line
