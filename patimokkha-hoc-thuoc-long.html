@@ -7,6 +7,7 @@
 	<link rel="manifest" href="./manifest3.json">
 	<meta name="theme-color" content="#8b5cf6">
 	<link rel="apple-touch-icon" href="./images/icon-192-patimokkha.png">
+	<link href="./css/css.css" rel="stylesheet">
     <title>Học Thuộc Lòng Pātimokkha</title>
  	<script src="./js/jquery-1.10.2.min.js"></script>
     <script src="./js/dpd_i2h.js"></script>
@@ -386,6 +387,13 @@ gap: 3px; /* Tighter gap for the rightmost controls */
     font-size: 12px;
     color: #555;
     transition: transform 0.1s;
+	-webkit-user-select: none; /* Safari / Chrome */
+    -moz-user-select: none;    /* Firefox */
+    -ms-user-select: none;     /* IE 10+ */
+    user-select: none;         /* Standard */
+    
+    -webkit-touch-callout: none; /* iOS Safari: Disables the system menu */
+    -webkit-tap-highlight-color: transparent; /* Removes the blue flash on tap */
 }
 
 [data-theme="dark"] .progress-box {
@@ -447,27 +455,36 @@ gap: 3px; /* Tighter gap for the rightmost controls */
     transition: width 0.3s ease;
 }
 
-/* SLIDER UNDER SENTENCE */
+/* --- CHECKBOX UNDER SENTENCE --- */
 .memorize-slider-container {
     margin-top: 15px;
     padding-top: 10px;
     border-top: 1px dashed var(--primary-color);
     text-align: center;
     animation: fadeIn 0.3s;
+    display: flex;           /* Flexbox to center content */
+    justify-content: center;
+    align-items: center;
 }
 
-.memorize-slider-container label {
-    display: block;
-    font-size: 14px;
-    margin-bottom: 5px;
+/* Label styling for the checkbox */
+.memorize-checkbox-label {
+    font-size: 16px;
     font-weight: bold;
     color: var(--highlight-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;               /* Space between box and text */
+    user-select: none;       /* Prevent text selection on click */
 }
 
-.memorize-slider {
-    width: 80%;
-    max-width: 300px;
+/* The actual checkbox styling */
+.memorize-checkbox {
+    width: 20px;
+    height: 20px;
     cursor: pointer;
+    accent-color: var(--highlight-color); /* Uses your theme color (Orange/Yellow) */
 }
 /* --- BUTTON VISIBILITY LOGIC --- */
         
@@ -514,6 +531,138 @@ gap: 3px; /* Tighter gap for the rightmost controls */
     border-color: #ff6b6b !important;
     background-color: rgba(255, 107, 107, 0.2);
 }
+
+/* --- ACHIEVEMENT BANNER (SECTION LEVEL) --- */
+#section-achievement-banner {
+    display: none;
+    background: #fffdf0; /* Màu giấy chứng chỉ nhẹ */
+    color: #5d4037;
+    width: 90%;
+    max-width: 800px;
+    text-align: center;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    /* Viền kép tạo nét cổ điển trang trọng */
+    border: 4px double #FDB931; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    animation: slideDown 0.5s ease-out;
+    position: relative;
+	
+}
+@media (min-width: 768px) {
+    #section-achievement-banner { width: 96%; }
+}
+[data-theme="dark"] #section-achievement-banner {
+    background-color: #2d2d2d;
+    color: #fff;
+    border-color: #d4a373;
+}
+#section-achievement-banner h3 {
+    color: #b35900;
+    font-family: "Times New Roman", serif;
+    font-size: 18px;
+    margin: 0;
+    text-transform: uppercase;
+}
+[data-theme="dark"] #section-achievement-banner h3 {
+    color: #e67300;
+}
+
+
+/* --- GRAND ACHIEVEMENT MODAL (GLOBAL LEVEL) --- */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.5s;
+}
+
+.modal-content {
+    background: #fff;
+    background-image: url('./images/imgbk.png');
+    padding: 20px; /* Reduced slightly for mobile comfort */
+    border-radius: 15px;
+    text-align: center;
+    
+    /* FIX STARTS HERE */
+    box-sizing: border-box;     /* Includes padding/border in the width calculation */
+    width: 90%;                /* Takes up 90% of screen width on small devices */
+    max-width: 400px;          /* Won't grow larger than 400px on tablets/PC */
+    /* FIX ENDS HERE */
+
+    border: 4px solid #FDB931;
+    box-shadow: 0 0 30px rgba(253, 185, 49, 0.6);
+    position: relative;
+    animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+[data-theme="dark"] .modal-content {
+    background-color: #2d2d2d;
+    color: #fff;
+    border-color: #d4a373;
+}
+
+.medal-icon {
+    font-size: 80px;
+    color: #FDB931;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 0 10px rgba(253, 185, 49, 0.8));
+    animation: floatMedal 3s ease-in-out infinite;
+}
+
+.modal-title {
+    font-size: 24px;
+    color: #d35400;
+    margin-bottom: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+[data-theme="dark"] .modal-title { color: #f39c12; }
+
+.modal-text {
+    font-size: 16px;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+.btn-close-modal {
+    background: #d35400;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    font-size: 16px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    font-weight: bold;
+}
+.btn-close-modal:hover { transform: scale(1.05); background: #e67e22; }
+
+/* Animations */
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 200%; }
+}
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes popIn {
+    0% { opacity: 0; transform: scale(0.5); }
+    100% { opacity: 1; transform: scale(1); }
+}
+@keyframes floatMedal {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
     </style>
 </head>
 <body>
@@ -535,7 +684,14 @@ gap: 3px; /* Tighter gap for the rightmost controls */
     </div>
 </div>
 
-
+<div id="section-achievement-banner">
+    <h3>
+        <i class="fas fa-wreath-laurel"></i> 
+        Hộ Trì Học Giới
+        <i class="fas fa-wreath-laurel"></i>
+    </h3>
+    <div style="font-size:12px; margin-top:5px;">Chứng Nhận Thành Tựu Học Thuộc Lòng Học&nbsp;Giới&nbsp;Này</div>
+</div>
 <div id="help-container" style="display: none; padding: 20px; background-color: var(--box-bg); border: 1px solid var(--box-border); margin-bottom: 15px; border-radius: 8px;">
         <h3>Học Thuộc Lòng Pātimokkha</h3>
         <p>Đây là ứng dụng & công cụ trên nền tảng web được thiết kế để hỗ trợ chư Tăng và hành giả trong việc học thuộc lòng giới bổn Pātimokkha. Ứng dụng có giao diện đồng bộ âm thanh & văn bản, làm nổi bật từng dòng chữ theo thời gian của âm thanh, cho phép thực hành tụng đọc chính xác, đồng thời bao gồm các bài tập ghi nhớ bằng cách ẩn ngẫu nhiên các từ.</p>
@@ -644,7 +800,7 @@ gap: 3px; /* Tighter gap for the rightmost controls */
 
 <div class="bottom-bar">
     <div class="bar-main-row">
-        <audio id="audioPlayer" controls loop>Trình duyệt không hỗ trợ audio.</audio>
+        <audio id="audioPlayer" controls>Trình duyệt không hỗ trợ audio.</audio>
 
     <div class="controls-cluster">         
 	        <button id="btn-dictionary" class="icon-btn" onclick="togglePaliLookup()" title="Từ điển Pali">📖</button>
@@ -697,6 +853,30 @@ gap: 3px; /* Tighter gap for the rightmost controls */
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<div id="grand-achievement-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="medal-icon">
+            <i class="far fa-wreath-laurel"></i>
+        </div>
+        
+        <div class="modal-title">Bậc Hộ Trì Giới</div>
+        
+        <p class="modal-text">
+            Lành thay! Quý hành giả đã ghi nhớ trọn vẹn toàn bộ <b>Giới&nbsp;Bổn&nbsp;Pātimokkha</b>.<br>
+            
+            <span style="display: block; color: #b35900; font-weight: 600; font-style: italic; margin-top: 15px;">
+               "Người chế ngự tay chân,<br>
+Chế ngự lời và ý,<br>
+Vui thích nội thiền định.<br>
+Ðộc thân, biết vừa đủ,<br>
+Thật xứng gọi Tỷ-kheo."
+            </span>
+        </p>
+        
+        <button class="btn-close-modal" onclick="closeAchievementModal()">Sādhu! Lành thay!</button>
     </div>
 </div>
 <script>
@@ -2969,8 +3149,13 @@ audioPlayer.addEventListener('play', () => {
 // --- ADD THIS NEW CODE ---
         // Sự kiện khi audio chạy hết bài: Reset về 0:00 và thoát chế độ Recitation
         audioPlayer.addEventListener('ended', () => {
-            audioPlayer.currentTime = 0; // Trả audio về 0:00
-        });
+    // If Loop is active and we are in Recitation Mode, 
+    // DO NOT reset to 0. Let runRecitationStep handle the loop jump.
+    if (isLoopActive && displayArea.classList.contains('recitation-active')) {
+        return; 
+    }
+    
+});
         // -------------------------
         let initialIndex = 0;
         const savedIndex = localStorage.getItem('lastSectionIndex');
@@ -3012,6 +3197,8 @@ function loadSection(index) {
 
    isLoopActive = false;
         document.getElementById('btn-loop').classList.remove('active-loop');
+		
+		 updateOverallStats(); 
     if (wasRecitationActive) {
         // If mode was on, RESTART it for the new section immediately.
         // We do NOT call exitRecitation().
@@ -3203,7 +3390,7 @@ function attachBoxEvents(box, idx) {
             toggleBoxSelection(idx);
             // Optional: Vibrate mobile device for feedback
             if (navigator.vibrate) navigator.vibrate(50);
-        }, 500); // 500ms threshold for long press
+        }, 400); // 500ms threshold for long press
     };
 
     const cancelPress = () => {
@@ -3270,8 +3457,12 @@ function updateDashboardBox(idx, score) {
 
 /* --- UPDATED STATISTICS LOGIC --- */
 
+/* --- UPDATED STATISTICS LOGIC WITH REWARDS --- */
+
+/* --- REPLACE YOUR EXISTING updateOverallStats FUNCTION WITH THIS ONE --- */
+
 function updateOverallStats() {
-    // --- 1. SESSION PROGRESS (Current Section Only) ---
+    // --- 1. CALCULATE SESSION PROGRESS (Current Section) ---
     let sessionTotalScore = 0;
     let sessionMaxScore = allLines.length * 100; // 100% per line
 
@@ -3281,21 +3472,68 @@ function updateOverallStats() {
     });
 
     // Calculate Session %
-    // Avoid division by zero if section is empty
     const sessionPct = sessionMaxScore === 0 ? 0 : Math.round((sessionTotalScore / sessionMaxScore) * 100);
     
+    // Update Session Bar UI
     document.getElementById('bar-session').style.width = sessionPct + '%';
     document.getElementById('text-session').innerText = sessionPct + '%';
 
-
-    // --- 2. GLOBAL PROGRESS (All Sections) ---
+    // --- 2. CALCULATE GLOBAL PROGRESS (All Sections) ---
     const globalStats = calculateGlobalStats();
     
     // Calculate Global %
     const globalPct = globalStats.maxScore === 0 ? 0 : Math.round((globalStats.currentScore / globalStats.maxScore) * 100);
 
+    // Update Global Bar UI
     document.getElementById('bar-total').style.width = globalPct + '%';
     document.getElementById('text-total').innerText = globalPct + '%';
+
+    // --- 3. BANNER LOGIC (UPDATED) ---
+    const banner = document.getElementById('section-achievement-banner');
+    const bannerTitle = banner.querySelector('h3');
+    const bannerSubtitle = banner.querySelector('div');
+
+    if (globalPct === 100 && globalStats.maxScore > 0) {
+        // CASE A: USER HAS MEMORIZED EVERYTHING (GLOBAL 100%)
+        banner.style.display = 'block';
+        // Update Title
+        bannerTitle.innerHTML = '<i class="fas fa-wreath-laurel"></i> Hộ Trì Giới Luật <i class="fas fa-wreath-laurel"></i>';
+        // Update Subtitle
+        bannerSubtitle.innerHTML = 'Chứng Nhận Thành Tựu Học Thuộc Lòng Giới&nbsp;Bổn&nbsp;Pātimokkha';
+
+    } else if (sessionPct === 100 && sessionMaxScore > 0) {
+        // CASE B: USER MEMORIZED ONLY THIS SECTION (SESSION 100%)
+        banner.style.display = 'block';
+        // Update Title (Revert to default section title)
+        bannerTitle.innerHTML = '<i class="fas fa-wreath-laurel"></i> Hộ Trì Học Giới <i class="fas fa-wreath-laurel"></i>';
+        // Update Subtitle
+        bannerSubtitle.innerHTML = 'Chứng Nhận Thành Tựu Học Thuộc Lòng Học&nbsp;Giới&nbsp;Này';
+
+    } else {
+        // CASE C: NOT COMPLETE
+        banner.style.display = 'none';
+    }
+
+    // *** REWARD 2: GLOBAL MODAL (Keep existing logic) ***
+    if (globalPct === 100 && globalStats.maxScore > 0) {
+        showGrandAchievement();
+    }
+}
+
+// Global variable to ensure we don't spam the user if they close the modal in the same session
+let hasSeenGlobalModal = false;
+
+function showGrandAchievement() {
+    if (hasSeenGlobalModal) return;
+    
+    const modal = document.getElementById('grand-achievement-modal');
+    modal.style.display = 'flex'; // Use flex to center
+}
+
+function closeAchievementModal() {
+    const modal = document.getElementById('grand-achievement-modal');
+    modal.style.display = 'none';
+    hasSeenGlobalModal = true; // Mark as seen for this page load
 }
 
 // Helper: Iterates through ALL sections data to calculate total mastery
@@ -3464,43 +3702,52 @@ function findRecitationLine(currentTime) {
         let nextIdx;
 
         if (isLoopActive) {
-            // === LOOP MODE ACTIVE ===
+            // --- A. Loop Mode (Single or Selected Boxes) ---
             if (selectedLoopIndices.size > 0) {
-                // A. MULTI-LOOP (Selected Boxes: 1, 5, 8...)
-                const sortedIndices = Array.from(selectedLoopIndices).sort((a, b) => a - b);
-                
-                // Find the first selected index that is GREATER than current line
-                const nextInSequence = sortedIndices.find(i => i > currentRecitationLine);
-                
-                if (nextInSequence !== undefined) {
-                    nextIdx = nextInSequence; // Go to next selected
-                } else {
-                    nextIdx = sortedIndices[0]; // Wrap back to first selected
-                }
+                 // Multi-loop logic...
+                 const sortedIndices = Array.from(selectedLoopIndices).sort((a, b) => a - b);
+                 const nextInSequence = sortedIndices.find(i => i > currentRecitationLine);
+                 nextIdx = nextInSequence !== undefined ? nextInSequence : sortedIndices[0];
             } else {
-                // B. SINGLE LOOP (Current sentence only)
-                nextIdx = currentRecitationLine; 
+                 // Single Loop (Current Sentence)
+                 nextIdx = currentRecitationLine; 
             }
         } else {
-            // === NORMAL MODE ===
+            // --- B. Normal Mode (Default: Loop Entire Section) ---
             nextIdx = currentRecitationLine + 1;
+            
+            // IF we reach the end, wrap back to 0 (Loop All)
+            if (nextIdx >= allLines.length) {
+                nextIdx = 0;
+            }
         }
 
         // --- 3. Execute Transition ---
         if (nextIdx < allLines.length) {
+            const prevLine = currentRecitationLine;
             currentRecitationLine = nextIdx;
             
-            // CRITICAL: If we are looping (single or multi), we MUST seek the audio
-            // to the start of the target line.
-            if (isLoopActive && !isCustomSpeed) {
+            // Sync Audio logic
+            // We need to seek audio if:
+            // 1. Loop Mode is Active (Single or Multi jumping back)
+            // 2. We wrapped around from End -> Start in Normal Mode (Loop All)
+            
+            const wrappedAround = (!isLoopActive && nextIdx === 0 && prevLine === allLines.length - 1);
+            
+            if ((isLoopActive || wrappedAround) && !isCustomSpeed) {
                 const targetLine = allLines[currentRecitationLine];
                 const newStart = parseFloat(targetLine.dataset.startTime);
+                
                 audioPlayer.currentTime = newStart;
+                
+                // Ensure audio resumes if it paused at the end of the track
+                if (audioPlayer.paused) audioPlayer.play(); 
             }
 
-            runRecitationStep(); // Recursive call
+            runRecitationStep(); 
         } else {
-            exitRecitation(); // End of chant
+            // This path is now rarely taken unless the text is empty
+            exitRecitation(); 
         }
 
     }, timeToNextStep);
@@ -3530,48 +3777,47 @@ function findRecitationLine(currentTime) {
 
 // Function to create/update slider
 function injectSlider(lineElement, idx) {
-    // Check if slider container already exists in this line
-    let sliderContainer = lineElement.querySelector('.memorize-slider-container');
+    // Check if container exists (Reusing class name for cleanup compatibility)
+    let container = lineElement.querySelector('.memorize-slider-container');
     
-    if (!sliderContainer) {
+    if (!container) {
         // Create container
-        sliderContainer = document.createElement('div');
-        sliderContainer.className = 'memorize-slider-container';
+        container = document.createElement('div');
+        container.className = 'memorize-slider-container';
         
-        // Create Label
+        // Create Label Wrapper
         const label = document.createElement('label');
-        label.id = `label-slider-${idx}`;
+        label.className = 'memorize-checkbox-label';
         
-        // Create Input
+        // Create Checkbox
         const input = document.createElement('input');
-        input.type = 'range';
-        input.min = 0;
-        input.max = 100;
-		input.step = 10;
-        input.className = 'memorize-slider';
+        input.type = 'checkbox';
+        input.className = 'memorize-checkbox';
         
-        // Logic
-        input.oninput = function() {
-            const val = this.value;
-            label.innerText = `Đã thuộc: ${val}%`;
-            // Save and update dashboard immediately
-            saveLineScore(idx, parseInt(val));
+        // Logic: Binary 0 or 100
+        input.onchange = function() {
+            const score = this.checked ? 100 : 0;
+            saveLineScore(idx, score);
         };
 
-        // Append
-        sliderContainer.appendChild(label);
-        sliderContainer.appendChild(input);
-        lineElement.appendChild(sliderContainer);
+        // Append Text
+        const textSpan = document.createElement('span');
+        textSpan.innerText = "Đã thuộc"; // Label text: "Memorized"
+
+        // Assemble elements
+        label.appendChild(input);
+        label.appendChild(textSpan);
+        container.appendChild(label);
+        lineElement.appendChild(container);
     }
 
-    // Set current values
+    // Set current state (Checked if score is 100)
     const currentScore = getLineScore(idx);
-    const input = sliderContainer.querySelector('input');
-    const label = sliderContainer.querySelector('label');
-    
-    input.value = currentScore;
-    label.innerText = `Đã thuộc: ${currentScore}%`;
+    const input = container.querySelector('input');
+    // We treat anything less than 100 as "not fully memorized"
+    input.checked = (currentScore >= 100);
 }
+
 
 function navigateRecitation(d) {
         // 1. Check if audio is currently playing before we do anything
