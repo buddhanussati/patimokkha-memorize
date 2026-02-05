@@ -127,9 +127,9 @@
 
         .btn-nav, .btn-darkmode {
             background: transparent; border: 1px solid var(--primary-color);
-            color: var(--primary-color); padding: 5px 10px; border-radius: 5px; cursor: pointer;
+            color: var(--primary-color); padding: 7px 7px; border-radius: 5px; cursor: pointer;
         }
-        .btn-darkmode { background: #34495e; color: #fff; border: none; font-size: 18px; }
+        .btn-darkmode { background: #34495e; color: #fff; border: none; font-size: 14px; }
 
         h2 { text-align: center; color: var(--primary-color); margin: 5px 0 15px 0; font-size: 20px; }
 
@@ -302,7 +302,7 @@ gap: 7px; /* Tighter gap for the navigation arrows and select */
 justify-content: flex-end; /* Ensure controls are aligned right */
 }
 .btn-nav, .btn-darkmode {
-padding: 4px 8px; /* Slightly reduced button padding */
+padding: 7px 7px; /* Slightly reduced button padding */
 }
 #section-select {
 max-width: 180px; /* Force the select box to be much narrower on mobile */
@@ -610,12 +610,12 @@ gap: 3px; /* Tighter gap for the rightmost controls */
 
 .medal-icon {
     font-size: 80px;
-    color: #FDB931;
+    color: #e39802;
     margin-bottom: 20px;
     filter: drop-shadow(0 0 10px rgba(253, 185, 49, 0.8));
     animation: floatMedal 3s ease-in-out infinite;
 }
-
+[data-theme="dark"] .modal-icon { color: #FDB931;}
 .modal-title {
     font-size: 24px;
     color: #d35400;
@@ -667,17 +667,17 @@ gap: 3px; /* Tighter gap for the rightmost controls */
 
 <div class="container" id="main-container">
 <div class="top-nav">
-    <button class="btn-darkmode" onclick="toggleTheme()">🌙</button> 
+    <button class="btn-darkmode" onclick="toggleTheme()"><i class="fas fa-moon"></i></button> 
     
 
         
         <div class="nav-controls">
-            <button class="btn-nav" onclick="changeSection(-1)">❮</button>
+            <button class="btn-nav" onclick="changeSection(-1)"><i class="fas fa-angle-left"></i></button>
             <select id="section-select" onchange="selectSection()"></select>
-            <button class="btn-nav" onclick="changeSection(1)">❯</button>
-	    <div id="top-right-controls" style="display: flex; gap: 5px; align-items: center;">
+            <button class="btn-nav" onclick="changeSection(1)"><i class="fas fa-angle-right"></i></button>
+	    <div id="top-right-controls" style="display: flex; gap: 3px; align-items: center;">
         
-        <button id="help-toggle" class="btn-nav" aria-expanded="false" title="Trợ giúp">&#9432;</button>		
+        <button id="help-toggle" class="btn-nav" style="text-align: center; " aria-expanded="false" title="Help"><i class="fas fa-circle-info"></i></button>		
         </div>
     </div>
 </div>
@@ -691,92 +691,78 @@ gap: 3px; /* Tighter gap for the rightmost controls */
     <div style="font-size:12px; margin-top:5px;">Certification of Achievement in&nbsp;Memorizing&nbsp;this&nbsp;Sikkhāpada</div>
 </div>
 <div id="help-container" style="display: none; padding: 20px; background-color: var(--box-bg); border: 1px solid var(--box-border); margin-bottom: 15px; border-radius: 8px;">
-        
-        <h3>Pātimokkha Memorize</h3>
-        <p>This is a web-based app & tool designed to assist Bhikkhus and students in memorizing the Pātimokkha. It features a synchronized text interface that highlights lines in time with the audio, allowing for precise follow-along practice, and includes memorization drills by hiding random words.</p>
+    
+    <h3>Pātimokkha Memorize</h3>
+    <p>This is a web-based app & tool designed to assist Bhikkhus and students in memorizing the Pātimokkha. It features synchronized text & audio chanting for precise follow-along practice, includes memorization drills by hiding random words, and an interactive dashboard to track memorization progress.</p>
 
-        <h4>📖 User Guide</h4>
-        
-        <h5>1. Navigation (Top Bar)</h5>
-        <ul>
-            <li>Theme Toggle (🌙/☀️): Switch between Light Mode and Dark Mode for comfortable reading in different lighting conditions.</li>
-            <li>Section Selector: Use the dropdown menu to jump to a specific rule (e.g., Pārājika 1, Saṅghādisesa 5).</li>
-            <li>Arrows (❮ ❯): Navigate to the immediate previous or next section.</li>
-        </ul>
+    <h4><i class="fas fa-book-open-reader"></i> User Guide</h4>
+    
+    <h4>1. Navigation & Basics</h4>
+    <ul>
+        <li><b>Theme Toggle (<i class="fas fa-moon"></i>/<i class="fas fa-sun-bright"></i>):</b> Switch between Light and Dark modes.</li>
+        <li><b>Section Selector:</b> Jump to a specific rule (e.g., Pārājika 1).</li>
+        <li><b>Random (<i class="far fa-dharmachakra"></i>):</b> Jump to a random rule to test your recall.</li>
+        <li><b>Dictionary (<i class="fas fa-book-open"></i>):</b> Toggle to enable Pāli lookup. Hover over words to see definitions.</li>
+    </ul>
 
-        <h5>2. Audio & Recitation Controls (Bottom Bar)</h5>
-        <ul>
-            <li>Audio Player: Standard play/pause and volume controls.
-                <ul>
-                    <li>Note: When a track finishes, the player automatically resets to the beginning (0:00).</li>
-                </ul>
-            </li>
-            <li>Recitation Button (🎤):
-                <ul>
-                    <li>Click to Start: Activates Recitation Mode. The text will enlarge and highlight line-by-line synchronized with the audio.</li>
-					
-                    <li>Status Colors:
-                        <ul>
-                            <li>Green (Pulsing): Auto-play mode is active (synchronized).</li>
-                            <li>Blue: Manual/Paused mode.</li>
-                        </ul>
-                    </li>
-                </ul>
-            </li>
-            <li>Navigation Buttons (« »):
-                <ul>
-                    <li>« (Previous): Jump back to the previous line of text and rewind audio.</li>
-                    <li>» (Next): Jump forward to the next line of text and skip audio forward.</li>
-                </ul>
-            </li>
-            <li>Exit (✖): Appears only during Recitation Mode. Click this (top left of the control bar) to stop the mode and return to the full text view.</li>
-        </ul>
-<h5>3. Pāli Dictionary Lookup</h5>
-<ul>
-    <li><b>Toggle On/Off:</b> Use the <b>📖</b> button on the control bar.</li>
-    <li><b>How to Look Up:</b> When the feature is turned on, simply hover over any Pāli word.</li>
-    <li><b>Functionality:</b> Allows you to look up the meaning of Pāli words directly within the text without leaving the page. The definition window will appear right next to the word.</li>
-</ul>
-        <h5>4. Settings & Memorization Tools (⚙️)</h5>
-        <p>Click the Gear Icon to open the settings panel.</p>
-        
-        <h5>A. Memorization Drill (Hide Texts)</h5>
-        <p>This feature helps test your memory by obscuring words.</p>
-        <ul>
-            <li>Difficulty Slider: Drag the slider to select the percentage of words to hide (10% to 90%).</li>
-            <li>Hide Button: Randomly hides words based on the selected percentage.</li>
-            <li>Reveal Interaction: Click on any hidden word (represented by a blank box) to reveal it instantly.</li>
-            <li>Show Button: Resets the text and reveals all words.</li>
-        </ul>
+    <h4>2. Recitation Mode (<i class="fas fa-microphone"></i>)</h4>
+    <p>Click the Mic button to enter Recitation Mode. The text enlarges and syncs with the audio.</p>
+    <ul>
+        <li><b>Status:</b> Green = Auto-playing; Blue = Paused/Manual.</li>
+        <li><b>Navigation:</b> Use <b>«</b> and <b>»</b> to jump lines.</li>
+    </ul>
 
-        <h5>B. Speed Control</h5>
-        <ul>
-            <li>Default: Uses the specific timing written in the code (e.g., [5.0] seconds) for perfect synchronization with the chanting audio.</li>
-            <li>Adjust (🕒): Allows you to override the default timing.
-                <ul>
-                    <li>Set a fixed duration (e.g., 3.0 seconds) for every line.</li>
-                    <li>Useful for practicing recitation at a steady, slower, or faster pace without audio sync.</li>
-                </ul>
-            </li>
-        </ul>
+    <h4>3. Loop Mode (Repetition)</h4>
+    <ul>
+        <li><b>Single Loop:</b> Click the Loop button (<i class="fas fa-arrows-repeat"></i>) to repeat the current sentence indefinitely.</li>
+        <li><b>Multi-Loop (Custom Sequence):</b> 
+            <ul>
+                <li>In the Dashboard Grid (colored boxes), <b>Long Press (Hold)</b> a box to select it. It will turn Red.</li>
+                <li>Select multiple boxes to create a custom loop. The player will cycle through only the selected lines.</li>
+                <li>Long press again to deselect.</li>
+            </ul>
+        </li>
+		<li><b>Default Loop:</b> When not clicked upon, the Loop button will repeat the current section audio.</li>
+    </ul>
 
-<h4>💾 Uses Offline</h4>
-<p>
-    To Use Offline, download the Apk file for Android, Zip file for PC, and ZIM file for all OS and devices. 
-    (The ZIM format is opened by Kiwix, a free program dedicated to providing offline access to free educational content. 
-    To learn more, see here: <a href="https://kiwix.org/en/about_us/" target="_blank">kiwix.org/en/about_us/</a>).
-</p>
-<p>Download Link & Source Code: <a href="https://github.com/buddhanussati/patimokkha-memorize"><b>here.</b></a></p></p>
+    <h4>4. Mastery Dashboard & Progress</h4>
+    <p>Located above the text in Recitation Mode, this dashboard visualizes your memory retention.</p>
+    <ul>
+        <li><b>Heatmap Grid:</b> Each box represents a line of text.
+            <ul>
+                <li><b>Gray:</b> Not memorized.</li>
+                <li><b>Green:</b> Memorized.</li>
+            </ul>
+        </li>
+        <li><b>Marking Progress:</b> When a line is active, a <b>"Memorized"</b> checkbox appears below the text. Check this to mark the line as complete (100%).</li>
+        <li><b>Statistics:</b>
+            <ul>
+                <li><b>Section Progress:</b> Completion % of the current rule.</li>
+                <li><b>Memorized Total:</b> Completion % of the entire Pātimokkha.</li>
+            </ul>
+        </li>
+        <li><b>Achievements:</b> You will receive a "Sikkhāpadavidū" banner for completing a section, and a "Vinayavidū" Medal Modal for completing the entire text.</li>
+    </ul>
 
-<h4>⚖️ License & Usage</h4>
-<p>
-    The content and code for this application are licensed under the Creative Commons NonCommercial 4.0 International License.
-    (<a href="https://creativecommons.org/licenses/by-nc/4.0/legalcode" target="_blank">CC BY-NC 4.0</a>).
-</p>
-<p>
-    You are free to Share and Adapt this material for <b>non-commercial</b> purposes. Commercial use is not permitted.
-</p>
-    </div>
+    <h4>5. Settings (<i class="fas fa-gear"></i>)</h4>
+    <ul>
+        <li><b>Hide Texts:</b> Use the slider to hide random words (10%-90%) to test your memory. Click hidden boxes to reveal them.</li>
+        <li><b>Speed Control (<i class="far fa-clock"></i>):</b> Override the audio synchronization to set a fixed speed (e.g., 5 seconds per line) for practicing recitation at a steady, slower, or faster pace without audio sync.</li>
+    </ul>
+
+    <h4><i class="fas fa-floppy-disk"></i> Use Offline</h4>
+    <p>
+        To Use Offline, download the Apk file for Android, Zip file for PC, or ZIM file for Kiwix.
+        (Learn more about Kiwix: <a href="https://kiwix.org/en/" target="_blank">kiwix.org</a>).
+    </p>
+    <p>Download Link & Source Code: <a href="https://github.com/buddhanussati/patimokkha-memorize"><b>here</b></a></p>
+
+    <h4><i class="fas fa-scale-balanced"></i>&nbsp;&nbsp;License</h4>
+    <p>
+        Licensed under <a href="https://creativecommons.org/licenses/by-nc/4.0/legalcode" target="_blank">CC BY-NC 4.0</a>.
+        Free to Share and Adapt for <b>non-commercial</b> purposes.
+    </p>
+</div>
 	<div id="recitation-dashboard">
     <div id="dashboard-grid" class="dashboard-grid">
         </div>
@@ -804,17 +790,11 @@ gap: 3px; /* Tighter gap for the rightmost controls */
         <div class="controls-cluster">
 		
 	           
-            <button id="btn-dictionary" class="icon-btn" onclick="togglePaliLookup()" title="Pali Lookup">📖</button>
-			<button id="settings-btn" class="icon-btn btn-settings" onclick="toggleSettings()" title="Settings">⚙️</button>
-			<button id="btn-exit-recitation" class="icon-btn" onclick="exitRecitation()" title="Exit Recitation">✖</button> <button id="btn-loop" class="icon-btn" onclick="toggleLoopSentence()" title="Loop current sentence">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="17 1 21 5 17 9"></polyline>
-        <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
-        <polyline points="7 23 3 19 7 15"></polyline>
-        <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
-        <text id="loop-count" x="12" y="15.5" font-family="Tahoma" font-size="8" font-weight="100" fill="currentColor" text-anchor="middle" style="display:none;">1</text>
-    </svg>
-</button> <button id="recitation-toggle-btn" class="icon-btn btn-recitation" onclick="toggleRecitationAction()" title="Recitation">🎤</button>
+            <button id="btn-dictionary" class="icon-btn" onclick="togglePaliLookup()" title="Pali Lookup"><i class="fas fa-book-open"></i></button>
+			<button id="settings-btn" class="icon-btn btn-settings" onclick="toggleSettings()" title="Settings"><i class="fas fa-gear"></i></button>
+			<button id="btn-exit-recitation" class="icon-btn" onclick="exitRecitation()" title="Exit Recitation"><i class="fas fa-xmark"></i></button> <button id="btn-loop" class="icon-btn" onclick="toggleLoopSentence()" title="Loop current sentence">
+    <i class="fas fa-arrows-repeat"></i>
+</button> <button id="recitation-toggle-btn" class="icon-btn btn-recitation" onclick="toggleRecitationAction()" title="Recitation"><i class="fas fa-microphone"></i></button>
            
 		<button id="btn-random" class="icon-btn" onclick="randomSection()" title="Random Training Rule">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -826,8 +806,8 @@ gap: 3px; /* Tighter gap for the rightmost controls */
         </svg>
     </button>
   <button id="btn-english-toggle" class="icon-btn" onclick="toggleEnglish()" title="Show English translation">EN</button>
-			<button class="icon-btn btn-nav-recitation" onclick="navigateRecitation(-1)" title="Previous">«</button>
-            <button class="icon-btn btn-nav-recitation" onclick="navigateRecitation(1)" title="Next">»</button>
+			<button class="icon-btn btn-nav-recitation" onclick="navigateRecitation(-1)" title="Previous"><i class="fas fa-angles-left"></i></button>
+            <button class="icon-btn btn-nav-recitation" onclick="navigateRecitation(1)" title="Next"><i class="fas fa-angles-right"></i></button>
         </div>
     </div>
 
@@ -844,7 +824,7 @@ gap: 3px; /* Tighter gap for the rightmost controls */
             <div class="setting-group">
                 <span style="font-size:13px; font-weight:600">Speed:</span>
                 
-                <button id="btn-show-speed" class="btn-sm" onclick="toggleSpeedControl()" style="background:#2980b9; color:white;">🕒</button>
+                <button id="btn-show-speed" class="btn-sm" onclick="toggleSpeedControl()" style="background:#2980b9; color:white;"><i class="far fa-clock"></i></button>
 
                 <div id="speed-control-area" style="display:none; align-items:center; gap:5px;">
                     <input type="range" id="recitation-interval" min="1" max="10" step="0.5" value="3" oninput="updateRecitationInterval(this.value)" style="width:80px">
@@ -865,7 +845,7 @@ gap: 3px; /* Tighter gap for the rightmost controls */
         <div class="modal-title">Vinayavidū</div>
         
         <p class="modal-text">
-            Excellent! You have fully memorized the entire <b>Pātimokkha&nbsp;Exposition</b>.<br>
+            Certification of Achievement: Full&nbsp;Memorization of&nbsp;the&nbsp;<b>Bhikkhu&nbsp;Pātimokkha<br>
             
             <span style="display: block; color: #b35900; font-weight: 600; font-style: italic; margin-top: 15px;">
        "Calm in body, calm in speech,<br>
@@ -875,7 +855,7 @@ gap: 3px; /* Tighter gap for the rightmost controls */
     </span>
         </p>
         
-        <button class="btn-close-modal" onclick="closeAchievementModal()">Sādhu! Sādhu! Sādhu!</button>
+        <button class="btn-close-modal" onclick="closeAchievementModal()">Sādhu! Sādhu!</button>
     </div>
 </div>
 <script>
@@ -3002,8 +2982,8 @@ function toggleLoopSentence() {
     const settingsPanel = document.getElementById('settings-panel');
     const helpButton = document.getElementById('help-toggle');
     const helpContainer = document.getElementById('help-container');
-    const symbolInfo = '&#9432;'; // Information symbol
-    const symbolClose = '✖'; // Close symbol
+    const symbolInfo = '<i class="fas fa-circle-info"></i>'; // Information symbol
+    const symbolClose = '<i class="fas fa-xmark"></i>'; // Close symbol
 
     function toggleHelp() {
         const isVisible = helpContainer.style.display !== 'none';
@@ -3036,10 +3016,10 @@ function toggleLoopSentence() {
 
         if (savedTheme === 'dark') {
             body.setAttribute('data-theme', 'dark');
-            if (btn) btn.innerHTML = "☀️";
+            if (btn) btn.innerHTML = '<i class="fas fa-sun-bright"></i>';
         } else {
              body.removeAttribute('data-theme');
-             if (btn) btn.innerHTML = "🌙";
+             if (btn) btn.innerHTML = '<i class="fas fa-moon"></i>';
         }
         const savedDictState = localStorage.getItem('dictionaryEnabled');
         // If it is 'true' OR null (first time user), turn it ON
@@ -3319,11 +3299,11 @@ function toggleEnglish() {
     function updateButtonVisuals(state) {
         recitationToggleBtn.classList.remove('active-auto', 'active-manual');
         if (state === 'auto') {
-            recitationToggleBtn.classList.add('active-auto'); recitationToggleBtn.innerHTML = "❚❚";
+            recitationToggleBtn.classList.add('active-auto'); recitationToggleBtn.innerHTML = '<i class="fas fa-pause"></i>';
         } else if (state === 'manual') {
-            recitationToggleBtn.classList.add('active-manual'); recitationToggleBtn.innerHTML = "▶";
+            recitationToggleBtn.classList.add('active-manual'); recitationToggleBtn.innerHTML = '<i class="fas fa-play"></i>';
         } else {
-            recitationToggleBtn.innerHTML = "🎤";
+            recitationToggleBtn.innerHTML = '<i class="fas fa-microphone"></i>';
         }
     }
 
@@ -3486,7 +3466,7 @@ function updateOverallStats() {
     const bannerTitle = banner.querySelector('h3');
     const bannerSubtitle = banner.querySelector('div');
 
-   if (globalPct === 100 && globalStats.maxScore > 0) {
+   if (globalPct === 100 && sessionPct === 100) {
         // CASE A: USER HAS MEMORIZED EVERYTHING (GLOBAL 100%)
         banner.style.display = 'block';
         // Update Title
@@ -3508,7 +3488,7 @@ function updateOverallStats() {
     }
 
     // *** REWARD 2: GLOBAL MODAL (Keep existing logic) ***
-    if (globalPct === 100 && globalStats.maxScore > 0) {
+    if (globalPct === 100 && sessionPct === 100) {
         showGrandAchievement();
     }
 }
@@ -3903,11 +3883,11 @@ function navigateRecitation(d) {
 
         if (isDark) {
             body.removeAttribute('data-theme');
-            btn.innerHTML = "🌙";
+            btn.innerHTML = '<i class="fas fa-moon"></i>';
             localStorage.setItem('themePreference', 'light');
         } else {
             body.setAttribute('data-theme', 'dark');
-            btn.innerHTML = "☀️";
+            btn.innerHTML = '<i class="fas fa-sun-bright"></i>';
             localStorage.setItem('themePreference', 'dark');
         }
     }
