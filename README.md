@@ -1,61 +1,73 @@
-### Pātimokkha Memorize
+## Pātimokkha Memorize
 
-This is a web-based app & tool designed to assist Bhikkhus and students in memorizing the Pātimokkha. It features a synchronized text interface that highlights lines in time with the audio, allowing for precise follow-along practice, and includes memorization drills by hiding random words.
+This is a web-based app & tool designed to assist Bhikkhus and students in memorizing the Pātimokkha. It features synchronized text & audio chanting for precise follow-along practice, includes memorization drills by hiding random words, and an interactive dashboard to track memorization progress.
 
-#### 🚀 How to Start
+<img width="1162" height="585" alt="image" src="https://github.com/user-attachments/assets/8ae3ebab-765b-4a19-9864-c0b2ff1c5df2" />
+
+### 🚀 How to Start
 
 This application is hosted online and can be accessed directly by clicking the link: [loicuaducphat.org/congcu/patimokkha-memorize](https://loicuaducphat.org/congcu/patimokkha-memorize). It is compatible with any modern web browser (Chrome, Firefox, Edge, Safari).
 
-#### 📖 User Guide
+### 📖 User Guide
 
-##### 1. Navigation (Top Bar)
+### 1. Navigation & Basics
 
-* **Theme Toggle (🌙/☀️):** Switch between Light Mode and Dark Mode for comfortable reading in different lighting conditions.
-* **Section Selector:** Use the dropdown menu to jump to a specific rule (e.g., Pārājika 1, Saṅghādisesa 5).
-* **Arrows (❮ ❯):** Navigate to the immediate previous or next section.
+* **Theme Toggle (🌙/☀️):** Switch between Light and Dark modes.
+* **Section Selector:** Jump to a specific rule (e.g., Pārājika 1).
+* **Random (☸️):** Jump to a random rule to test your recall.
+* **Dictionary (📖):** Toggle to enable Pāli lookup. Hover over words to see definitions.
 
-##### 2. Audio & Recitation Controls (Bottom Bar)
+### 2. Recitation Mode (🎤)
 
-* **Audio Player:** Standard play/pause and volume controls.
+Click the **Mic button** to enter Recitation Mode. The text enlarges and syncs with the audio.
 
-* **Recitation Button (🎤):**
+* **Status:** Green = Auto-playing; Blue = Paused/Manual.
+* **Navigation:** Use **«** and **»** to jump between lines.
 
-  * **Click to Start:** Activates Recitation Mode. The text will enlarge and highlight line-by-line synchronized with the audio.
-  * 
-      ~~**NOTE:** </b> For perfect synchronization, it is recommended to <b>only</b> use the toggles of <b>Recitation Button (❚❚/▶)</b> and <b>Navigation Buttons (« »)</b> to control playback (pause, play, fast forward) once Recitation Mode is active. Using the standard Audio Player controls (play/pause/seek) may interrupt the text synchronization.~~ See [Release v1.0.2"](https://github.com/buddhanussati/patimokkha-memorize/releases/tag/v1.0.2) .
-            </li>
-  * **Status Colors:**
-    * Green (Pulsing): Auto-play mode is active (synchronized).
-    * Blue: Manual/Paused mode.
-* **Navigation Buttons (« »):**
-  * **« (Previous):** Jump back to the previous line of text and rewind audio.
-  * **» (Next):** Jump forward to the next line of text and skip audio forward.
-* **Exit (✖):** Appears only during Recitation Mode. Click this (top left of the control bar) to stop the mode and return to the full text view.
+### 3. Loop Mode (Repetition)
 
-##### 3. Pāli Dictionary Lookup
-* **Toggle On/Off:** Use the **📖** button on the control bar.
-* **How to Look Up:** When the feature is turned on, simply hover over any Pāli word.
-* **Functionality:** Allows you to look up the meaning of Pāli words directly within the text without leaving the page. The definition window will appear right next to the word.
-##### 4. Settings & Memorization Tools (⚙️)
+* **Single Loop:** Click the **Loop button** (↺) to repeat the current sentence indefinitely.
+* **Multi-Loop (Custom Sequence):** * In the Dashboard Grid (colored boxes), **Long Press (Hold)** a box to select it. It will turn Red.
+* **Default Loop:** When not clicked upon, the Loop button will repeat the current section audio.
+* Select multiple boxes to create a custom loop. The player will cycle through only the selected lines.
+* Long press again to deselect.
 
-Click the Gear Icon to open the settings panel.
 
-##### A. Memorization Drill (Hide Texts)
 
-This feature helps test your memory by obscuring words.
+### 4. Mastery Dashboard & Progress
 
-* **Difficulty Slider:** Drag the slider to select the percentage of words to hide (10% to 90%).
-* **Hide Button:** Randomly hides words based on the selected percentage.
-* **Reveal Interaction:** Click on any hidden word (represented by a blank box) to reveal it instantly.
-* **Show Button:** Resets the text and reveals all words.
+Located above the text in Recitation Mode, this dashboard visualizes your memory retention.
 
-##### B. Speed Control
+* **Heatmap Grid:** Each box represents a line of text.
+* **Gray:** Not memorized.
+* **Green:** Memorized.
 
-* **Default:** Uses the specific timing written in the code (e.g., [5.0] seconds) for perfect synchronization with the chanting audio.
-* **Adjust (🕒):** Allows you to override the default timing.
-  * Set a fixed duration (e.g., 3.0 seconds) for every line.
-  * Useful for practicing recitation at a steady, slower, or faster pace without audio sync.
 
-#### 💾 Uses Offline
+* **Marking Progress:** When a line is active, a **"Memorized"** checkbox appears below the text. Check this to mark the line as complete (100%).
+* **Statistics:**
+* **Section Progress:** Completion % of the current rule.
+* **Memorized Total:** Completion % of the entire Pātimokkha.
 
-To Use Offline, download the Apk file for Android, Zip file for PC, and ZIM file for all OS and devices. (The ZIM format is opened by Kiwix, a free program dedicated to providing offline access to free educational content (To learn more see here: [kiwix.org/en/about_us/"](https://kiwix.org/en/about-us/)) .
+
+* **Achievements:** You will receive a "Sikkhāpadavidū" banner for completing a section, and a "Vinayavidū" Medal Modal for completing the entire text.
+
+### 5. Settings (⚙️)
+
+* **Hide Texts:** Use the slider to hide random words (10%–90%) to test your memory. Click hidden boxes to reveal them.
+* **Speed Control (🕒):** Override the audio synchronization to set a fixed speed (e.g., 5 seconds per line) for practicing recitation at a steady pace without audio sync.
+
+---
+
+### 💾 Use Offline
+
+To use offline, download the Apk file for Android, Zip file for PC, or ZIM file for Kiwix.
+
+(Learn more about Kiwix: [kiwix.org](https://kiwix.org/en/))
+
+**Download Link & Source Code:** [Available here](https://github.com/buddhanussati/patimokkha-memorize)
+
+### ⚖️ License
+
+Licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/legalcode).
+
+Free to Share and Adapt for **non-commercial** purposes.
