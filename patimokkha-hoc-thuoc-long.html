@@ -698,7 +698,7 @@ gap: 3px; /* Tighter gap for the rightmost controls */
     <h3>Học Thuộc Lòng Pātimokkha</h3>
     <p>Đây là ứng dụng & công cụ được thiết kế để hỗ trợ chư Tăng và hành giả học thuộc lòng giới bổn Pātimokkha. Ứng dụng có tính năng đồng bộ văn bản với âm thanh cho phép thực hành tụng đọc theo chính xác, đồng thời bao gồm các bài tập ghi nhớ bằng cách ẩn ngẫu nhiên các từ, và một bảng điều khiển tương tác để theo dõi tiến độ học thuộc.</p>
 
-    <h4><i class="fas fa-book-open-reader"></i> Hướng Dẫn Sử Dụng</h4>
+    <h4><i class="fas fa-book-open-reader"></i> Hướng Dẫn</h4>
     
     <h4>1. Điều Hướng & Cơ Bản</h4>
     <ul>
@@ -3111,7 +3111,12 @@ audioPlayer.addEventListener('play', () => {
         runRecitationStep();
     }
 });
-        
+   
+   audioPlayer.addEventListener('volumechange', () => {
+    // Save the current volume (0.0 to 1.0) to localStorage
+    localStorage.setItem('savedAudioVolume', audioPlayer.volume);
+});     
+
 // CẬP NHẬT MỚI: Chỉ dừng timer nếu user bấm pause, không dừng nếu audio tự hết
         audioPlayer.addEventListener('pause', () => {
             // Chỉ chạy logic này khi đang trong chế độ Tụng Đọc
@@ -3282,7 +3287,21 @@ function renderText(rawText) {
     });
 }
 
-/* --- UPDATED: TOGGLE VIETNAMESE WITH SAVE --- */
+// specific setup function or inside window.onload
+function initAudioPlayer() {
+    const savedVolume = localStorage.getItem('savedAudioVolume');
+    
+    if (savedVolume !== null) {
+        // Convert the string back to a float and apply it
+        audioPlayer.volume = parseFloat(savedVolume);
+    } else {
+        // Optional: Set a default if nothing is saved (e.g., 50%)
+        audioPlayer.volume = 0.5; 
+    }
+}
+
+// Call this when the app starts
+initAudioPlayer();
 function toggleVietnamese() {
     displayArea.classList.toggle('show-translation');
     const btn = document.getElementById('btn-viet-toggle');
@@ -3555,7 +3574,7 @@ function calculateGlobalStats() {
 
 // Function to handle clicking a box
 function jumpToLine(idx) {
-    // Stop auto-play timer
+    const wasPlaying = !audioPlayer.paused;
     if (recitationTimeout) { clearTimeout(recitationTimeout); recitationTimeout = null; }
     
     currentRecitationLine = idx;
@@ -3566,10 +3585,17 @@ function jumpToLine(idx) {
     const startTime = parseFloat(targetEl.dataset.startTime || 0);
     audioPlayer.currentTime = startTime;
 
-    // Visuals
-    updateButtonVisuals('manual');
-    if (!audioPlayer.paused) audioPlayer.pause();
-}    
+    if (wasPlaying) {
+        // If it was playing, keep playing from the new time
+        audioPlayer.play();
+        // You may need to update visuals to 'playing' state here if 'manual' sets it to pause
+        // updateButtonVisuals('playing'); 
+    } else {
+        // If it was paused, keep it paused and update visuals
+        updateButtonVisuals('manual'); 
+        audioPlayer.pause();
+    }
+}   
 function toggleRecitationAction() {
     const isActive = displayArea.classList.contains('recitation-active');
     const isRunning = !!recitationTimeout;
