@@ -851,7 +851,7 @@ gap: 3px; /* Tighter gap for the rightmost controls */
        "Calm in body, calm in speech,<br>
         Tranquil and composed of heart,<br>
         Whoso has spewed out worldly&nbsp;wants<br>
-        "Serene" is such a bhikkhu called." - Dhp 378
+        "Serene" is such a bhikkhu called."
     </span>
         </p>
         
@@ -3126,7 +3126,12 @@ audioPlayer.addEventListener('play', () => {
                 updateButtonVisuals('manual');
             }
         });
-// --- ADD THIS NEW CODE ---
+		
+audioPlayer.addEventListener('volumechange', () => {
+    // Save the current volume (0.0 to 1.0) to localStorage
+    localStorage.setItem('savedAudioVolume', audioPlayer.volume);
+});
+
         // Sự kiện khi audio chạy hết bài: Reset về 0:00 và thoát chế độ Recitation
         audioPlayer.addEventListener('ended', () => {
     // If Loop is active and we are in Recitation Mode, 
@@ -3280,7 +3285,22 @@ function renderText(rawText) {
     });
 }
 
-/* --- UPDATED: TOGGLE VIETNAMESE WITH SAVE --- */
+// specific setup function or inside window.onload
+function initAudioPlayer() {
+    const savedVolume = localStorage.getItem('savedAudioVolume');
+    
+    if (savedVolume !== null) {
+        // Convert the string back to a float and apply it
+        audioPlayer.volume = parseFloat(savedVolume);
+    } else {
+        // Optional: Set a default if nothing is saved (e.g., 50%)
+        audioPlayer.volume = 0.5; 
+    }
+}
+
+// Call this when the app starts
+initAudioPlayer();
+
 function toggleEnglish() {
     displayArea.classList.toggle('show-translation');
     const btn = document.getElementById('btn-english-toggle');
@@ -3546,7 +3566,7 @@ function calculateGlobalStats() {
 
 // Function to handle clicking a box
 function jumpToLine(idx) {
-    // Stop auto-play timer
+    const wasPlaying = !audioPlayer.paused;
     if (recitationTimeout) { clearTimeout(recitationTimeout); recitationTimeout = null; }
     
     currentRecitationLine = idx;
@@ -3557,10 +3577,17 @@ function jumpToLine(idx) {
     const startTime = parseFloat(targetEl.dataset.startTime || 0);
     audioPlayer.currentTime = startTime;
 
-    // Visuals
-    updateButtonVisuals('manual');
-    if (!audioPlayer.paused) audioPlayer.pause();
-}    
+    if (wasPlaying) {
+        // If it was playing, keep playing from the new time
+        audioPlayer.play();
+        // You may need to update visuals to 'playing' state here if 'manual' sets it to pause
+        // updateButtonVisuals('playing'); 
+    } else {
+        // If it was paused, keep it paused and update visuals
+        updateButtonVisuals('manual'); 
+        audioPlayer.pause();
+    }
+}
 function toggleRecitationAction() {
     const isActive = displayArea.classList.contains('recitation-active');
     const isRunning = !!recitationTimeout;
