@@ -1853,6 +1853,14 @@ dpd_i2h = {
     "catuppada 2",
     "catuppada 3"
   ],
+  "ākāsaṭṭhā": [
+    "ākāsaṭṭha 1",
+    "ākāsaṭṭha 2",
+    ],
+   "catūhapāyehi": [
+    "catu",
+    "apāya 1",
+  ],
   "caraṃ": [
     "cara 1",
     "cara 3",
@@ -3466,6 +3474,12 @@ dpd_i2h = {
 	"atthacariyā",
 
   ],
+  
+  "buddhaguṇe": [
+    "buddha 1",
+	"guṇa 1.1",
+
+  ],
   "cariyāyo": [
     "cariyā 1.1",
   ],
@@ -3505,9 +3519,7 @@ dpd_i2h = {
     "sabbepi",
 	"ime",
   ],
-  "buddhaguṇe": [
-
-  ],
+ 
   "āvajjetvā": [
     "āvajjetvā",
 
