@@ -664,6 +664,125 @@ gap: 3px; /* Tighter gap for the rightmost controls */
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
 }
+
+/* --- SECTION TITLE & INFO ICON LAYOUT --- */
+.section-header-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin: 5px 0 15px 0;
+}
+
+#section-title {
+    margin: 0; /* Reset margin since wrapper handles it */
+}
+
+.btn-info-icon {
+    font-size: 15px;
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: transform 0.2s, color 0.2s;
+    display: none; /* Hidden by default until JS enables it */
+	vertical-align: middle;      /* Aligns to the middle of the text line */
+    line-height: 1;              /* Removes extra spacing around the icon */
+    position: relative;          /* Allows for micro-adjustments */
+    top: 2px;                   /* Manually nudge it down if it still looks 'high' */
+}
+
+.btn-info-icon:hover {
+    transform: scale(1.1);
+    color: var(--highlight-color);
+}
+.simple-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Simple dark dim */
+    z-index: 10000; /* Very high z-index */
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px); /* Slight blur, not too heavy */
+}
+
+.simple-modal-content {
+    background-color: var(--bg-color); /* Matches theme */
+    background-image: url('./images/imgbk.png'); /* Keeps texture if you want, or remove */
+    color: var(--text-color);
+    width: 90%;
+    max-width: 650px;
+    max-height: 85vh;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: relative; /* For absolute positioning of X button */
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--box-border);
+}
+
+/* Header Area */
+.simple-modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--box-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.simple-modal-header h3 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 20px;
+}
+
+/* The X Close Icon */
+.btn-close-simple {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.btn-close-simple:hover {
+    opacity: 1;
+    color: var(--highlight-color);
+}
+
+/* Scrollable Body */
+.simple-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    line-height: 1.6;
+    font-size: 16px;
+}
+
+/* Scrollbar styling */
+.simple-modal-body::-webkit-scrollbar { width: 8px; }
+.simple-modal-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+.simple-modal-body::-webkit-scrollbar-thumb { background: #999; border-radius: 4px; }
+
+/* Content specific styling */
+.simple-modal-body h4 {
+    color: var(--highlight-color);
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 5px;
+    margin-top: 3px;
+    margin-bottom: 15px;
+}
+.simple-modal-body ul { padding-left: 20px; }
+.simple-modal-body li { margin-bottom: 10px; }
+
+/* Dark mode tweaks */
+[data-theme="dark"] .simple-modal-content {
+    background-color: #2d2d2d;
+    border-color: #555;
+}
     </style>
 </head>
 <body>
@@ -782,10 +901,15 @@ gap: 3px; /* Tighter gap for the rightmost controls */
         </div>
     </div>
 </div>
-    <h2 id="section-title">Loading...</h2>
-	<h2 id="section-title-vn" style="font-weight: normal; font-size: 18px; margin-top: 0; opacity: 0.9;"></h2>
+   <div class="section-header-wrapper">
+        <h2 id="section-title">Đang tải...</h2>
+        <i id="btn-section-info" class="fas fa-circle-info btn-info-icon" onclick="showSectionInfo()" title="Về kinh này"></i>
+    </div>
+    
+    <h2 id="section-title-vn" style="font-weight: normal; font-size: 18px; margin-top: 0; opacity: 0.9;"></h2>
     <div id="display-area" class="text-content"></div>
 </div>
+
 
 <div class="bottom-bar">
     <div class="bar-main-row">
@@ -838,7 +962,16 @@ gap: 3px; /* Tighter gap for the rightmost controls */
         </div>
     </div>
 </div>
-
+<div id="simple-info-modal" class="simple-modal-overlay">
+    <div class="simple-modal-content">
+        <div class="simple-modal-header">
+            <h3 id="simple-modal-title">Sutta Info</h3>
+            <button class="btn-close-simple" onclick="closeSimpleInfoModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="simple-modal-body" class="simple-modal-body">
+            </div>
+    </div>
+</div>
 <div id="grand-achievement-modal" class="modal-overlay">
     <div class="modal-content">
         <div class="medal-icon">
@@ -1029,7 +1162,111 @@ function lookupWord(word, displayTitle) {
 }
 </script>
 <script>
-    // --- DỮ LIỆU ---
+    const introContent = `
+        <h4>DẪN NHẬP</h4>
+        <p><i><b>“Uggaṇhātha, bhikkhave, āṭānāṭiyaṃ rakkhaṃ. Pariyāpuṇātha, bhikkhave, āṭānāṭiyaṃ rakkhaṃ. Dhāretha, bhikkhave, āṭānāṭiyaṃ rakkhaṃ. Atthasaṃhitā, bhikkhave, āṭānāṭiyā rakkhā bhikkhūnaṃ bhikkhunīnaṃ upāsakṃnaṃ upāsikānaṃ guttiyā rakkhāya avihiṃsāya phāsuvihārāyā”ti.</b></i> (Trích Trường Bộ Kinh 32).</p>
+        
+        <p><i>“Này các Tỷ-kheo, hãy học Hộ Kinh Āṭānāṭiya này, hãy thuộc lòng Kinh Āṭānāṭiya này. Này các Tỷ-kheo, Tỷ-kheo-ni, Nam cư sĩ, Nữ cư sĩ được che chở, được hộ trì, được ngăn khỏi bị làm hại, được sống thoải mái hạnh phúc.”</i></p>
+        
+        <p>Với những lời này, Đức Phật đã khuyến khích các hàng đệ tử học tập kinh hộ trì Āṭānāṭiya để tự bảo vệ mình, và từ đó bắt đầu truyền thống tụng đọc các bài Kinh để cầu sự bảo vệ và những kết quả tốt lành. Các bài Kinh được tụng để bảo vệ còn được gọi là Kinh Hộ Trì hay ‘Paritta’, nghĩa là “bài Kinh bảo vệ những người tụng và người nghe khỏi những nguy hiểm, tai họa, v.v., từ khắp xung quanh.” Trải qua các thời đại, các bài Kinh khác đã được thêm vào danh sách ‘Các Kinh để tụng’. Như trong bộ Milindapañha (Mi Tiên Vấn Đáp) và các Chú giải của Ngài Buddhaghosa, có chín bài Kinh được nhắc đến như là Kinh Hộ Trì: Ratanasutta, Mettāsutta, Khandhasutta, Morasutta, Dhajaggasutta, Āṭānāṭiyasutta, Aṅgulimālasutta, Bojhaṅgasutta và Isigilisutta.</p>
+        
+        <p>Tập kinh trình bày ở đây bao gồm tám bài Kinh đầu tiên và thêm vào đó là cá kinh Maṅgalasutta, Vaṭṭasutta và Pubbaṇhasutta, tổng cộng gồm 11 bài Kinh, cùng với các câu kệ mở đầu cho mỗi bài. Đây là 11 bài Kinh được tụng hàng ngày tại mọi tu viện, chùa chiền và tại nhà của các cư sĩ ở tất cả các quốc gia Phật giáo Theravāda (Phật giáo Nguyên thủy). Bộ sưu tập này được biết đến ở Myanmar với tên gọi ‘Đại Hộ Kinh’, không phải vì các bài Kinh trong đó dài, mà có lẽ vì chúng có sức mạnh to lớn, nếu được trì tụng và lắng nghe đúng đắn, có thể xua tan nguy hiểm và mang lại những kết quả nhiệm màu.</p>
+        
+        <h4>CÁCH TRÌ TỤNG VÀ LẮNG NGHE KINH</h4>
+        <p>Vì các bài Kinh Hộ Trì Paritta này nhằm mục đích bảo vệ và mang lại các kết quả tốt đẹp khác, điều quan trọng là chúng phải được tụng và nghe một cách chính xác. Có một số điều kiện cần được thực hiện bởi cả người tụng và người nghe để nhận được trọn vẹn lợi ích của Kinh Paritta. Cụ thể, có ba điều kiện cho người tụng đọc và ba điều kiện cho người lắng nghe:</p>
+        
+        <b>Ba điều kiện đối với người tụng đọc:</b>
+        <ol>
+            <li>Họ phải học và tụng các bài Kinh một cách chính xác và đầy đủ, không được bỏ sót.</li>
+            <li>Họ phải hiểu ý nghĩa của các bài Kinh đang được tụng.</li>
+            <li>Họ phải tụng với tâm tràn đầy lòng hoan hỷ và từ tâm.</li>
+        </ol>
+        
+        <b>Ba điều kiện đối với người nghe:</b>
+        <ol>
+            <li>Họ phải không phạm vào ngũ nghịch đại tội: giết cha, giết mẹ, giết bậc A-la-hán, làm thân Phật chảy máu, và làm chia rẽ Tăng đoàn.</li>
+            <li>Họ phải không có ‘tà kiến cố định’ (tà kiến bác bỏ nghiệp và quả của nghiệp).</li>
+            <li>Họ phải lắng nghe với niềm tin vào hiệu năng của các bài Kinh trong việc ngăn chặn nguy hiểm và mang lại kết quả tốt lành. (Khi mọi người nghe với niềm tin, họ sẽ nghe với sự tôn trọng và chú tâm).</li>
+        </ol>
+        
+        <p>Chỉ khi các điều kiện này được đáp ứng, mọi người mới nhận được đầy đủ lợi ích từ các bài Kinh Paritta. Do đó, điều quan trọng là khi Kinh đang được tụng, mọi người nên lắng nghe với chú ý, tín tâm và sự tôn trọng. Hơn nữa, việc tụng Kinh Paritta là một hành động phát sanh 2 lợi íc. Người tụng giống như người cho đi, và người nghe giống như người nhận; nếu không nhận những gì được cho, họ sẽ không có được món đồ đó. Tương tự như vậy, nếu mọi người không lắng nghe mà lại làm việc khác trong khi người khác tụng, họ chắc chắn sẽ không nhận được lợi ích của việc tụng Kinh.</p>
+        
+        <h4>NGUỒN TRÍCH DẪN</h4>
+        <p>Ngoại trừ các câu kệ mở đầu, các bài Kinh được tìm thấy trong Tam Tạng (Piṭaka) như sau:<br>
+        <small>(Số tham chiếu là số trang của Ấn bản Đại hội Kết tập Kinh điển lần thứ VI, ngoại trừ Jātaka (Bổn sanh) được ghi theo số thứ tự của các chuyện Tiền thân).</small></p>
+        
+        <ul>
+            <li><b>Phần mở đầu (Parikamma)</b> => do các nhà kết tập biên soạn.</li>
+            <li><b>1. Maṅgalasutta</b> => Khuddakapāṭha, 3-4; Suttanipāta, 308-9.</li>
+            
+            <li><b>2. Ratatasutta</b><br>
+            Đoạn dẫn nhập => Dhammapada Aṭṭhakathā, ii. 272,<br>
+            Hai câu kệ tiếp theo => do các nhà kết tập biên soạn,<br>
+            Nội dung còn lại => Khuddakapāṭha, 4-7; Suttanipāta, 312-5.</li>
+            
+            <li><b>3. Mettāsutta</b> => Khuddakapāṭha, 10-12; Suttanipāta, 300-1.</li>
+            <li><b>4. Khandhasutta</b> => Vinaya. iv. 245; Aṅguttaranikāya, i. 384; Jātaka số 203.</li>
+            <li><b>5. Morasutta</b> => Jātaka số 159.</li>
+            <li><b>6. Vaṭṭasutta</b> => Cariyapiṭaka, 415.</li>
+            <li><b>7. Dhajaggasutta</b> => Saṃyuttanikāya, i. 220-2.</li>
+            
+            <li><b>8. Āṭānāṭiyasutta</b><br>
+            Các câu kệ 104-109 => Dīghanikāya, iii. 159.<br>
+            Các câu kệ 102, 103, 110-130 => do các nhà kết tập biên soạn.<br>
+            Câu kệ 131 => Kinh Pháp Cú (Dhammapada), câu 109.</li>
+            
+            <li><b>9. Aṅgulimālasutta</b> => Majjhimanikāya, ii. 306.</li>
+            
+            <li><b>10. Bojjhaṅgasutta</b><br>
+            Các bài Kinh gốc => Saṃyuttanikāya, iii. 71, 72, 73.<br>
+            Các câu kệ ở đây => do các nhà kết tập biên soạn.</li>
+            
+            <li><b>11. Pubbaṇhasutta</b><br>
+            Câu kệ 153 => Khuddakapāṭha, 5; Suttanipāta, 312.<br>
+            Các câu kệ 162-4 => Aṅguttaranikāya, i. 299.<br>
+            Phần còn lại => do các nhà kết tập biên soạn.</li>
+        </ul>
+
+        <h4>CÔNG DỤNG CỦA CÁC BÀI KINH HỘ TRÌ</h4>
+        <p>Mặc dù các bài Kinh Paritta nhìn chung là để tụng đọc, nhưng một số bài kinh cũng cần được thực hành. Chỉ có các Kinh Châu Báu (Ratanasutta), Kinh Con Công (Morasutta), Kinh Chim Cút (Vaṭṭasutta), Kinh Āṭānāṭiya, Kinh Aṅgulimāla và Kinh Ban Mai (Pubbaṇhasutta) là dành riêng cho việc tụng đọc; các bài khác dùng cho cả việc tụng đọc và thực hành. Mỗi bài Kinh có những công dụng cụ thể mặc dù mục đích chung là bảo vệ khỏi nguy hiểm. Các công dụng cụ thể có thể được tìm thấy trong các câu kệ dẫn nhập của mỗi bài Kinh, tóm tắt như sau:</p>
+        
+        <ul style="list-style-type: none; padding-left: 0;">
+            <li>1. Maṅgalasutta => cầu phước lành và thịnh vượng.</li>
+            <li>2. Ratanasutta => để thoát khỏi các nguy hiểm do bệnh tật, tà ma và nạn đói.</li>
+            <li>3. Mettāsutta => để lan tỏa lòng từ ái đến tất cả chúng sinh.</li>
+            <li>4. Khandhasutta => để bảo vệ khỏi rắn rết và các loài bò sát khác.</li>
+            <li>5. Morasutta => để bảo vệ khỏi cạm bẫy, sự giam cầm và được an toàn.</li>
+            <li>6. Vaṭṭasutta => để bảo vệ khỏi hỏa hoạn.</li>
+            <li>7. Dhajaggasutta => để bảo vệ khỏi sự sợ hãi, run rẩy và kinh hoàng.</li>
+            <li>8. Āṭanāṭiyasutta => để bảo vệ khỏi tà ma, có được sức khỏe và hạnh phúc.</li>
+            <li>9. Aṅgulimālasutta => để giúp các sản phụ dễ dàng sinh nở.</li>
+            <li>10. Bojjhaṅgasutta => để bảo vệ và thoát khỏi ốm đau, bệnh tật.</li>
+            <li>11. Pubbaṇhasutta => để bảo vệ khỏi điềm xấu, v.v., và có được hạnh phúc.</li>
+        </ul>
+        
+        <h4>RẢI TÂM TỪ</h4>
+        <p>Chưa bao giờ sự cần thiết của lòng từ ái (tâm từ) lại được cảm nhận sâu sắc như ngày nay khi bạo lực tràn lan khắp thế giới. Nếu chúng ta không giảm bớt bạo lực, thế giới sẽ trở thành địa ngục cho tất cả mọi người. Do đó, điều cấp thiết là chúng ta phải làm gì đó để ít nhất là giảm bớt bạo lực ngay cả khi không thể xóa sạch nó hoàn toàn. Việc thực hành lòng từ ái có thể giúp chúng ta đạt được mục tiêu đó; chúng ta có thể giúp giảm bớt bạo lực bằng tâm từ và làm cho mọi thứ tốt đẹp hơn cho tất cả chúng sinh.</p>
+        
+        <h4>HỒI HƯỚNG PHƯỚC BÁU</h4>
+        <p>‘Hồi hướng phước báu’ luôn là một hành động đẹp mỗi khi chúng ta làm được việc thiện sự. Khi các bài Kinh Paritta được tụng với âm hưởng trầm bổng và được lắng nghe với niềm tin thành kính, lợi ích tức thì mà chúng mang lại là sự thanh thản, tĩnh lặng, bình an và niềm hỷ lạc. Nhiều thế hệ đã hưởng được những lợi ích này của Paritta và Mettā trong rất nhiều năm qua. Những lợi ích này cũng dành cho chúng ta nếu chúng ta biết tụng, nghe và thực hành đúng cách. Nguyện cầu cho tất cả chúng sinh tận hưởng được lợi ích của Paritta và Mettā theo những lời hướng dẫn ở đây.</p>
+        
+        <p><i>U Sīlānanda, Aggamahāpaṇḍita<br>Hoa Kỳ, 1998</i></p>
+    `;
+
+const sectionInfoData = {
+    'Paritta': introContent,
+    'MS': introContent,
+    'Ratana': introContent,
+    'Metta': introContent,
+    'Khandha': introContent,
+    'Mora': introContent,
+    'Vaṭṭa': introContent,
+    'Dhajagga': introContent,
+    'Āṭānāṭiya': introContent,
+    'Aṅgulimāla': introContent,
+    'Bojjhaṅga': introContent,
+    'Pubbaṇha': introContent
+};
    const sections = [
       {
     id: 'Paritta', title: 'Paritta Parikamma', title_vn: 'Kệ Mở Đầu Hộ Kinh', audio: '00-ParittaPalikamma.mp3',
@@ -2252,7 +2489,7 @@ pabbajitena abhiṇhaṃ paccavekkhitabbā. [5.710]
 vị xuất gia cần phải luôn luôn quán sát.`
 },
 {
-    id: 'Pattidana', title: 'Mettābhāvanā', title_vn: 'Nguyện cầu - Chia phước', audio: '15-Pattidana.mp3',
+    id: 'Pattidana', title: 'Mettābhāvanā', title_vn: 'Hồi hướng - Chia phước', audio: '15-Pattidana.mp3',
 text: `Sabbe sattā, sabbe pāṇā, [3.709]
 Nguyện cho tất cả chúng sinh, tất cả hữu tình,
 sabbe bhūtā, sabbe puggalā, [3.398]
@@ -2573,8 +2810,25 @@ audioPlayer.addEventListener('volumechange', () => {
         loadSection(initialIndex);
     }
 
-    // --- LOGIC GIAO DIỆN & PERSISTENCE ---
-    /* --- UPDATED NAVIGATION LOGIC --- */
+/* --- INFO MODAL LOGIC --- */
+function showSectionInfo() {
+    const currentSection = sections[currentSectionIndex];
+    const infoContent = sectionInfoData[currentSection.id];
+    
+    if (infoContent) {
+        // Default Title
+        let displayTitle = "Về Kinh Hộ Trì Paritta";
+        
+        
+        document.getElementById('simple-modal-title').innerText = displayTitle;
+        document.getElementById('simple-modal-body').innerHTML = infoContent;
+        document.getElementById('simple-info-modal').style.display = 'flex';
+    }
+}
+
+function closeSimpleInfoModal() {
+    document.getElementById('simple-info-modal').style.display = 'none';
+}
 
 function loadSection(index) {
     // 1. Check if Recitation Mode is CURRENTLY active
@@ -2594,6 +2848,12 @@ function loadSection(index) {
     // 5. Update UI Basics
     sectionSelect.value = index;
     titleArea.innerText = sections[index].title;
+	const infoIcon = document.getElementById('btn-section-info');
+    if (sectionInfoData[sections[index].id]) {
+        infoIcon.style.display = 'block';
+    } else {
+        infoIcon.style.display = 'none';
+    }
 	const vnTitleEl = document.getElementById('section-title-vn');
     if (vnTitleEl) {
         vnTitleEl.innerText = sections[index].title_vn || ""; // Fallback to empty if missing

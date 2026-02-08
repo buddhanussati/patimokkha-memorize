@@ -661,6 +661,124 @@ gap: 3px; /* Tighter gap for the rightmost controls */
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
 }
+/* --- SECTION TITLE & INFO ICON LAYOUT --- */
+.section-header-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin: 5px 0 15px 0;
+}
+
+#section-title {
+    margin: 0; /* Reset margin since wrapper handles it */
+}
+
+.btn-info-icon {
+    font-size: 15px;
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: transform 0.2s, color 0.2s;
+    display: none; /* Hidden by default until JS enables it */
+	vertical-align: middle;      /* Aligns to the middle of the text line */
+    line-height: 1;              /* Removes extra spacing around the icon */
+    position: relative;          /* Allows for micro-adjustments */
+    top: 2px;                   /* Manually nudge it down if it still looks 'high' */
+}
+
+.btn-info-icon:hover {
+    transform: scale(1.1);
+    color: var(--highlight-color);
+}
+.simple-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Simple dark dim */
+    z-index: 10000; /* Very high z-index */
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px); /* Slight blur, not too heavy */
+}
+
+.simple-modal-content {
+    background-color: var(--bg-color); /* Matches theme */
+    background-image: url('./images/imgbk.png'); /* Keeps texture if you want, or remove */
+    color: var(--text-color);
+    width: 90%;
+    max-width: 650px;
+    max-height: 85vh;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: relative; /* For absolute positioning of X button */
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--box-border);
+}
+
+/* Header Area */
+.simple-modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--box-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.simple-modal-header h3 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 20px;
+}
+
+/* The X Close Icon */
+.btn-close-simple {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.btn-close-simple:hover {
+    opacity: 1;
+    color: var(--highlight-color);
+}
+
+/* Scrollable Body */
+.simple-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+    line-height: 1.6;
+    font-size: 16px;
+}
+
+/* Scrollbar styling */
+.simple-modal-body::-webkit-scrollbar { width: 8px; }
+.simple-modal-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+.simple-modal-body::-webkit-scrollbar-thumb { background: #999; border-radius: 4px; }
+
+/* Content specific styling */
+.simple-modal-body h4 {
+    color: var(--highlight-color);
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 5px;
+    margin-top: 3px;
+    margin-bottom: 15px;
+}
+.simple-modal-body ul { padding-left: 20px; }
+.simple-modal-body li { margin-bottom: 10px; }
+
+/* Dark mode tweaks */
+[data-theme="dark"] .simple-modal-content {
+    background-color: #2d2d2d;
+    border-color: #555;
+}
     </style>
 </head>
 <body>
@@ -779,8 +897,12 @@ gap: 3px; /* Tighter gap for the rightmost controls */
         </div>
     </div>
 </div>
-    <h2 id="section-title">Loading...</h2>
-	<h2 id="section-title-vn" style="font-weight: normal; font-size: 18px; margin-top: 0; opacity: 0.9;"></h2>
+  <div class="section-header-wrapper">
+        <h2 id="section-title">Loading...</h2>
+        <i id="btn-section-info" class="fas fa-circle-info btn-info-icon" onclick="showSectionInfo()" title="About this Sutta"></i>
+    </div>
+    
+    <h2 id="section-title-vn" style="font-weight: normal; font-size: 18px; margin-top: 0; opacity: 0.9;"></h2>
     <div id="display-area" class="text-content"></div>
 </div>
 
@@ -836,7 +958,16 @@ gap: 3px; /* Tighter gap for the rightmost controls */
         </div>
     </div>
 </div>
-
+<div id="simple-info-modal" class="simple-modal-overlay">
+    <div class="simple-modal-content">
+        <div class="simple-modal-header">
+            <h3 id="simple-modal-title">Sutta Info</h3>
+            <button class="btn-close-simple" onclick="closeSimpleInfoModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="simple-modal-body" class="simple-modal-body">
+            </div>
+    </div>
+</div>
 <div id="grand-achievement-modal" class="modal-overlay">
     <div class="modal-content">
         <div class="medal-icon">
@@ -1027,7 +1158,112 @@ function lookupWord(word, displayTitle) {
 }
 </script>
 <script>
-    // --- DỮ LIỆU ---
+    /* --- INFO CONTENT DATA --- */
+const introContent = `
+         <h4>INTRODUCTION</h4>
+        <p><i><b>“Uggaṇhātha, bhikkhave, āṭānāṭiyaṃ rakkhaṃ. Pariyāpuṇātha, bhikkhave, āṭānāṭiyaṃ rakkhaṃ. Dhāretha, bhikkhave, āṭānāṭiyaṃ rakkhaṃ. Atthasaṃhitā, bhikkhave, āṭānāṭiyā rakkhā bhikkhūnaṃ bhikkhunīnaṃ upāsakānaṃ upāsikānaṃ guttiyā rakkhāya avihiṃsāya phāsuvihārāyā”ti.</b></i> (Dīgha Nikāya 32).</p>
+        
+        <p><i>“Monks, learn the Āṭānāṭiya protection, study the Āṭānāṭiya protection, hold in your hearts the Āṭānāṭiya protection. Monks, beneficial is the Āṭānāṭiya protection for security, protection, freedom from harm and living in ease for monks, nuns (bhikkhunis) and male and female lay followers”.</i></p>
+        
+        <p>With these words the Buddha exhorted His monks to learn the Āṭānāṭiya protection for their protection and thus began the tradition of chanting the Sutta (discourses) for protection and good results. The Sutta chanted for protection, etc., is also known as ‘Paritta’ which means “the Sutta that protects those who chant and who listen to it against dangers, calamities, etc., from all around.” Through the ages other Suttas were added to the list of ‘Suttas for chanting’. Thus we find in Milindapañha and the Commentaries by the Venerable Buddhaghosa the following nine Suttas mentioned as Parittas: Ratanasutta, Mettāsutta, Khandhasutta, Morasutta, Dhajaggasutta, Āṭānāṭiyasutta. Aṅgulimālasutta, Bojhaṅgasutta and Isigilisutta.</p>
+        
+        <p>The collection presented here includes the first eight Suttas and in addition, Maṅgalasutta, Vaṭṭasutta and Pubbaṇhasutta, thus comprising altogether 11 Suttas, with further addition of introductory verses at the beginning of each Sutta. These are the 11 Suttas chanted everyday in every monastery and nunnery and in some houses of lay people in all Theravāda Buddhist countries. This collection is known in Myanmar as ‘The Great Paritta’, not because the Suttas in this collection are long ones, but probably because they have great power, if chanted and listened to in a correct way, could ward off dangers and bring in results.</p>
+        
+        <h4>CHANTING OF AND LISTENING TO THE SUTTAS</h4>
+        <p>Since these Parittas are meant for protection and other good results, it is important that they are chanted and listened to in a correct way. There are some conditions to he fulfilled by both the chanters and the listeners so as to get the full benefits of the Paritta. In fact, there are three conditions for the chanters to fulfill and another three for the listeners:</p>
+        
+        <b>The three conditions for the chanters are:</b>
+        <ol>
+            <li>They must have learnt and chant the Suttas correctly and fully without any omission,</li>
+            <li>They must understand the meaning of the Suttas being chanted, and</li>
+            <li>They must chant with the heart filled with goodwill and loving-kindness.</li>
+        </ol>
+        
+        <b>The three conditions for the listeners are:</b>
+        <ol>
+            <li>They must not have committed the five most heinous crimes, namely, killing one’s own father, killing one’s own mother, killing an Arahant, causing the blood to be congealed in the body of the Buddha by wounding Him, and causing schism in the Saṅgha.</li>
+            <li>They must not have the ‘fixed wrong view’, the view that rejects kamma and its results.</li>
+            <li>They must listen to the chanting with confidence in the efficacy of the Suttas in warding off the dangers and bringing good results. (When people listen with confidence they do so with respect and attention, so listening with respect and attention is implied in this condition.)</li>
+        </ol>
+        
+        <p>Only when these conditions are fulfilled do people get full benefits from the Parittas. Therefore, it is important that when the Parittas are being chanted, people should listen to the chanting with confidence, respect and attentiveness. Moreover, the chanting of Parittas for benefits is a two way action. Those who chant are like those who give out something, and those who listen are like those who take what is given; if they do not take what is given they will not get the thing. In the same way if people do not listen to the chanting, but just let other people chant and themselves do something else, they surely are not taking what is given and so they will not get the benefits of the chanting.</p>
+        
+        <h4>REFERENCES</h4>
+        <p>Except the introductory verses, the Suttas are found in the Piṭakas as follows:<br>
+        <small>(Reference numbers are page numbers of Sixth Buddhist Council Edition except those of Jātakas which are given by Jātaka numbers).</small></p>
+        
+        <ul>
+            <li><b>Preliminary</b> => composed by compilers.</li>
+            <li><b>1. Maṅgalasutta</b> => Khuddakapāṭha, 3-4; Suttanipāta, 308-9.</li>
+            
+            <li><b>2. Ratatasutta</b><br>
+            introductory passage => Dhammapada Aṭṭhakathā,ii. 272,<br>
+            following two verses => composed by compilers,<br>
+            remaining text => Khuddakapāṭha, 4-7; Suttanipāta, 312-5.</li>
+            
+            <li><b>3. Mettāsutta</b> => Khuddakapāṭha, 10-12; Suttanipāta, 300-1.</li>
+            <li><b>4. Khandhasutta</b> => Vinaya. iv. 245; Aṅguttaranikāya, i. 384; Jātaka no. 203.</li>
+            <li><b>5. Morasutta</b> => Jātaka no. 159.</li>
+            <li><b>6. Vaṭṭasutta</b> => Cariyapiṭaka, 415.</li>
+            <li><b>7. Dhajaggasutta</b> => Saṃyuttanikāya, i. 220-2.</li>
+            
+            <li><b>8. Āṭānāṭiyasutta</b><br>
+            verses 104-109 => Dīghanikāya, iii. 159.<br>
+            verses 102, 103, 110-130 => composed by compilers.<br>
+            verse 131 => Dhammapada, verse 109.</li>
+            
+            <li><b>9. Aṅgulimālasutta</b> => Majjhimanikāya, ii. 306.</li>
+            
+            <li><b>10. Bojjhaṅgasutta</b><br>
+            original Suttas => Saṃyuttanikāya, iii. 71, 72, 73.<br>
+            Verses here => composed by compilers.</li>
+            
+            <li><b>11. Pubbaṇhasutta</b><br>
+            verse 153 => Khuddakapāṭha, 5; Suttanipāta, 312.<br>
+            verses 162-4 => Aṅguttaranikāya, i. 299.<br>
+            the rest => composed by compilers.</li>
+        </ul>
+
+        <h4>THE USE OF THE PARITTAS</h4>
+        <p>Although the Parittas are for chanting in general, some of the Parittas are to be practiced as well. Only the Ratanasutta, Morasutta, Vaṭṭasutta, Āṭānāṭiyasutta, Aṅgulimālasutta and Pubbaṇhasutta are meant for chanting only; the others are for both chanting and practicing. And there are specific uses for the Parittas although generally they are meant for protection against dangers. The specific uses can be obtained from the introductory verses of each Sutta. They are, in brief, as follows:</p>
+        
+        <ul style="list-style-type: none; padding-left: 0;">
+            <li>1. Maṅgalasutta => for blessings and prosperity,</li>
+            <li>2. Ratanasutta => for getting free from dangers caused by disease, evil spirits and famine,</li>
+            <li>3. Mettāsutta => for suffusing all kinds of beings with loving-kindness,</li>
+            <li>4. Khandhasutta => for protecting against snakes and other creatures,</li>
+            <li>5. Morasutta => for protection against snares, imprisonment and for safety,</li>
+            <li>6. Vaṭṭasutta => for protection against fire,</li>
+            <li>7. Dhajaggasutta => for protection against fear, trembling and horror,</li>
+            <li>8. Āṭanāṭiyasutta => for protection against evil spirits, and gaining health and happiness,</li>
+            <li>9. Aṅgulimālasutta => for easy delivery for expectant mothers,</li>
+            <li>10. Bojjhaṅgasutta => for protection against and getting free from sickness and disease,</li>
+            <li>11. Pubbaṇhasutta => for protection against bad omens, etc., and gaining happiness.</li>
+        </ul>
+        
+       <h4>LOVING-KINDNESS</h4>
+        <p>Never before has the need for loving-kindness been so much felt as in these days. Violence is rampant throughout the world. If we cannot and do not reduce violence, the world will be a living hell for all inhabitants. Therefore it is imperative that we do something to at least reduce violence even if we will not be able to wipe it out from the world altogether. The practice of loving-kindness fortunately for us can help us achieve that aim; we can help reduce violence with the practice of loving-kindness and make things better for all beings.</p>
+        
+        <h4>SHARING MERITS</h4>
+        <p>‘Sharing Merits’ is always a pleasant act to do whenever we do meritorious deeds. When Parittas are chanted in sonorous tones and listened to with devotional faith, the immediate benefits they bring are serenity, calm, peacefulness and joy. Generations have enjoyed these benefits and many others of Paritta and Mettā for many many years. These benefits are for us too if we chant, listen to and practice them in a correct way. May all beings enjoy the benefits of Paritta and Mettā following the instructions given here.</p>
+        
+        <p><i>U Sīlānanda, Aggamahāpaṇḍita<br>USA, 1998</i></p>
+    `;
+
+const sectionInfoData = {
+    'Paritta': introContent,
+    'MS': introContent,
+    'Ratana': introContent,
+    'Metta': introContent,
+    'Khandha': introContent,
+    'Mora': introContent,
+    'Vaṭṭa': introContent,
+    'Dhajagga': introContent,
+    'Āṭānāṭiya': introContent,
+    'Aṅgulimāla': introContent,
+    'Bojjhaṅga': introContent,
+    'Pubbaṇha': introContent
+};
     const sections = [
       {
     id: 'Paritta', title: 'Paritta Parikamma', title_vn: 'Introductory Verses', audio: '00-ParittaPalikamma.mp3',
@@ -2584,8 +2820,26 @@ audioPlayer.addEventListener('volumechange', () => {
         loadSection(initialIndex);
     }
 
-    // --- LOGIC GIAO DIỆN & PERSISTENCE ---
-    /* --- UPDATED NAVIGATION LOGIC --- */
+/* --- INFO MODAL LOGIC --- */
+function showSectionInfo() {
+    const currentSection = sections[currentSectionIndex];
+    const infoContent = sectionInfoData[currentSection.id];
+    
+    if (infoContent) {
+        // Default Title
+        let displayTitle = "Protective Verses (Paritta)";
+        
+  
+        
+        document.getElementById('simple-modal-title').innerText = displayTitle;
+        document.getElementById('simple-modal-body').innerHTML = infoContent;
+        document.getElementById('simple-info-modal').style.display = 'flex';
+    }
+}
+
+function closeSimpleInfoModal() {
+    document.getElementById('simple-info-modal').style.display = 'none';
+}
 
 function loadSection(index) {
     // 1. Check if Recitation Mode is CURRENTLY active
@@ -2605,6 +2859,12 @@ function loadSection(index) {
     // 5. Update UI Basics
     sectionSelect.value = index;
     titleArea.innerText = sections[index].title;
+	const infoIcon = document.getElementById('btn-section-info');
+    if (sectionInfoData[sections[index].id]) {
+        infoIcon.style.display = 'block';
+    } else {
+        infoIcon.style.display = 'none';
+    }
 	const vnTitleEl = document.getElementById('section-title-vn');
     if (vnTitleEl) {
         vnTitleEl.innerText = sections[index].title_vn || ""; // Fallback to empty if missing
