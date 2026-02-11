@@ -899,3 +899,134 @@ gap: 3px; /* Tighter gap for the rightmost controls */
     font-size: 1rem;
     pointer-events: none; /* This is an alternative fix that makes clicks "pass through" the icon to the button */
 }
+
+/* --- QUIZ MODAL STYLES --- */
+.quiz-content {
+    max-width: 600px;
+    width: 95%;
+    text-align: left;
+	overflow-y: auto;
+}
+
+.quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.quiz-sentence-area {
+    font-size: 20px;
+    line-height: 2;
+    margin-bottom: 25px;
+    background: rgba(0,0,0,0.05);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid var(--box-border);
+}
+
+.quiz-blank {
+    display: inline-block;
+    min-width: 60px;
+    /* Remove fixed height and bottom alignment */
+    border-bottom: 2px dashed var(--highlight-color);
+    margin: 0 5px;
+    padding: 0 4px; /* Give a little space on sides */
+    cursor: pointer;
+    color: var(--highlight-color);
+    font-weight: bold;
+    text-align: center;
+    /* Use baseline to align with neighboring text */
+    vertical-align: baseline; 
+    /* Prevent the border from shifting line height */
+    line-height: 1; 
+}
+
+.quiz-blank.filled {
+    border-bottom: 2px solid #27ae60;
+    color: #27ae60;
+}
+
+.quiz-blank.error {
+    border-bottom: 2px solid #c0392b;
+    color: #c0392b;
+    animation: shake 0.3s;
+}
+
+/* Ensure the sentence area has consistent line-height */
+.quiz-sentence-area {
+    line-height: 2.2; /* Slightly increased for better readability with underlined blanks */
+}
+
+.quiz-options-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+.quiz-option {
+    background-color: var(--box-bg);
+    border: 1px solid var(--primary-color);
+    color: var(--text-color);
+    padding: 8px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    user-select: none;
+    transition: all 0.2s;
+}
+
+.quiz-option:hover {
+    background-color: var(--primary-color);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.quiz-option.used {
+    opacity: 0.3;
+    pointer-events: none;
+    transform: scale(0.9);
+}
+
+.quiz-footer {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #ccc;
+    padding-top: 15px;
+}
+
+.btn-primary, .btn-secondary, .btn-warning {
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-primary { background: var(--highlight-color); color: white; }
+.btn-primary:disabled { background: #95a5a6; cursor: not-allowed; }
+.btn-secondary { background: #95a5a6; color: white; }
+.btn-warning { background: #f39c12; color: white; }
+
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+    100% { transform: translateX(0); }
+}
+
+/* Final Exam Button Area */
+#final-exam-container {
+    text-align: center;
+    margin: 20px 0;
+    padding: 20px;
+    background-color: rgba(255, 215, 0, 0.1);
+    border: 2px solid #f1c40f;
+    border-radius: 8px;
+    display: none; /* Hidden by default */
+}
