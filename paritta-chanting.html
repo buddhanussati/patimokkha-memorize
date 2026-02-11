@@ -226,7 +226,7 @@
         <div class="modal-title">Dhammadhara</div>
         
         <p class="modal-text">
-            Certification of Achievement: Full&nbsp;Memorization of&nbsp;the&nbsp;<b>Paritta&nbsp;Suttas<br>
+            Certification of Achievement: Full&nbsp;Memorization of&nbsp;the&nbsp;<b>Paritta&nbsp;Suttas</b><br>
             
             <span style="display: block; color: #b35900; font-weight: 600; font-style: italic; margin-top: 15px;">
        "The disciples of Gotama,<br>
@@ -237,6 +237,32 @@
         </p>
         
         <button class="btn-close-modal" onclick="closeAchievementModal()">Sādhu! Sādhu!</button>
+    </div>
+</div>
+<div id="quiz-modal" class="modal-overlay">
+    <div class="modal-content quiz-content">
+        <div class="quiz-header">
+            <h3 id="quiz-title">Memory Test</h3>
+            <div id="quiz-progress">Question 1/2</div>
+        </div>
+        
+        <div id="quiz-body">
+            <p class="quiz-instruction">Select the words below to fill in the blanks:</p>
+            
+            <div id="quiz-sentence-area" class="quiz-sentence-area">
+                </div>
+
+            <div id="quiz-options-area" class="quiz-options-area">
+                </div>
+        </div>
+
+        <div id="quiz-feedback" class="quiz-feedback" style="display:none;"></div>
+
+        <div class="quiz-footer">
+            <button id="btn-quiz-cancel" class="btn-secondary" onclick="closeQuizModal()">Cancel</button>
+            <button id="btn-quiz-reset" class="btn-warning" onclick="resetCurrentQuestion()" style="display:none;">Reset</button>
+            <button id="btn-quiz-next" class="btn-primary" onclick="nextQuizQuestion()" disabled>Continue</button>
+        </div>
     </div>
 </div>
 <script src="./js/en-paritta.js"></script>
