@@ -1622,7 +1622,114 @@ Sādhu Sādhu Sādhu. [11.800]`
 		
     ];
 
-  // --- BIẾN ---
+ /* --- QUIZ SYSTEM VARIABLES --- */
+let quizQueue = [];
+let currentQuizIndex = 0;
+let currentTargetLineIndex = -1; // The line originally clicked
+let isSectionExam = false; // Flag to distinguish line test vs final exam
+
+/* --- QUIZ GENERATION LOGIC --- */
+
+// Helper to clean word for matching (strips punctuation)
+/* --- HELPER: CLEAN WORD (LOWERCASE + NO PUNCTUATION) --- */
+function cleanPaliWord(text) {
+    if (!text) return "";
+    return text.toLowerCase()
+        // Remove standard and special punctuation common in Pali/Vietnamese texts
+        .replace(/[.,:;!?'"“”‘’()\[\]{}...–-]/g, '') 
+        .replace(/\s+/g, '') // Remove any accidental whitespace inside
+        .trim();
+}
+
+/* --- 1. GENERATE QUIZ DATA --- */
+function generateQuizData(lineIdx, hideRatio = 0.4) {
+    const lineDiv = allLines[lineIdx];
+    const wordSpans = Array.from(lineDiv.querySelectorAll('.word'));
+    const allWords = wordSpans.map(span => span.innerText);
+    
+    // 1. Identify Valid Indices (Skip words that become empty after cleaning)
+    const validIndices = allWords.map((w, i) => cleanPaliWord(w) ? i : -1).filter(i => i !== -1);
+    
+    // 2. Determine number of blanks
+    let countToHide = Math.ceil(validIndices.length * hideRatio);
+    if (countToHide < 1) countToHide = 1;
+    if (countToHide > validIndices.length) countToHide = validIndices.length;
+
+    // 3. Randomly select indices to hide
+    const shuffledIndices = validIndices.sort(() => 0.5 - Math.random());
+    const hiddenIndices = shuffledIndices.slice(0, countToHide).sort((a, b) => a - b);
+    
+    // 4. Get Correct Words (CLEANED)
+    const correctHiddenWords = hiddenIndices.map(i => cleanPaliWord(allWords[i]));
+    
+    // 5. Generate Distractors (CLEANED)
+    // We need: (Total hidden * 3) - Correct Words = Total Distractors needed
+    const totalOptionsNeeded = hiddenIndices.length * 3;
+    const distractorCount = totalOptionsNeeded - correctHiddenWords.length;
+    
+    const distractors = getDistractors(lineIdx, distractorCount);
+    
+    // 6. Create Word Bank (All Cleaned)
+    let wordBank = [...correctHiddenWords, ...distractors];
+    
+    // Shuffle Word Bank
+    wordBank = wordBank.sort(() => 0.5 - Math.random());
+
+    return {
+        lineIndex: lineIdx,
+        originalWords: allWords,    // Keeps original formatting for the sentence display
+        hiddenIndices: hiddenIndices,
+        wordBank: wordBank,         // Contains only lowercase, clean words
+        userAnswers: new Array(hiddenIndices.length).fill(null)
+    };
+}
+
+/* --- 2. GET DISTRACTORS (CLEANED) --- */
+function getDistractors(targetIdx, count) {
+    let pool = [];
+    
+    // Define neighbors (2 before, 1 after)
+    let neighbors = [];
+    if (targetIdx === 0) {
+        neighbors = [1, 2, 3];
+    } else if (targetIdx === allLines.length - 1) {
+        neighbors = [targetIdx - 3, targetIdx - 2, targetIdx - 1];
+    } else {
+        neighbors = [targetIdx - 2, targetIdx - 1, targetIdx + 1];
+    }
+
+    // Filter valid lines
+    neighbors = neighbors.filter(i => i >= 0 && i < allLines.length && i !== targetIdx);
+
+    // Helper to add words to pool
+    const addToPool = (lineIndex) => {
+        const spans = allLines[lineIndex].querySelectorAll('.word');
+        spans.forEach(s => {
+            const clean = cleanPaliWord(s.innerText);
+            if (clean) pool.push(clean); // Push CLEANED word
+        });
+    };
+
+    // 1. Try getting words from neighbors
+    neighbors.forEach(nIdx => addToPool(nIdx));
+
+    // 2. Fallback: If pool is too small (short section), grab from anywhere
+    if (pool.length < count) {
+        allLines.forEach((div, i) => {
+            if (i !== targetIdx && !neighbors.includes(i)) {
+                 addToPool(i);
+            }
+        });
+    }
+
+    // 3. Return unique random words to fill the count
+    // Shuffle full pool first
+    pool = pool.sort(() => 0.5 - Math.random());
+    
+    // Take unique slice
+    return [...new Set(pool)].slice(0, count);
+}
+
     let globalInterval = 3000; 
     let recitationTimeout = null;
     let currentRecitationLine = 0;
@@ -2147,62 +2254,165 @@ function updateDashboardBox(idx, score) {
 }
 
 function updateOverallStats() {
-    // --- 1. CALCULATE SESSION PROGRESS (Current Section) ---
+    // ... (Keep the existing calculation logic for sessionPct and globalPct) ...
     let sessionTotalScore = 0;
-    let sessionMaxScore = allLines.length * 100; // 100% per line
-
+    let sessionMaxScore = allLines.length * 100;
     allLines.forEach((_, idx) => {
-        const s = getLineScore(idx); // Get score for current section line
+        const s = getLineScore(idx);
         sessionTotalScore += s;
     });
-
-    // Calculate Session %
     const sessionPct = sessionMaxScore === 0 ? 0 : Math.round((sessionTotalScore / sessionMaxScore) * 100);
-    
-    // Update Session Bar UI
-    document.getElementById('bar-session').style.width = sessionPct + '%';
-    document.getElementById('text-session').innerText = sessionPct + '%';
-
-    // --- 2. CALCULATE GLOBAL PROGRESS (All Sections) ---
     const globalStats = calculateGlobalStats();
-    
-    // Calculate Global %
     const globalPct = globalStats.maxScore === 0 ? 0 : Math.round((globalStats.currentScore / globalStats.maxScore) * 100);
 
-    // Update Global Bar UI
+    // Update Bars
+    document.getElementById('bar-session').style.width = sessionPct + '%';
+    document.getElementById('text-session').innerText = sessionPct + '%';
     document.getElementById('bar-total').style.width = globalPct + '%';
     document.getElementById('text-total').innerText = globalPct + '%';
 
-    // --- 3. BANNER LOGIC (UPDATED) ---
+    // --- LOGIC FOR SECTION EXAM BUTTON & BANNER ---
+    
+    // Check if user has ALREADY passed this section's final exam
+    const sectionPassedKey = `section_passed_${sections[currentSectionIndex].id}`;
+    const hasPassedSection = localStorage.getItem(sectionPassedKey) === 'true';
+    const isRecitationActive = document.getElementById('display-area').classList.contains('recitation-active');
     const banner = document.getElementById('section-achievement-banner');
-    const bannerTitle = banner.querySelector('h3');
-    const bannerSubtitle = banner.querySelector('div');
+    let examContainer = document.getElementById('final-exam-container');
 
-   if (globalPct === 100 && sessionPct === 100) {
-        // CASE A: USER HAS MEMORIZED EVERYTHING (GLOBAL 100%)
-        banner.style.display = 'block';
-        // Update Title
-        bannerTitle.innerHTML = '<i class="fas fa-wreath-laurel"></i> Dhammadhara <i class="fas fa-wreath-laurel"></i>';
-        // Update Subtitle
-        bannerSubtitle.innerHTML = 'Certification of Achievement: Full&nbsp;Memorization&nbsp;of&nbsp;the&nbsp;Paritta';
+    // Helper to ensure exam button is visible and set text
+    const showExamButton = (title, desc, btnText) => {
+        if (!examContainer) {
+            injectExamButton();
+            examContainer = document.getElementById('final-exam-container');
+        }
+        examContainer.style.display = 'block';
+        
+        // Update text if elements exist
+        const t = document.getElementById('exam-title');
+        const d = document.getElementById('exam-desc');
+        const b = document.getElementById('exam-btn');
+        if (t) t.innerText = title;
+        if (d) d.innerText = desc;
+        if (b) b.innerText = btnText;
+    };
 
-    } else if (sessionPct === 100 && sessionMaxScore > 0) {
-        // CASE B: USER MEMORIZED ONLY THIS SECTION (SESSION 100%)
+    // LOGIC:
+    // 1. If 100% Memorized (regardless of pass status), show the Exam Button
+    if (hasPassedSection) {
+        // SCENARIO: ALREADY PASSED
+        
+        // 1. Always show the banner
         banner.style.display = 'block';
-        // Update Title (Revert to default section title)
-        bannerTitle.innerHTML = '<i class="fas fa-wreath-laurel"></i> Sutadhara <i class="fas fa-wreath-laurel"></i>';
-        // Update Subtitle
-        bannerSubtitle.innerHTML = 'Certification of Achievement in&nbsp;Memorizing&nbsp;this&nbsp;Sutta';
+        
+        // 2. Only show "Retake" button if inside Recitation Mode
+        if (isRecitationActive) {
+            showExamButton(
+                "Review & Assessment", 
+        "Would you like to retake the test to reinforce your memory?", 
+        "Review Again"
+            );
+        } else {
+            // If viewing normal text, hide the exam button to keep it clean
+            if (examContainer) examContainer.style.display = 'none';
+        }
 
     } else {
-        // CASE C: NOT COMPLETE
+        // SCENARIO: NOT PASSED YET
         banner.style.display = 'none';
+
+        if (sessionPct === 100) {
+            // If 100% memorized but not passed: Always show button (Normal & Recitation)
+            showExamButton(
+                "Congratulations! You've mastered 100% of the lines!", 
+            "Pass the final assessment to earn your Certification.", 
+            "Start Test"
+            );
+        } else {
+            // Not 100% yet
+            if (examContainer) examContainer.style.display = 'none';
+        }
     }
 
-    // *** REWARD 2: GLOBAL MODAL (Keep existing logic) ***
-    if (globalPct === 100 && sessionPct === 100) {
-        showGrandAchievement();
+    // --- BANNER CONTENT UPDATE (If Visible) ---
+    if (banner.style.display === 'block') {
+        const bannerTitle = banner.querySelector('h3');
+        const bannerSubtitle = banner.querySelector('div');
+
+        if (globalPct === 100) {
+            bannerTitle.innerHTML = '<i class="fas fa-wreath-laurel"></i> Dhammadhara <i class="fas fa-wreath-laurel"></i>';
+            bannerSubtitle.innerHTML = 'Certification of Achievement: Full&nbsp;Memorization&nbsp;of&nbsp;the&nbsp;Paritta';
+             showGrandAchievement();
+        } else {
+            bannerTitle.innerHTML = '<i class="fas fa-wreath-laurel"></i> Sutadhara <i class="fas fa-wreath-laurel"></i>';
+            bannerSubtitle.innerHTML = 'Certification of Achievement in&nbsp;Memorizing&nbsp;this&nbsp;Sutta';
+        }
     }
+}
+
+function injectExamButton() {
+    // Check if it already exists to avoid duplicates
+    if (document.getElementById('final-exam-container')) return;
+
+    const container = document.createElement('div');
+    container.id = 'final-exam-container';
+    // Added IDs to h4, p, and button for dynamic text updating
+    container.innerHTML = `
+       <h4 id="exam-title" style="margin-top:0; color:#b35900">Congratulations! You've mastered 100% of the lines!</h4>
+        <p id="exam-desc">Pass the final assessment to earn your Certification.</p>
+        <button id="exam-btn" class="btn-primary" onclick="startSectionExam()">Start Test</button>
+    `;
+    // Insert after dashboard grid
+    const dashboard = document.getElementById('recitation-dashboard');
+    dashboard.parentNode.insertBefore(container, dashboard.nextSibling);
+}
+
+function startSectionExam() {
+    isSectionExam = true;
+    quizQueue = [];
+    const totalLines = allLines.length;
+    const count = 10;
+
+    // 1. Create a shuffled list of all available line indices
+    let indices = Array.from({ length: totalLines }, (_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+
+    // 2. Generate 10 questions
+    for (let i = 0; i < count; i++) {
+        // Use modulo to cycle through the shuffled indices if totalLines < 10
+        let actualLineIdx = indices[i % totalLines];
+        
+        // Determine how many times we have cycled through the whole list
+        let repetition = Math.floor(i / totalLines);
+
+   
+        let difficulty = 0.4 + (repetition * 0.1);
+        if (difficulty > 0.6) difficulty = 0.6; // Cap at 60%
+
+        quizQueue.push(generateQuizData(actualLineIdx, difficulty));
+    }
+
+    currentQuizIndex = 0;
+    document.getElementById('quiz-title').innerText = "Comprehensive Test (10 Questions)";
+    openQuizModal();
+}
+
+function completeSectionExam() {
+    // Save passed state
+    const sectionPassedKey = `section_passed_${sections[currentSectionIndex].id}`;
+    localStorage.setItem(sectionPassedKey, 'true');
+    
+    // Refresh stats to show banner
+    updateOverallStats();
+    
+    // Scroll to banner
+    document.getElementById('section-achievement-banner').scrollIntoView({behavior: 'smooth'});
+    
+    // Celebrate
+    alert("Sādhu! You have successfully completed this sutta.");
 }
 
 // Global variable to ensure we don't spam the user if they close the modal in the same session
@@ -2335,7 +2545,13 @@ function findRecitationLine(currentTime) {
     displayArea.classList.add('recitation-active');
     document.body.classList.add('recitation-active-mode');
     
-    // --- NEW: GENERATE DASHBOARD ---
+    if (typeof Website2APK !== 'undefined') {
+        try {
+            Website2APK.keepScreenOn(true);
+        } catch (e) {
+            console.log("Website2APK error: " + e);
+        }
+    }
     renderDashboard(); 
     // -------------------------------
 
@@ -2347,7 +2563,14 @@ function findRecitationLine(currentTime) {
     function exitRecitation() {
         if(recitationTimeout) clearTimeout(recitationTimeout); recitationTimeout = null;
         if(!audioPlayer.paused) audioPlayer.pause();
-
+   
+        if (typeof Website2APK !== 'undefined') {
+        try {
+            Website2APK.keepScreenOn(false);
+        } catch (e) {
+            console.log("Website2APK error: " + e);
+        }
+    }
         displayArea.classList.remove('recitation-active');
         document.body.classList.remove('recitation-active-mode');
         document.querySelector('.line-recitation-show')?.classList.remove('line-recitation-show');
@@ -2469,45 +2692,260 @@ function findRecitationLine(currentTime) {
 
 // Function to create/update slider
 function injectSlider(lineElement, idx) {
-    // Check if container exists (Reusing class name for cleanup compatibility)
     let container = lineElement.querySelector('.memorize-slider-container');
-    
     if (!container) {
-        // Create container
         container = document.createElement('div');
         container.className = 'memorize-slider-container';
         
-        // Create Label Wrapper
         const label = document.createElement('label');
         label.className = 'memorize-checkbox-label';
         
-        // Create Checkbox
         const input = document.createElement('input');
         input.type = 'checkbox';
         input.className = 'memorize-checkbox';
-        
-        // Logic: Binary 0 or 100
-        input.onchange = function() {
-            const score = this.checked ? 100 : 0;
-            saveLineScore(idx, score);
-        };
+        input.id = `checkbox-${idx}`; // Add ID for easier access
 
-        // Append Text
+        // --- MODIFIED CLICK HANDLER ---
+        input.addEventListener('click', function(e) {
+            const isChecked = this.checked;
+            
+            if (isChecked) {
+                // User wants to mark as learned -> Trigger Test
+                e.preventDefault(); // Stop the check immediately
+                startLineTest(idx);
+            } else {
+                // User unchecking -> Allow immediately and reset score
+                saveLineScore(idx, 0);
+            }
+        });
+
         const textSpan = document.createElement('span');
-        textSpan.innerText = "Memorized"; // Label text: "Memorized"
+        textSpan.innerText = "Memorized"; 
 
-        // Assemble elements
         label.appendChild(input);
         label.appendChild(textSpan);
         container.appendChild(label);
         lineElement.appendChild(container);
     }
 
-    // Set current state (Checked if score is 100)
+    // Sync state
     const currentScore = getLineScore(idx);
     const input = container.querySelector('input');
-    // We treat anything less than 100 as "not fully memorized"
     input.checked = (currentScore >= 100);
+}
+
+/* --- QUIZ UI HANDLERS --- */
+
+function startLineTest(idx) {
+    isSectionExam = false;
+    currentTargetLineIndex = idx;
+    quizQueue = [];
+
+    // Question 1: Current Sentence (40% hidden)
+    quizQueue.push(generateQuizData(idx, 0.4));
+
+    // Question 2: Previous Sentence (if exists)
+    if (idx > 0) {
+        quizQueue.push(generateQuizData(idx - 1, 0.4));
+    }
+    // Note: If idx is 0, only 1 question is pushed.
+
+    currentQuizIndex = 0;
+    document.getElementById('quiz-title').innerText = "Memorize Test";
+    openQuizModal();
+}
+
+function openQuizModal() {
+    document.getElementById('quiz-modal').style.display = 'flex';
+    renderQuizStep();
+}
+
+function closeQuizModal() {
+    document.getElementById('quiz-modal').style.display = 'none';
+    quizQueue = [];
+}
+
+function renderQuizStep() {
+    const data = quizQueue[currentQuizIndex];
+    const total = quizQueue.length;
+    
+    // Update Progress
+    document.getElementById('quiz-progress').innerText = `Question ${currentQuizIndex + 1}/${total}`;
+    document.getElementById('btn-quiz-next').disabled = true;
+    document.getElementById('btn-quiz-next').innerText = (currentQuizIndex === total - 1) ? "Complete" : "Continue";
+    document.getElementById('btn-quiz-reset').style.display = 'none';
+
+    // 1. Render Sentence with Blanks
+    const sentenceArea = document.getElementById('quiz-sentence-area');
+    sentenceArea.innerHTML = '';
+    
+    data.originalWords.forEach((word, i) => {
+        if (data.hiddenIndices.includes(i)) {
+            // It's a blank
+            const blankIdx = data.hiddenIndices.indexOf(i);
+            const span = document.createElement('span');
+            span.className = 'quiz-blank';
+            span.dataset.wordIndex = i;
+            span.dataset.blankIndex = blankIdx;
+            span.innerHTML = "&nbsp;&nbsp;&nbsp;";
+            
+            // Allow clicking blank to clear it (if filled)
+            span.onclick = () => clearBlank(blankIdx);
+            
+            sentenceArea.appendChild(span);
+        } else {
+            // Regular text
+            const span = document.createElement('span');
+            span.innerText = word + " ";
+            sentenceArea.appendChild(span);
+        }
+    });
+
+    // 2. Render Word Bank
+    const optionsArea = document.getElementById('quiz-options-area');
+    optionsArea.innerHTML = '';
+    
+    data.wordBank.forEach((word, i) => {
+        const btn = document.createElement('div');
+        btn.className = 'quiz-option';
+        btn.innerText = word;
+        btn.dataset.optIndex = i;
+        btn.onclick = () => selectOption(i, word);
+        optionsArea.appendChild(btn);
+    });
+}
+
+function selectOption(optIndex, word) {
+    const data = quizQueue[currentQuizIndex];
+    
+    // Find first empty blank
+    const emptyBlankIndex = data.userAnswers.findIndex(ans => ans === null);
+    
+    if (emptyBlankIndex === -1) return; // All full
+
+    // Fill data
+    data.userAnswers[emptyBlankIndex] = { word: word, optIndex: optIndex };
+    
+    // Update UI
+    const blankEl = document.querySelector(`.quiz-blank[data-blank-index="${emptyBlankIndex}"]`);
+    blankEl.innerText = word;
+    blankEl.classList.add('filled');
+    blankEl.classList.remove('error');
+
+    // Mark option used
+    const optEl = document.querySelector(`.quiz-option[data-opt-index="${optIndex}"]`);
+    optEl.classList.add('used');
+
+    checkStepCompletion();
+}
+
+function clearBlank(blankIdx) {
+    const data = quizQueue[currentQuizIndex];
+    const answer = data.userAnswers[blankIdx];
+    
+    if (!answer) return;
+
+    // Restore option
+    const optEl = document.querySelector(`.quiz-option[data-opt-index="${answer.optIndex}"]`);
+    if(optEl) optEl.classList.remove('used');
+
+    // Clear data
+    data.userAnswers[blankIdx] = null;
+
+    // Clear UI
+    const blankEl = document.querySelector(`.quiz-blank[data-blank-index="${blankIdx}"]`);
+    blankEl.innerHTML = "&nbsp;&nbsp;&nbsp;";
+    blankEl.classList.remove('filled', 'error');
+    
+    checkStepCompletion();
+}
+
+function checkStepCompletion() {
+    const data = quizQueue[currentQuizIndex];
+    const isFull = data.userAnswers.every(ans => ans !== null);
+    
+    const btnNext = document.getElementById('btn-quiz-next');
+    
+    if (isFull) {
+        // Auto validate or wait for user? Let's wait for user to click "Next/Check"
+        btnNext.disabled = false;
+        btnNext.onclick = validateCurrentQuestion;
+    } else {
+        btnNext.disabled = true;
+    }
+}
+
+/* --- 3. VALIDATION LOGIC (Ensure comparison uses cleaner) --- */
+function validateCurrentQuestion() {
+    const data = quizQueue[currentQuizIndex];
+    let isCorrect = true;
+
+    data.hiddenIndices.forEach((wordIdx, i) => {
+        // Compare CLEANED original vs User Answer (which is already clean from wordBank)
+        const correctWordClean = cleanPaliWord(data.originalWords[wordIdx]);
+        const userWord = data.userAnswers[i] ? data.userAnswers[i].word : ""; 
+
+        const blankEl = document.querySelector(`.quiz-blank[data-blank-index="${i}"]`);
+
+        if (correctWordClean !== userWord) {
+            isCorrect = false;
+            blankEl.classList.add('error');
+        } else {
+            blankEl.classList.remove('error');
+            blankEl.classList.add('filled');
+        }
+    });
+
+    if (isCorrect) {
+        if (currentQuizIndex < quizQueue.length - 1) {
+            // Wait a moment so user sees green, then move on
+            setTimeout(() => {
+                currentQuizIndex++;
+                renderQuizStep();
+            }, 500);
+        } else {
+            finishQuizSuccess();
+        }
+    } else {
+        const btnReset = document.getElementById('btn-quiz-reset');
+        btnReset.style.display = 'inline-block';
+        document.getElementById('btn-quiz-next').disabled = true;
+        if (navigator.vibrate) navigator.vibrate(200);
+    }
+}
+
+function resetCurrentQuestion() {
+    // Reset Data
+    const data = quizQueue[currentQuizIndex];
+    data.userAnswers.fill(null);
+    renderQuizStep(); // Re-render
+}
+
+function finishQuizSuccess() {
+    // 1. Update the local line state immediately
+    if (!isSectionExam && currentTargetLineIndex !== -1) {
+        // Visually check the box
+        const checkbox = document.getElementById(`checkbox-${currentTargetLineIndex}`);
+        if (checkbox) checkbox.checked = true;
+        
+        // Save to localStorage
+        saveLineScore(currentTargetLineIndex, 100);
+    }
+
+    // 2. Close the modal UI
+    closeQuizModal();
+    
+    // 3. Use a Timeout to run the heavy "Overall Stats" logic.
+    // This allows the browser to hide the modal first before processing the logic
+    // that shows the Achievement Banner or Final Exam button.
+    setTimeout(() => {
+        if (isSectionExam) {
+            completeSectionExam();
+        } else {
+            // Refresh percentages and check if the Final Exam button should appear
+            updateOverallStats(); 
+        }
+    }, 150); // 150ms delay is enough to feel instant but keep the UI smooth
 }
 
 function navigateRecitation(d) {
