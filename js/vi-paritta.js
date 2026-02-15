@@ -320,9 +320,9 @@ Nguyện cầu những hưng thịnh, hằng hiện hữu cho thế giới và c
 Sāsanampi ca lokañca, devā rakkhantu sabbadā. [7.568]
 Xin chư Thiên hằng hộ trì cho thế giới và giáo pháp.
 Saddhiṃ hontu sukhī sabbe, parivārehi attano, [6.986]
-Nguyện cầu cho các sanh linh, cùng tất cả tùy tùng, họ hàng quyến thuộc, được an lạc, đẹp ý,
+Nguyện cầu cho các sanh linh, cùng tất cả tùy tùng, họ hàng quyến thuộc, được an lạc,
 Anīghā sumanā hontu, saha sabbehi ñātibhi. [7.367]
-Và thoát khỏi mọi lụy phiền.
+Đẹp ý, và thoát khỏi mọi lụy phiền.
 
 Rājato vā, corato vā, manussato vā, amanussato vā, [8.934]
 Thoát tai họa từ hôn quân, đạo tặc, phàm nhân, phi nhân,
@@ -2362,35 +2362,68 @@ function startSectionExam() {
     isSectionExam = true;
     quizQueue = [];
     const totalLines = allLines.length;
-    const count = 10;
-
-    // 1. Create a shuffled list of all available line indices
-    let indices = Array.from({ length: totalLines }, (_, i) => i);
-    for (let i = indices.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [indices[i], indices[j]] = [indices[j], indices[i]];
+    
+    // 1. Determine the Pool of Indices
+    let pool = [];
+    
+    if (selectedLoopIndices.size > 0) {
+        // PRIORITY: Create pool from User Selection (Long-pressed boxes)
+        pool = Array.from(selectedLoopIndices);
+    } else {
+        // DEFAULT: Create pool from All Lines
+        pool = Array.from({ length: totalLines }, (_, i) => i);
     }
 
-    // 2. Generate 10 questions
-    for (let i = 0; i < count; i++) {
-        // Use modulo to cycle through the shuffled indices if totalLines < 10
-        let actualLineIdx = indices[i % totalLines];
-        
-        // Determine how many times we have cycled through the whole list
-        let repetition = Math.floor(i / totalLines);
+    // 2. Shuffle the pool to ensure randomness
+    for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
 
-   
+    // 3. Determine Question Count based on Pool Size
+    let questionCount = 10; // Default standard
+
+    if (selectedLoopIndices.size > 0) {
+        if (pool.length <= 2) {
+            // Constraint: If 1 or 2 boxes selected -> Create 5 questions (cycling through them)
+            questionCount = 5;
+        
+        } else {
+            // Constraint: If >10 boxes selected -> Pick 10 unique ones
+            questionCount = 10;
+        }
+    } else {
+        // Standard Exam (No selection) -> 10 questions
+        questionCount = (totalLines <= 2) ? 5 : 10;
+    }
+
+    // 4. Generate the Quiz Queue
+    for (let i = 0; i < questionCount; i++) {
+        // Use modulo to cycle through lines if pool is smaller than question count
+        // (e.g., 2 selected boxes for 5 questions)
+        let actualLineIdx = pool[i % pool.length];
+        
+        // Calculate difficulty
+        // If we are repeating lines (repetition > 0), increase difficulty slightly
+        let repetition = Math.floor(i / pool.length);
         let difficulty = 0.4 + (repetition * 0.1);
-        if (difficulty > 0.6) difficulty = 0.6; // Cap at 60%
+        if (difficulty > 0.6) difficulty = 0.6; // Cap at 60% hidden
 
         quizQueue.push(generateQuizData(actualLineIdx, difficulty));
     }
 
+    // 5. Start Quiz
     currentQuizIndex = 0;
-    document.getElementById('quiz-title').innerText = "Kiểm Tra Tổng Hợp (10 Câu)";
+    
+    // Update Title based on mode
+    let titleText = "Kiểm Tra Tổng Hợp";
+    if (selectedLoopIndices.size > 0) {
+        titleText = `Ôn Tập (${selectedLoopIndices.size} câu đã chọn)`;
+    }
+    
+    document.getElementById('quiz-title').innerText = `${titleText}`;
     openQuizModal();
 }
-
 function completeSectionExam() {
     // Save passed state
     const sectionPassedKey = `section_passed_${sections[currentSectionIndex].id}`;
