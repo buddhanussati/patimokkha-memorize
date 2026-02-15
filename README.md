@@ -49,9 +49,16 @@ Located above the text in Recitation Mode, this dashboard visualizes your memory
 * **Memorized Total:** Completion % of the entire Pātimokkha.
 
 
-* **Achievements:** You will receive a "Sikkhāpadavidū" banner for completing a section, and a "Vinayavidū" Medal Modal for completing the entire text.
+### 5. Review & Quiz System ✅
 
-### 5. Settings (⚙️)
+To ensure solid memorization, the app features an integrated multiple-choice quiz system:
+
+* **Verifying "Memorized":** When you tick the **"Memorized"** checkbox next to a line, a mini-quiz appears. You must correctly select the missing word for the system to officially mark that line as memorized.
+* **Mastery Test:** Once you have memorized 100% of the lines in a section, the **"Start Test"** button will appear. You must pass this random test (10 questions) to receive the **Certificate of Achievement** for that section.
+* **Custom Review:** You can select specific cells on the progress grid (by **long-pressing** them). The system will then generate a custom quiz consisting only of the lines you selected for review.
+* **Achievements:** You will receive a **"Sikkhāpadavidū"** banner for completing a sutta, and a **"Vinayavidū"** Medal Modal for completing the entire text.
+
+### 6. Settings (⚙️)
 
 * **Hide Texts:** Use the slider to hide random words (10%–90%) to test your memory. Click hidden boxes to reveal them.
 * **Speed Control (🕒):** Override the audio synchronization to set a fixed speed (e.g., 5 seconds per line) for practicing recitation at a steady pace without audio sync.
