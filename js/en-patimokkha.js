@@ -2694,7 +2694,24 @@ function updateDashboardBox(idx, score) {
         box.classList.add(getHeatmapClass(score));
     }
 }
+// --- HỆ THỐNG XP VÀ CẤP ĐỘ ---
+function getSectionXP(sectionId) {
+    const xp = localStorage.getItem(`section_xp_${sectionId}`);
+    return xp ? parseInt(xp) : 0;
+}
 
+function addSectionXP(sectionId, amount) {
+    const currentXP = getSectionXP(sectionId);
+    localStorage.setItem(`section_xp_${sectionId}`, currentXP + amount);
+}
+
+function getLevelInfo(xp) {
+    if (xp < 200) return { level: 1, icon: '<i class="fas fa-award-simple"></i>' };
+    if (xp < 500) return { level: 2, icon: '<i class="fas fa-award"></i>' };
+    if (xp < 900) return { level: 3, icon: '<i class="far fa-award-simple"></i>' };
+    if (xp < 1400) return { level: 4, icon: '<i class="far fa-award"></i>' };
+    return { level: 5, icon: '<i class="fas fa-trophy-star"></i>' };
+}
 function updateOverallStats() {
     // ... (Keep the existing calculation logic for sessionPct and globalPct) ...
     let sessionTotalScore = 0;
@@ -2735,7 +2752,7 @@ function updateOverallStats() {
         const d = document.getElementById('exam-desc');
         const b = document.getElementById('exam-btn');
         if (t) t.innerText = title;
-        if (d) d.innerText = desc;
+        if (d) d.innerHTML = desc;
         if (b) b.innerText = btnText;
     };
 
@@ -2749,10 +2766,14 @@ function updateOverallStats() {
         
         // 2. Only show "Retake" button if inside Recitation Mode
         if (isRecitationActive) {
+            const currentSectionId = sections[currentSectionIndex].id;
+            const currentXP = getSectionXP(currentSectionId);
+            const levelInfo = getLevelInfo(currentXP);
+            
             showExamButton(
-                "Review & Assessment", 
-        "Would you like to retake the test to reinforce your memory?", 
-        "Review Again"
+                "Review & Test", 
+                `${levelInfo.icon} Proficiency: Level ${levelInfo.level} (${currentXP} XP)`, 
+                "Review Again"
             );
         } else {
             // If viewing normal text, hide the exam button to keep it clean
@@ -2782,11 +2803,11 @@ function updateOverallStats() {
         const bannerSubtitle = banner.querySelector('div');
 
         if (globalPct === 100) {
-            bannerTitle.innerHTML = '<i class="fas fa-wreath-laurel"></i> Dhammadhara <i class="fas fa-wreath-laurel"></i>';
+            bannerTitle.innerHTML = '<i class="fas fa-wreath-laurel"></i> Vinayavidū <i class="fas fa-wreath-laurel"></i>';
             bannerSubtitle.innerHTML = 'Certification of Achievement: Full&nbsp;Memorization&nbsp;of&nbsp;the&nbsp;Pātimokkha';
              showGrandAchievement();
         } else {
-            bannerTitle.innerHTML = '<i class="fas fa-wreath-laurel"></i> Sutadhara <i class="fas fa-wreath-laurel"></i>';
+            bannerTitle.innerHTML = '<i class="fas fa-wreath-laurel"></i> Sikkhāpadavidū <i class="fas fa-wreath-laurel"></i>';
             bannerSubtitle.innerHTML = 'Certification of Achievement in&nbsp;Memorizing&nbsp;this&nbsp;Sikkhāpada';
         }
     }
@@ -3053,7 +3074,7 @@ if (typeof Website2APK !== 'undefined') {
         // --- FIX: Remove all slider containers from the text ---
         document.querySelectorAll('.memorize-slider-container').forEach(el => el.remove());
         // -------------------------------------------------------
-
+        updateOverallStats();
         updateButtonVisuals('inactive');
     }
 
@@ -3406,12 +3427,16 @@ function finishQuizSuccess() {
         saveLineScore(currentTargetLineIndex, 100);
     }
 
+    // --- CỘNG ĐIỂM XP ---
+    // Cộng điểm tương đương số câu hỏi trong phiên kiểm tra/ôn tập
+    const currentSectionId = sections[currentSectionIndex].id;
+    addSectionXP(currentSectionId, quizQueue.length);
+    // --------------------
+
     // 2. Close the modal UI
     closeQuizModal();
     
     // 3. Use a Timeout to run the heavy "Overall Stats" logic.
-    // This allows the browser to hide the modal first before processing the logic
-    // that shows the Achievement Banner or Final Exam button.
     setTimeout(() => {
         if (isSectionExam) {
             completeSectionExam();
@@ -3419,7 +3444,7 @@ function finishQuizSuccess() {
             // Refresh percentages and check if the Final Exam button should appear
             updateOverallStats(); 
         }
-    }, 150); // 150ms delay is enough to feel instant but keep the UI smooth
+    }, 150); 
 }
 
 function navigateRecitation(d) {
