@@ -2706,10 +2706,10 @@ function addSectionXP(sectionId, amount) {
 }
 
 function getLevelInfo(xp) {
-    if (xp < 200) return { level: 1, icon: '<i class="fas fa-award-simple"></i>' };
-    if (xp < 500) return { level: 2, icon: '<i class="fas fa-award"></i>' };
-    if (xp < 900) return { level: 3, icon: '<i class="far fa-award-simple"></i>' };
-    if (xp < 1400) return { level: 4, icon: '<i class="far fa-award"></i>' };
+    if (xp < 100) return { level: 1, icon: '<i class="fas fa-award-simple"></i>' };
+    if (xp < 200) return { level: 2, icon: '<i class="fas fa-award"></i>' };
+    if (xp < 300) return { level: 3, icon: '<i class="far fa-award-simple"></i>' };
+    if (xp < 400) return { level: 4, icon: '<i class="far fa-award"></i>' };
     return { level: 5, icon: '<i class="fas fa-trophy-star"></i>' };
 }
 function updateOverallStats() {
