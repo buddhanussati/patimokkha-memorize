@@ -243,6 +243,7 @@
 .recitation-active-mode #btn-exit-recitation { display: flex; }
 .recitation-active-mode #btn-viet-toggle { display: none; }
 .recitation-active-mode #btn-english-toggle { display: none; }
+.recitation-active-mode #btn-stats { display: none; }
 
 /* Trạng thái nút VN khi đang bật */
 .btn-viet-active, .btn-english-active {
@@ -1030,3 +1031,95 @@ gap: 3px; /* Tighter gap for the rightmost controls */
     border-radius: 8px;
     display: none; /* Hidden by default */
 }
+
+
+/* Button Luyện Tập */
+.btn-practice {
+    margin-left: 15px; /* Space from the checkbox */
+    padding: 6px 12px;
+    background-color: #3566d0;
+    color: white;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.btn-practice:hover {
+    background-color: #4a69bd;
+    transform: translateY(-1px);
+}
+/* --- Bổ sung cho Câu hỏi Dịch tiếng Việt --- */
+.quiz-option.translation-option {
+    width: 100%;
+    text-align: left;
+    margin-bottom: 8px;
+    white-space: normal; /* Cho phép rớt dòng đối với các câu dài */
+    line-height: 1.5;
+    box-sizing: border-box;
+}
+/* --- LÀM LẠI GIAO DIỆN BIỂU ĐỒ (Giống renderreport.js) --- */
+.stats-content {
+    background-color: var(--bg-color); 
+}
+
+/* Card Style */
+.card {
+    background: #1f2937; /* Màu xám đậm từ Tailwind/renderreport */
+    border-color: #374151;
+    color: #f3f4f6;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 8px;
+    padding: 15px;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+[data-theme="dark"] .card {
+    background: #1f2937; /* Màu xám đậm từ Tailwind/renderreport */
+    border-color: #374151;
+    color: #f3f4f6;
+}
+
+/* Các Nút Điều Hướng & Select */
+.btn-secondary {
+    background-color: #4b5563;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-secondary:hover {
+    background-color: #6b7280;
+}
+
+.form-control {
+    background-color: #374151;
+    color: #f3f4f6;
+    border-color: #4b5563;
+    border: 1px solid var(--box-border);
+    border-radius: 4px;
+    outline: none;
+}
+[data-theme="dark"] .form-control {
+    background-color: #374151;
+    color: #f3f4f6;
+    border-color: #4b5563;
+}
+
+/* Pen icon hover effect */
+.fa-pen:hover {
+    color: var(--highlight-color) !important;
+    transform: scale(1.2);
+}
+
+
+
