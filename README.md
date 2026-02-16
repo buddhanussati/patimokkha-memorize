@@ -16,7 +16,7 @@ This application is hosted online and can be accessed directly by clicking the l
 * **Section Selector:** Jump to a specific rule (e.g., Pārājika 1).
 * **Random (☸️):** Jump to a random rule to test your recall.
 * **Dictionary (📖):** Toggle to enable Pāli lookup. Hover over words to see definitions.
-
+* **Statistics 📊:** Click the button to view XP charts, set your **Daily Goal**, and track your practice history by Week/Month.
 ### 2. Recitation Mode (🎤)
 
 Click the **Mic button** to enter Recitation Mode. The text enlarges and syncs with the audio.
@@ -54,9 +54,11 @@ Located above the text in Recitation Mode, this dashboard visualizes your memory
 To ensure solid memorization, the app features an integrated multiple-choice quiz system:
 
 * **Verifying "Memorized":** When you tick the **"Memorized"** checkbox next to a line, a mini-quiz appears. You must correctly select the missing word for the system to officially mark that line as memorized.
-* **Mastery Test:** Once you have memorized 100% of the lines in a section, the **"Start Test"** button will appear. You must pass this random test (10 questions) to receive the **Certificate of Achievement** for that section.
-* **Custom Review:** You can select specific cells on the progress grid (by **long-pressing** them). The system will then generate a custom quiz consisting only of the lines you selected for review.
+* **"Practicing" Button 🎯:** Click to perform a quick exercise (Fill-in-the-blanks & Translation) for that specific verse to reinforce your memory.
+* **Comprehensive Test:** Once you have memorized 100% of the lines in a section, the **"Start Test"** button will appear. You must pass this random test (10 questions) to receive the **Certificate of Achievement** for that section.
+* **Custom Review & Practice:** You can select specific cells on the progress grid (by **long-pressing** them). The system will then generate a custom quiz consisting only of the lines you selected for review.
 * **Achievements:** You will receive a **"Sikkhāpadavidū"** banner for completing a sutta, and a **"Vinayavidū"** Medal Modal for completing the entire text.
+
 
 ### 6. Settings (⚙️)
 
