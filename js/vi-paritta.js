@@ -2255,11 +2255,33 @@ function addSectionXP(sectionId, amount) {
 }
 
 function getLevelInfo(xp) {
-    if (xp < 100) return { level: 1, icon: '<i class="fas fa-award-simple"></i>' };
-    if (xp < 200) return { level: 2, icon: '<i class="fas fa-award"></i>' };
-    if (xp < 300) return { level: 3, icon: '<i class="far fa-award-simple"></i>' };
-    if (xp < 400) return { level: 4, icon: '<i class="far fa-award"></i>' };
-    return { level: 5, icon: '<i class="fas fa-trophy-star"></i>' };
+    // Calculate level: Starts at 1, adds 1 level for every 100 XP
+    const level = Math.floor(xp / 100) + 1;
+    let iconStr = "";
+
+    if (level === 1) {
+        iconStr = '<i class="fas fa-award-simple"></i>';
+    } else if (level === 2) {
+        iconStr = '<i class="fas fa-award"></i>';
+    } else if (level === 3) {
+        iconStr = '<i class="far fa-award-simple"></i>';
+    } else if (level === 4) {
+        iconStr = '<i class="far fa-award"></i>';
+    } else {
+        // Level 5 and up: Logic for Trophies
+        // Level 5 = 1 trophy, Level 6 = 2 trophies, Level 7+ = 3 trophies
+        let trophyCount = level - 4; 
+        
+        // Cap the trophies at 3
+        if (trophyCount > 3) trophyCount = 3;
+
+        // Generate the icons
+        for (let i = 0; i < trophyCount; i++) {
+            iconStr += '<i class="fas fa-trophy-star"></i>';
+        }
+    }
+
+    return { level: level, icon: iconStr };
 }
 
 function updateOverallStats() {
