@@ -13,7 +13,8 @@
  	<script src="./js/jquery-1.10.2.min.js"></script>
     <script src="./js/edpd_i2h.js"></script>
     <script src="./js/edpd_ebts.js"></script>
-    <script src="./js/dpd_deconstructor.js"></script>	
+    <script src="./js/dpd_deconstructor.js"></script>
+    <script src="./js/chart.js"></script>	
 </head>
 <body>
 
@@ -59,6 +60,15 @@
             <div class="progress-track"><div id="bar-total" class="progress-fill" style="background-color: #27ae60;"></div></div>
             <span id="text-total">0%</span>
         </div>
+		<div class="progress-bar-container" title="Click the pen icon to edit the target">
+    <span style="width: 120px;">Daily Goal: </span>
+    <div class="progress-track">
+        <div id="bar-daily" class="progress-fill" style="background-color: #e67e22;"></div>
+    </div>
+    <span id="text-daily" style="min-width: 80px; text-align: right;">
+        0/100 XP 
+    </span>
+</div>
     </div>
 </div>
     <h2 id="section-title">Loading...</h2>
@@ -73,6 +83,9 @@
 		
 	           
             <button id="btn-dictionary" class="icon-btn" onclick="togglePaliLookup()" title="Pali Lookup"><i class="fas fa-book-open"></i></button>
+			<button id="btn-stats" class="icon-btn" onclick="openStatsModal()" title="Practice Statistics" style="background-color: #4834d4;">
+    <i class="fas fa-chart-pie"></i>
+</button>
 			<button id="settings-btn" class="icon-btn btn-settings" onclick="toggleSettings()" title="Settings"><i class="fas fa-gear"></i></button>
 			<button id="btn-exit-recitation" class="icon-btn" onclick="exitRecitation()" title="Exit Recitation"><i class="fas fa-xmark"></i></button> <button id="btn-loop" class="icon-btn" onclick="toggleLoopSentence()" title="Loop current sentence">
     <i class="fas fa-arrows-repeat"></i>
@@ -106,7 +119,7 @@
             <div class="setting-group">
                 <span style="font-size:13px; font-weight:600">Speed:</span>
                 
-                <button id="btn-show-speed" class="btn-sm" onclick="toggleSpeedControl()" style="background:#2980b9; color:white;"><i class="far fa-clock"></i></button>
+                <button id="btn-show-speed" class="btn-sm" onclick="toggleSpeedControl()" style="background:#2980b9; color:white;"><i class="far fa-clock"></i></button><span id="btn-show-speed2" style="font-size:13px; font-weight:600"> (Synchronized)</span>
 
                 <div id="speed-control-area" style="display:none; align-items:center; gap:5px;">
                     <input type="range" id="recitation-interval" min="1" max="10" step="0.5" value="3" oninput="updateRecitationInterval(this.value)" style="width:80px">
@@ -136,6 +149,7 @@
         <li><b>Section Selector:</b> Jump to a specific rule (e.g., Pārājika 1).</li>
         <li><b>Random (<i class="far fa-dharmachakra"></i>):</b> Jump to a random rule to test your recall.</li>
         <li><b>Dictionary (<i class="fas fa-book-open"></i>):</b> Toggle to enable Pāli lookup. Hover over words to see definitions.</li>
+		<li><b>Statistics (<i class="fas fa-chart-pie"></i>):</b> Click the button to view XP charts, set your <b>Daily Goal</b> (<i class="fas fa-pen"></i>), and track your practice history by Week/Month.</li>
     </ul>
 
     <h4>2. Recitation Mode (<i class="fas fa-microphone"></i>)</h4>
@@ -179,8 +193,9 @@
     <p>To ensure solid memorization, the app features an integrated multiple-choice quiz system:</p>
     <ul>
         <li><b>Verifying "Memorized":</b> When you tick the <i>"Memorized"</i> checkbox next to a line, a mini-quiz appears. You must correctly select the missing word for the system to officially mark that line as memorized.</li>
-        <li><b>Mastery Test:</b> Once you have memorized 100% of the lines in a section, the <b>"Start Test"</b> button will appear. You must pass this random test (10 questions) to receive the Certificate of Achievement for that section.</li>
-        <li><b>Custom Review:</b> You can select specific cells on the progress grid (by <b>long-pressing</b> them). The system will then generate a custom quiz consisting only of the lines you selected for review.</li>
+		<li><b>"Practicing" Button (<i class="fas fa-bullseye-arrow"></i>):</b> Click to perform a quick exercise (Fill-in-the-blanks & Translation) for that specific verse to reinforce your memory.</li>
+        <li><b>Comprehensive Test:</b> Once you have memorized 100% of the lines in a section, the <b>"Start Test"</b> button will appear. You must pass this random test (10 questions) to receive the Certificate of Achievement for that section.</li>
+        <li><b>Custom Review & Practice:</b> You can select specific cells on the progress grid (by <b>long-pressing</b> them). The system will then generate a custom quiz consisting only of the lines you selected for review.</li>
        <li><b>Achievements:</b> You will receive a "Sikkhāpadavidū" banner for completing a section, and a "Vinayavidū" Medal Modal for completing the entire text.</li>
     </ul>
 		
@@ -236,7 +251,7 @@
         </div>
         
         <div id="quiz-body">
-            <p class="quiz-instruction">Select the words below to fill in the blanks:</p>
+            <p id="quiz-instruction-text" class="quiz-instruction">Select the words below to fill in the blanks:</p>
             
             <div id="quiz-sentence-area" class="quiz-sentence-area">
                 </div>
@@ -251,6 +266,61 @@
             <button id="btn-quiz-cancel" class="btn-secondary" onclick="closeQuizModal()">Cancel</button>
             <button id="btn-quiz-reset" class="btn-warning" onclick="resetCurrentQuestion()" style="display:none;">Reset</button>
             <button id="btn-quiz-next" class="btn-primary" onclick="nextQuizQuestion()" disabled>Continue</button>
+        </div>
+    </div>
+</div>
+<div id="stats-modal" class="modal-overlay">
+    <div class="modal-content stats-content" style="max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 20px;">
+        <div class="quiz-header" style="margin-bottom: 20px;">
+            <h3 style="margin: 0;">Practice Statistics</h3>
+            <button class="btn-close-simple" onclick="closeStatsModal()"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="stats-body" style="padding: 0;">
+            <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+                    
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h4 id="breakdown-title" style="margin: 0; font-size: 16px;">Overview</h4>
+                            <select id="report-range-select" class="form-control" style="width: auto; padding: 5px; font-size: 13px; height: 32px;" onchange="renderStatsCharts(true)">
+                             <option value="all">All Time</option>
+                             <option value="today">Today</option>
+			                 <option value="yesterday">Yesterday</option>
+                             <option value="this_week" selected>This Week</option>
+                             <option value="last_week">Last Week</option>
+                             <option value="this_month">This Month</option>
+                             <option value="last_month">Last Month</option>
+                            </select>
+                        </div>
+                        <div style="height: 300px; display:flex; justify-content:center;">
+                            <canvas id="sectionXPChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsWeek(-1)"><i class="fas fa-chevron-left"></i></button>
+                            <h4 id="weekly-report-title" style="margin: 0; font-size: 16px;">Weekly Focus</h4>
+                            <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsWeek(1)"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div style="height: 300px;">
+                            <canvas id="weeklyXPChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                        <h4 id="monthly-report-title" style="margin: 0; font-size: 16px;">Monthly Focus</h4>
+                        <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <div style="height: 300px;">
+                        <canvas id="monthlyXPChart"></canvas>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

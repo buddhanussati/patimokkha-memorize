@@ -14,6 +14,7 @@
     <script src="./js/prdpd_i2h.js"></script>
     <script src="./js/prdpd_ebts.js"></script>
     <script src="./js/prdpd_deconstructor.js"></script>
+	<script src="./js/chart.js"></script>
 
 </head>
 <body>
@@ -60,7 +61,16 @@
             <div class="progress-track"><div id="bar-total" class="progress-fill" style="background-color: #27ae60;"></div></div>
             <span id="text-total" style="font-size: 12px;">0%</span>
         </div>
+    
+	<div class="progress-bar-container" title="Nhấn vào biểu tượng bút để sửa mục tiêu">
+    <span style="width: 120px; font-size: 12px;">Mục tiêu ngày: </span>
+    <div class="progress-track">
+        <div id="bar-daily" class="progress-fill" style="background-color: #e67e22;"></div>
     </div>
+    <span id="text-daily" style="font-size: 12px; min-width: 80px; text-align: right;">
+        0/100 XP 
+    </span>
+</div></div>
 </div>
    <div class="section-header-wrapper">
         <h2 id="section-title">Đang tải...</h2>
@@ -78,6 +88,9 @@
 
     <div class="controls-cluster">         
 	        <button id="btn-dictionary" class="icon-btn" onclick="togglePaliLookup()" title="Từ điển Pali"><i class="fas fa-book-open"></i></button>
+			<button id="btn-stats" class="icon-btn" onclick="openStatsModal()" title="Thống kê tu tập" style="background-color: #4834d4;">
+    <i class="fas fa-chart-pie"></i>
+</button>
             <button id="settings-btn" class="icon-btn btn-settings" onclick="toggleSettings()" title="Cài đặt"><i class="fas fa-gear"></i></button>
 		    <button id="btn-exit-recitation" class="icon-btn" onclick="exitRecitation()" title="Thoát Tụng Đọc"><i class="fas fa-xmark"></i></button>
 			<button id="btn-loop" class="icon-btn" onclick="toggleLoopSentence()" title="Lặp câu hiện tại">
@@ -112,7 +125,7 @@
             <div class="setting-group">
                 <span style="font-size:13px; font-weight:600">Tốc độ:</span>
                 
-                <button id="btn-show-speed" class="btn-sm" onclick="toggleSpeedControl()" style="background:#2980b9; color:white;"><i class="far fa-clock"></i></button>
+                <button id="btn-show-speed" class="btn-sm" onclick="toggleSpeedControl()" style="background:#2980b9; color:white;"><i class="far fa-clock"></i></button><span id="btn-show-speed2" style="font-size:13px; font-weight:600"> (Đồng bộ)</span>
 
                 <div id="speed-control-area" style="display:none; align-items:center; gap:5px;">
                     <input type="range" id="recitation-interval" min="1" max="10" step="0.5" value="3" oninput="updateRecitationInterval(this.value)" style="width:80px">
@@ -140,6 +153,7 @@
         <li><b>Chọn Mục:</b> Sử dụng menu thả xuống để chuyển đến một bài kinh cụ thể (ví dụ: Maṅgalasutta, Mettasutta)</li>
         <li><b>Ngẫu Nhiên (<i class="far fa-dharmachakra"></i>):</b> Chuyển đến một bài kinh bất kỳ.</li>
         <li><b>Từ Điển (<i class="fas fa-book-open"></i>):</b> Bật để tra cứu Pāli. Di chuột qua từ để xem nghĩa.</li>
+		<li><b>Thống Kê (<i class="fas fa-chart-pie"></i>):</b> Nhấn nút để xem biểu đồ XP, đặt <b>Mục tiêu hằng ngày</b> (<i class="fas fa-pen"></i>) và theo dõi lịch sử tu tập theo Tuần/Tháng.</li>
     </ul>
 
     <h4>2. Chế Độ Tụng Đọc (<i class="fas fa-microphone"></i>)</h4>
@@ -182,6 +196,7 @@
     <p>Để đảm bảo bạn thực sự ghi nhớ, ứng dụng tích hợp hệ thống kiểm tra trắc nghiệm:</p>
     <ul>
         <li><b>Xác nhận "Đã thuộc":</b> Khi bạn tích vào ô chọn <i>"Đã thuộc"</i> bên cạnh một câu, một bài kiểm tra nhỏ sẽ hiện ra. Bạn phải chọn đúng từ còn thiếu để hệ thống ghi nhận câu đó là đã thuộc.</li>
+		<li><b>Nút "Luyện Tập" (<i class="fas fa-bullseye-arrow"></i>):</b> Nhấn vào để làm bài tập nhanh (Điền từ & Dịch nghĩa) cho riêng câu đó nhằm củng cố trí nhớ.</li>
         <li><b>Bài Thi Tổng Hợp:</b> Khi bạn đã thuộc 100% các câu trong một bài kinh, nút <b>"Bắt đầu kiểm tra"</b> sẽ xuất hiện. Bạn cần vượt qua bài thi ngẫu nhiên (10 câu) để nhận Chứng Nhận Thành Tựu cho bài kinh đó.</li>
         <li><b>Ôn Tập Tùy Chọn:</b> Bạn có thể chọn các ô trên lưới (nhấn giữ), sau đó hệ thống sẽ tạo một bài kiểm tra riêng chỉ gồm những câu bạn đã chọn để ôn tập lại.</li>
         <li><b>Thành Tựu:</b> Bạn sẽ nhận Biểu ngữ "Hộ Trì Học Pháp" khi thuộc xong một bài kinh, và Huy chương "Bậc Hộ Trì Pháp" khi thuộc toàn bộ.</li>
@@ -248,7 +263,7 @@
         </div>
         
         <div id="quiz-body">
-            <p class="quiz-instruction">Chọn từ bên dưới để điền vào chỗ trống:</p>
+            <p id="quiz-instruction-text" class="quiz-instruction">Chọn từ bên dưới để điền vào chỗ trống:</p>
             
             <div id="quiz-sentence-area" class="quiz-sentence-area">
                 </div>
@@ -266,6 +281,62 @@
         </div>
     </div>
 </div>
+<div id="stats-modal" class="modal-overlay">
+    <div class="modal-content stats-content" style="max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 20px;">
+        <div class="quiz-header" style="margin-bottom: 20px;">
+            <h3 style="margin: 0;">Thống Kê Tu Tập</h3>
+            <button class="btn-close-simple" onclick="closeStatsModal()"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="stats-body" style="padding: 0;">
+            <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+                    
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h4 id="breakdown-title" style="margin: 0; font-size: 16px;">Tổng quan</h4>
+                            <select id="report-range-select" class="form-control" style="width: auto; padding: 5px; font-size: 13px; height: 32px;" onchange="renderStatsCharts(true)">
+                                <option value="all">Toàn bộ</option>
+                                <option value="today">Hôm nay</option>
+                                <option value="yesterday">Hôm qua</option>
+                                <option value="this_week" selected>Tuần này</option>
+                                <option value="last_week">Tuần trước</option>
+                                <option value="this_month">Tháng này</option>
+                                <option value="last_month">Tháng trước</option>
+                            </select>
+                        </div>
+                        <div style="height: 300px; display:flex; justify-content:center;">
+                            <canvas id="sectionXPChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsWeek(-1)"><i class="fas fa-chevron-left"></i></button>
+                            <h4 id="weekly-report-title" style="margin: 0; font-size: 16px;">Tiêu điểm tuần</h4>
+                            <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsWeek(1)"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div style="height: 300px;">
+                            <canvas id="weeklyXPChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                        <h4 id="monthly-report-title" style="margin: 0; font-size: 16px;">Tiêu điểm tháng</h4>
+                        <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <div style="height: 300px;">
+                        <canvas id="monthlyXPChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="./js/vi-paritta.js"></script>
 </body>
 </html>
