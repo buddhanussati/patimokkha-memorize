@@ -2525,7 +2525,6 @@ function renderText(rawText) {
         }
     });
 }
-
 // specific setup function or inside window.onload
 function initAudioPlayer() {
     const savedVolume = localStorage.getItem('savedAudioVolume');
@@ -2694,15 +2693,27 @@ function updateDashboardBox(idx, score) {
         box.classList.add(getHeatmapClass(score));
     }
 }
-// --- HỆ THỐNG XP VÀ CẤP ĐỘ ---
+/* --- UPDATED XP SYSTEM --- */
 function getSectionXP(sectionId) {
     const xp = localStorage.getItem(`section_xp_${sectionId}`);
     return xp ? parseInt(xp) : 0;
 }
 
 function addSectionXP(sectionId, amount) {
+    // 1. Add to Section Total (Existing logic)
     const currentXP = getSectionXP(sectionId);
     localStorage.setItem(`section_xp_${sectionId}`, currentXP + amount);
+    
+    // 2. Add to Daily XP Log (Existing logic)
+    const today = new Date().toISOString().split('T')[0];
+    const dailyKey = `daily_xp_log_${today}`;
+    const currentDaily = parseInt(localStorage.getItem(dailyKey) || 0);
+    localStorage.setItem(dailyKey, currentDaily + amount);
+
+    // 3. NEW: Add to Daily Section XP Log (For stacked charts)
+    const dailySectionKey = `daily_section_xp_${sectionId}_${today}`;
+    const currentDailySection = parseInt(localStorage.getItem(dailySectionKey) || 0);
+    localStorage.setItem(dailySectionKey, currentDailySection + amount);
 }
 
 function getLevelInfo(xp) {
@@ -2734,8 +2745,47 @@ function getLevelInfo(xp) {
 
     return { level: level, icon: iconStr };
 }
+
+/* --- DAILY GOAL LOGIC --- */
+
+function getDailyGoal() {
+    return parseInt(localStorage.getItem('daily_xp_goal') || 100);
+}
+
+function getDailyXP() {
+    const today = new Date().toISOString().split('T')[0];
+    return parseInt(localStorage.getItem(`daily_xp_log_${today}`) || 0);
+}
+
+function editDailyGoal() {
+    const currentGoal = getDailyGoal();
+    const newGoal = prompt("Enter your daily goal:", currentGoal);
+    
+    if (newGoal !== null && !isNaN(newGoal) && newGoal > 0) {
+        localStorage.setItem('daily_xp_goal', parseInt(newGoal));
+        updateOverallStats(); // Refresh UI
+    }
+}
 function updateOverallStats() {
-    // ... (Keep the existing calculation logic for sessionPct and globalPct) ...
+    const dailyXP = getDailyXP();
+    const dailyGoal = getDailyGoal();
+    let dailyPct = Math.round((dailyXP / dailyGoal) * 100);
+    
+    // Cap visual width at 100% even if overachieved
+    const visualWidth = dailyPct > 100 ? 100 : dailyPct;
+    
+    document.getElementById('bar-daily').style.width = visualWidth + '%';
+    
+    // Change color if goal reached
+    if (dailyPct >= 100) {
+        document.getElementById('bar-daily').style.backgroundColor = '#8e44ad'; // Purple for completion
+    } else {
+        document.getElementById('bar-daily').style.backgroundColor = '#e67e22'; // Orange default
+    }
+
+    // Update Text with Icon
+    const penIcon = '<i class="fas fa-pen" onclick="editDailyGoal()" style="cursor: pointer; margin-left: 5px; font-size: 10px; opacity: 0.7;"></i>';
+    document.getElementById('text-daily').innerHTML = `${dailyXP}/${dailyGoal} XP ${penIcon}`;
     let sessionTotalScore = 0;
     let sessionMaxScore = allLines.length * 100;
     allLines.forEach((_, idx) => {
@@ -2835,6 +2885,327 @@ function updateOverallStats() {
     }
 }
 
+/* --- HỆ THỐNG BIỂU ĐỒ (Dựa trên renderreport.js) --- */
+
+let statsCharts = {
+    section: null,
+    weekly: null,
+    monthly: null
+};
+
+// State variables for navigating dates
+let statsCurrentWeekStart = null;
+let statsCurrentMonth = null;
+
+function openStatsModal() {
+    document.getElementById('stats-modal').style.display = 'flex';
+    // Khởi tạo/Reset lại UI khi mở (Render mặc định "Tuần này")
+    setTimeout(() => renderStatsCharts(true), 100); 
+}
+
+function closeStatsModal() {
+    document.getElementById('stats-modal').style.display = 'none';
+}
+
+function changeStatsWeek(offset) {
+    if(!statsCurrentWeekStart) return;
+    statsCurrentWeekStart.setDate(statsCurrentWeekStart.getDate() + (offset * 7));
+    renderStatsCharts();
+}
+
+function changeStatsMonth(offset) {
+    if(!statsCurrentMonth) return;
+    statsCurrentMonth.setMonth(statsCurrentMonth.getMonth() + offset);
+    renderStatsCharts();
+}
+
+function renderStatsCharts(resetDates = false) {
+    if (typeof Chart === 'undefined') {
+        alert("Loading chart library...");
+        return;
+    }
+
+    const rangeSelect = document.getElementById('report-range-select');
+    const rangeMode = rangeSelect ? rangeSelect.value : 'all';
+
+    const now = new Date();
+    const realCurrentDay = now.getDay() || 7; // 1-7 (Mon-Sun)
+    const realThisWeekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - realCurrentDay + 1);
+    const realThisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Handle Reset / Adjust Dates
+    if (resetDates || !statsCurrentWeekStart || !statsCurrentMonth) {
+        if (rangeMode === 'last_week') {
+            statsCurrentWeekStart = new Date(realThisWeekStart);
+            statsCurrentWeekStart.setDate(statsCurrentWeekStart.getDate() - 7);
+            statsCurrentMonth = new Date(statsCurrentWeekStart.getFullYear(), statsCurrentWeekStart.getMonth(), 1);
+        } else if (rangeMode === 'last_month') {
+            statsCurrentMonth = new Date(realThisMonthStart);
+            statsCurrentMonth.setMonth(statsCurrentMonth.getMonth() - 1);
+            statsCurrentWeekStart = new Date(statsCurrentMonth.getFullYear(), statsCurrentMonth.getMonth(), 1);
+            const day = statsCurrentWeekStart.getDay() || 7;
+            statsCurrentWeekStart.setDate(statsCurrentWeekStart.getDate() - day + 1);
+        } else {
+            statsCurrentWeekStart = new Date(realThisWeekStart);
+            statsCurrentMonth = new Date(realThisMonthStart);
+        }
+    }
+
+    // --- CHART CONFIGURATION ---
+    const commonOptions = {
+        maintainAspectRatio: false,
+        scales: {
+            x: { stacked: true, grid: { color: '#374151' }, ticks: { color: '#9ca3af', font: { size: 11 } } },
+            y: {
+                stacked: true,
+                grid: { color: '#374151' },
+                title: { display: false },
+                ticks: { color: '#9ca3af', font: { size: 11 } }
+            }
+        },
+        plugins: {
+            legend: { labels: { color: '#9ca3af', font: { size: 11 } } },
+            tooltip: {
+                backgroundColor: '#121821', titleColor: '#f3f4f6', bodyColor: '#f3f4f6', borderColor: '#374151', borderWidth: 1, padding: 10, z: 999,
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        let value = context.raw || 0;
+                        let total = 0;
+                        
+                        // Calculate the total of the stack for percentage
+                        context.chart.data.datasets.forEach((dataset, i) => {
+                            if (context.chart.isDatasetVisible(i)) {
+                                total += dataset.data[context.dataIndex] || 0;
+                            }
+                        });
+
+                        let percentage = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
+                        return `${label}: ${value} XP (${percentage}%)`;
+                    }
+                }
+            }
+        }
+    };
+
+    // --- DATA PREPARATION ---
+    const bgColors = [
+    // 1-10: Nhóm màu rực rỡ (Vibrant)
+    '#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', 
+    '#e67e22', '#1abc9c', '#e84393', '#f39c12', '#d35400',
+    
+    // 11-20: Nhóm màu Pastel sáng (Light/Pastel)
+    '#55efc4', '#81ecec', '#74b9ff', '#a29bfe', '#ffeaa7', 
+    '#fab1a0', '#ff7675', '#fd79a8', '#badc58', '#dff9fb',
+    
+    // 21-30: Nhóm màu đậm/trầm (Deep/Dark)
+    '#c0392b', '#2980b9', '#27ae60', '#f39c12', '#8e44ad', 
+    '#d35400', '#16a085', '#2c3e50', '#192a56', '#441d49',
+    
+    // 31-40: Nhóm màu Neon và kẹo ngọt (Candy/Neon)
+    '#00cec9', '#0984e3', '#6c5ce7', '#ff85a2', '#4cd137', 
+    '#fbc531', '#487eb0', '#e056fd', '#ffbe76', '#ff7979',
+    
+    // 41-50: Nhóm màu trung tính và Earth tones (Earthy)
+    '#95afc0', '#22a6b3', '#be2edd', '#4834d4', '#130f40', 
+    '#6ab04c', '#f9ca24', '#eb4d4b', '#7ed6df', '#5758bb'
+];
+
+    // 1. Doughnut Chart Data (Overall)
+    const sectionLabels = [];
+    const sectionData = [];
+	const doughnutColors = [];
+    let totalXP = 0;
+    
+    // Array to hold dataset structures for Bar Charts
+    let weeklyDatasets = [];
+    let monthlyDatasets = [];
+    const daysInMonth = new Date(statsCurrentMonth.getFullYear(), statsCurrentMonth.getMonth() + 1, 0).getDate();
+
+    sections.forEach((sec, idx) => {
+        let color = bgColors[idx % bgColors.length];
+        
+        // Setup Doughnut Data
+        const xp = getSectionXP(sec.id);
+        if (xp > 0) {
+            sectionLabels.push(sec.title);
+            sectionData.push(xp);
+			doughnutColors.push(color);
+            totalXP += xp;
+        }
+
+        // Setup base structures for Stacked Bar charts
+        weeklyDatasets.push({
+            label: sec.title,
+            data: new Array(7).fill(0),
+            backgroundColor: color,
+            stack: '0',
+            _sumWeek: 0
+        });
+        
+        monthlyDatasets.push({
+            label: sec.title,
+            data: new Array(daysInMonth).fill(0),
+            backgroundColor: color,
+            stack: '0',
+            _sumMonth: 0
+        });
+    });
+
+    // 2. Weekly Chart Data Population
+    const weekStartMs = statsCurrentWeekStart.getTime();
+    const weekEndMs = weekStartMs + (7 * 24 * 60 * 60 * 1000);
+    const weekEndDisp = new Date(weekEndMs - 1);
+    document.getElementById('weekly-report-title').innerText = `Week (${statsCurrentWeekStart.toLocaleDateString('en-GB', {month:'numeric', day:'numeric'})} - ${weekEndDisp.toLocaleDateString('en-GB', {month:'numeric', day:'numeric'})})`;
+
+    const weeklyLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(statsCurrentWeekStart);
+        d.setDate(d.getDate() + i);
+        const offset = d.getTimezoneOffset() * 60000;
+        const dateStr = new Date(d.getTime() - offset).toISOString().split('T')[0];
+        
+        sections.forEach((sec, sIdx) => {
+            const val = parseInt(localStorage.getItem(`daily_section_xp_${sec.id}_${dateStr}`) || 0);
+            weeklyDatasets[sIdx].data[i] = val;
+            weeklyDatasets[sIdx]._sumWeek += val;
+        });
+    }
+
+    // 3. Monthly Chart Data Population
+    const mYear = statsCurrentMonth.getFullYear();
+    const mMonth = statsCurrentMonth.getMonth();
+    document.getElementById('monthly-report-title').innerText = `Month ${new Date(mYear, mMonth).toLocaleDateString('en-GB', { month: 'numeric', year: 'numeric' })}`;
+    const monthlyLabels = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+    for (let i = 1; i <= daysInMonth; i++) {
+        const d = new Date(mYear, mMonth, i);
+        const offset = d.getTimezoneOffset() * 60000;
+        const dateStr = new Date(d.getTime() - offset).toISOString().split('T')[0];
+        
+        sections.forEach((sec, sIdx) => {
+            const val = parseInt(localStorage.getItem(`daily_section_xp_${sec.id}_${dateStr}`) || 0);
+            monthlyDatasets[sIdx].data[i-1] = val;
+            monthlyDatasets[sIdx]._sumMonth += val;
+        });
+    }
+
+    // Filter out datasets that have 0 XP for the selected period to keep the legend clean
+    weeklyDatasets = weeklyDatasets.filter(ds => ds._sumWeek > 0);
+    monthlyDatasets = monthlyDatasets.filter(ds => ds._sumMonth > 0);
+
+    // --- DRAW CHARTS ---
+
+    // Doughnut Chart
+    const ctxSection = document.getElementById('sectionXPChart').getContext('2d');
+    if (statsCharts.section) statsCharts.section.destroy();
+
+    const centerTextPlugin = {
+        id: 'centerText',
+        afterDatasetsDraw: function(chart) {
+            const { ctx, chartArea: { top, bottom, left, right } } = chart;
+            ctx.save();
+            const centerX = (left + right) / 2;
+            const centerY = (top + bottom) / 2;
+            const chartHeight = bottom - top;
+            const fontSizeMain = chartHeight / 10; 
+            const fontSizeSub = chartHeight / 20;
+
+            ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.font = `bold ${fontSizeMain}px sans-serif`;
+            ctx.fillStyle = "#FFFFFF"; 
+            ctx.fillText(totalXP.toLocaleString(), centerX, centerY - (fontSizeMain * 0.15));
+            ctx.font = `normal ${fontSizeSub}px sans-serif`;
+            ctx.fillStyle = "#9ca3af";
+            ctx.fillText("XP", centerX, centerY + (fontSizeMain * 0.75));
+            ctx.restore();
+        }
+    };
+
+    statsCharts.section = new Chart(ctxSection, {
+        type: 'doughnut',
+        data: {
+            labels: sectionLabels,
+            datasets: [{ data: sectionData, backgroundColor: doughnutColors, borderWidth: 1, borderColor: '#1f2937' }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#9ca3af' }, position: 'bottom' },
+                title: { display: sectionData.length === 0, text: 'No data available', position: 'bottom', color: '#6b7280' },
+                tooltip: {
+                    backgroundColor: '#121821', titleColor: '#f3f4f6', bodyColor: '#f3f4f6', borderColor: '#374151', borderWidth: 1, padding: 10,
+                    callbacks: {
+                        label: function(context) {
+                            let value = context.raw;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
+                            return ` ${value} XP (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        },
+        plugins: [centerTextPlugin]
+    });
+
+    // Weekly Stacked Bar Chart
+    const ctxWeekly = document.getElementById('weeklyXPChart').getContext('2d');
+    if (statsCharts.weekly) statsCharts.weekly.destroy();
+
+    statsCharts.weekly = new Chart(ctxWeekly, {
+        type: 'bar',
+        data: {
+            labels: weeklyLabels,
+            datasets: weeklyDatasets.length > 0 ? weeklyDatasets : [{ label: 'No data available', data: new Array(7).fill(0), backgroundColor: '#374151' }]
+        },
+        options: {
+            ...commonOptions,
+            plugins: {
+                ...commonOptions.plugins,
+                tooltip: {
+                    ...commonOptions.plugins.tooltip,
+                    callbacks: {
+                        ...commonOptions.plugins.tooltip.callbacks,
+                        title: (context) => {
+                            const index = context[0].dataIndex;
+                            const date = new Date(statsCurrentWeekStart);
+                            date.setDate(date.getDate() + index);
+                            
+                            return `${context[0].label} (${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')})`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Monthly Stacked Bar Chart
+    const ctxMonthly = document.getElementById('monthlyXPChart').getContext('2d');
+    if (statsCharts.monthly) statsCharts.monthly.destroy();
+
+    statsCharts.monthly = new Chart(ctxMonthly, {
+        type: 'bar',
+        data: {
+            labels: monthlyLabels,
+            datasets: monthlyDatasets.length > 0 ? monthlyDatasets : [{ label: 'No data available', data: new Array(daysInMonth).fill(0), backgroundColor: '#374151' }]
+        },
+        options: {
+            ...commonOptions,
+            plugins: {
+                ...commonOptions.plugins,
+                tooltip: {
+                    ...commonOptions.plugins.tooltip,
+                    callbacks: {
+                        ...commonOptions.plugins.tooltip.callbacks,
+                        title: (context) => `${String(context[0].label).padStart(2, '0')}/${String(mMonth + 1).padStart(2, '0')}`
+                    }
+                }
+            }
+        }
+    });
+}
 function injectExamButton() {
     // Check if it already exists to avoid duplicates
     if (document.getElementById('final-exam-container')) return;
@@ -3214,24 +3585,22 @@ function injectSlider(lineElement, idx) {
         container = document.createElement('div');
         container.className = 'memorize-slider-container';
         
+        // 1. Checkbox Section
         const label = document.createElement('label');
         label.className = 'memorize-checkbox-label';
         
         const input = document.createElement('input');
         input.type = 'checkbox';
         input.className = 'memorize-checkbox';
-        input.id = `checkbox-${idx}`; // Add ID for easier access
+        input.id = `checkbox-${idx}`; 
 
-        // --- MODIFIED CLICK HANDLER ---
         input.addEventListener('click', function(e) {
             const isChecked = this.checked;
-            
             if (isChecked) {
-                // User wants to mark as learned -> Trigger Test
-                e.preventDefault(); // Stop the check immediately
-                startLineTest(idx);
+                e.preventDefault(); 
+                // Mode: 'check' -> Questions 1 & 2
+                startLineTest(idx, 'check');
             } else {
-                // User unchecking -> Allow immediately and reset score
                 saveLineScore(idx, 0);
             }
         });
@@ -3242,6 +3611,18 @@ function injectSlider(lineElement, idx) {
         label.appendChild(input);
         label.appendChild(textSpan);
         container.appendChild(label);
+
+        // 2. NEW: Practice Button Section
+        const practiceBtn = document.createElement('button');
+        practiceBtn.className = 'btn-practice';
+        practiceBtn.innerHTML = '<i class="fas fa-bullseye-arrow"></i> Practicing';
+        practiceBtn.onclick = function() {
+            // Mode: 'practice' -> Questions 1 & 3
+            startLineTest(idx, 'practice');
+        };
+        
+        container.appendChild(practiceBtn);
+
         lineElement.appendChild(container);
     }
 
@@ -3251,26 +3632,171 @@ function injectSlider(lineElement, idx) {
     input.checked = (currentScore >= 100);
 }
 
-/* --- QUIZ UI HANDLERS --- */
+/* --- HELPER: GET TRANSLATION FOR PALI LINE --- */
+function getTranslationForLine(sectionIdx, targetLineIdx) {
+    const lines = sections[sectionIdx].text.split('\n');
+    let currentPaliIndex = -1;
+    let paliText = "";
+    
+    for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
+        if (line === '') continue;
+        
+        const timeMatch = line.match(/\s*\[(\d+(\.\d+)?)\]\s*$/);
+        if (timeMatch) {
+            currentPaliIndex++;
+            if (currentPaliIndex === targetLineIdx) {
+                paliText = line.replace(timeMatch[0], '').trim();
+                // Tìm dòng dịch (dòng tiếp theo không chứa time marker)
+                for (let j = i + 1; j < lines.length; j++) {
+                    let nextLine = lines[j].trim();
+                    if (nextLine === '') continue;
+                    if (!nextLine.match(/\s*\[(\d+(\.\d+)?)\]\s*$/)) {
+                        return { pali: paliText, trans: nextLine };
+                    } else {
+                        break; // Gặp câu Pali tiếp theo -> Không có bản dịch
+                    }
+                }
+                return { pali: paliText, trans: "(No translation)" };
+            }
+        }
+    }
+    return { pali: "", trans: "" };
+}
 
-function startLineTest(idx) {
+/* --- HELPER: GET RANDOM DISTRACTORS FROM ALL SECTIONS --- */
+function getRandomTranslations(count, excludeTrans) {
+    let finalDistractors = [];
+
+    // 1. Tạo mảng chứa thứ tự ưu tiên các Section
+    // Bắt đầu bằng section hiện tại
+    let prioritizedIndices = [currentSectionIndex]; 
+    let maxOffset = Math.max(currentSectionIndex, sections.length - 1 - currentSectionIndex);
+
+    // Mở rộng dần ra: Liền trước (-1) rồi Liền sau (+1), tiếp tục (-2) rồi (+2)...
+    for (let offset = 1; offset <= maxOffset; offset++) {
+        let prev = currentSectionIndex - offset;
+        let next = currentSectionIndex + offset;
+
+        if (prev >= 0) prioritizedIndices.push(prev);
+        if (next < sections.length) prioritizedIndices.push(next);
+    }
+
+    // 2. Duyệt qua từng section theo thứ tự ưu tiên
+    for (let secIdx of prioritizedIndices) {
+        let currentSecTrans = [];
+        const lines = sections[secIdx].text.split('\n');
+        
+        // Lấy tất cả các câu dịch trong section này
+        lines.forEach(line => {
+            let l = line.trim();
+            // Bỏ qua dòng trống và dòng Pali (có time marker)
+            if (l !== '' && !l.match(/\s*\[(\d+(\.\d+)?)\]\s*$/)) {
+                currentSecTrans.push(l);
+            }
+        });
+
+        // 3. Lọc trùng lặp, loại câu ngắn (<=5), loại đáp án đúng, 
+        // VÀ loại cả những đáp án đã được đưa vào mảng finalDistractors trước đó
+        let uniqueValidTrans = [...new Set(currentSecTrans)].filter(t => 
+            t !== excludeTrans && 
+            t.length > 5 && 
+            !finalDistractors.includes(t)
+        );
+
+        // 4. Trộn ngẫu nhiên danh sách hợp lệ của section này
+        uniqueValidTrans.sort(() => 0.5 - Math.random());
+
+        // 5. Bổ sung từ từ vào danh sách kết quả cuối cùng cho đến khi đủ số lượng
+        for (let trans of uniqueValidTrans) {
+            if (finalDistractors.length < count) {
+                finalDistractors.push(trans);
+            }
+            // Nếu đã lấy đủ thì ngắt vòng lặp và trả về kết quả luôn
+            if (finalDistractors.length === count) {
+                return finalDistractors; 
+            }
+        }
+    }
+
+    // Trả về số lượng thu thập được (phòng trường hợp toàn bộ dữ liệu vẫn không đủ 'count')
+    return finalDistractors;
+}
+
+/* --- GENERATE TRANSLATION QUIZ DATA --- */
+function generateTranslationQuizData(lineIdx) {
+    const { pali, trans } = getTranslationForLine(currentSectionIndex, lineIdx);
+    // Lấy 3 đáp án nhiễu
+    const distractors = getRandomTranslations(3, trans);
+    
+    let options = [trans, ...distractors];
+    // Trộn ngẫu nhiên vị trí của 4 đáp án
+    options.sort(() => 0.5 - Math.random()); 
+    
+    return {
+        type: 'translation',
+        paliText: pali,
+        correctTranslation: trans,
+        options: options,
+        userAnswer: null
+    };
+}
+
+let isPracticeMode = false; // Flag to track if we are in practice mode
+
+function startLineTest(idx, mode = 'check') {
     isSectionExam = false;
     currentTargetLineIndex = idx;
     quizQueue = [];
+    
+    // Set global flag
+    isPracticeMode = (mode === 'practice');
 
-    // Question 1: Current Sentence (40% hidden)
-    quizQueue.push(generateQuizData(idx, 0.4));
+    // === NEW LOGIC: MULTI-SELECT PRACTICE MODE ===
+    // If user clicked "Luyện Tập" AND has specific boxes selected via Long Press
+    if (isPracticeMode && selectedLoopIndices.size > 0) {
+        
+        // 1. Get selected lines and sort them (e.g., 3, 5, 7)
+        const sortedIndices = Array.from(selectedLoopIndices).sort((a, b) => a - b);
+        
+        // 2. Generate Q1 (Fill Blank) and Q3 (Translation) for EACH selected line
+        sortedIndices.forEach(lineIdx => {
+            // Question 1: Fill in the blank (Current Line)
+            quizQueue.push(generateQuizData(lineIdx, 0.4));
+            
+            // Question 3: Vietnamese Translation (Current Line)
+            quizQueue.push(generateTranslationQuizData(lineIdx));
+        });
 
-    // Question 2: Previous Sentence (if exists)
-    if (idx > 0) {
-        quizQueue.push(generateQuizData(idx - 1, 0.4));
+        // 3. Update Title
+        document.getElementById('quiz-title').innerText = `Practicing (${sortedIndices.length} selected)`;
+
+    } else {
+        // === ORIGINAL LOGIC: SINGLE LINE MODE ===
+        
+        // Question 1: Fill Blank (Current Line)
+        quizQueue.push(generateQuizData(idx, 0.4));
+
+        // Question 2: Previous Sentence (if exists) - Only for standard Check/Practice
+        if (idx > 0) {
+            quizQueue.push(generateQuizData(idx - 1, 0.4));
+        }
+        
+        // Question 3: Translation
+        quizQueue.push(generateTranslationQuizData(idx));
+
+        // Set Title based on mode
+        if (mode === 'check') {
+            document.getElementById('quiz-title').innerText = "Memorize Test";
+        } else if (mode === 'practice') {
+            document.getElementById('quiz-title').innerText = "Practicing";
+        }
     }
-    // Note: If idx is 0, only 1 question is pushed.
 
     currentQuizIndex = 0;
-    document.getElementById('quiz-title').innerText = "Memorize Test";
     openQuizModal();
 }
+
 
 function openQuizModal() {
     document.getElementById('quiz-modal').style.display = 'flex';
@@ -3287,49 +3813,108 @@ function renderQuizStep() {
     const total = quizQueue.length;
     
     // Update Progress
-    document.getElementById('quiz-progress').innerText = `Question ${currentQuizIndex + 1}/${total}`;
+    document.getElementById('quiz-progress').innerText = `Quiz ${currentQuizIndex + 1}/${total}`;
     document.getElementById('btn-quiz-next').disabled = true;
     document.getElementById('btn-quiz-next').innerText = (currentQuizIndex === total - 1) ? "Complete" : "Continue";
     document.getElementById('btn-quiz-reset').style.display = 'none';
 
-    // 1. Render Sentence with Blanks
     const sentenceArea = document.getElementById('quiz-sentence-area');
-    sentenceArea.innerHTML = '';
-    
-    data.originalWords.forEach((word, i) => {
-        if (data.hiddenIndices.includes(i)) {
-            // It's a blank
-            const blankIdx = data.hiddenIndices.indexOf(i);
-            const span = document.createElement('span');
-            span.className = 'quiz-blank';
-            span.dataset.wordIndex = i;
-            span.dataset.blankIndex = blankIdx;
-            span.innerHTML = "&nbsp;&nbsp;&nbsp;";
-            
-            // Allow clicking blank to clear it (if filled)
-            span.onclick = () => clearBlank(blankIdx);
-            
-            sentenceArea.appendChild(span);
-        } else {
-            // Regular text
-            const span = document.createElement('span');
-            span.innerText = word + " ";
-            sentenceArea.appendChild(span);
-        }
-    });
-
-    // 2. Render Word Bank
     const optionsArea = document.getElementById('quiz-options-area');
-    optionsArea.innerHTML = '';
+    const instructionText = document.getElementById('quiz-instruction-text'); // Target the instruction
     
-    data.wordBank.forEach((word, i) => {
-        const btn = document.createElement('div');
-        btn.className = 'quiz-option';
-        btn.innerText = word;
-        btn.dataset.optIndex = i;
-        btn.onclick = () => selectOption(i, word);
-        optionsArea.appendChild(btn);
+    sentenceArea.innerHTML = '';
+    optionsArea.innerHTML = '';
+
+    // === NẾU LÀ CÂU HỎI TRẮC NGHIỆM TIẾNG VIỆT ===
+    if (data.type === 'translation') {
+        
+        // Cập nhật câu hướng dẫn
+        if (instructionText) instructionText.innerText = "What is the meaning of this Pali sentence?";
+        
+        // Render Text Question (Removed redundant labels, just keeping the Pali text)
+        sentenceArea.innerHTML = `
+            <div style="font-weight: bold; color: var(--primary-color); font-size: 20px; text-align: center; padding: 10px 0;">"${data.paliText}"</div>
+        `;
+        
+        // Đặt layout dọc cho các đáp án dài
+        optionsArea.style.flexDirection = 'column';
+        optionsArea.style.alignItems = 'stretch';
+        
+        data.options.forEach((opt, i) => {
+            const btn = document.createElement('div');
+            btn.className = 'quiz-option translation-option';
+            btn.innerText = opt;
+            btn.dataset.optIndex = i;
+            
+            // Giữ trạng thái chọn nếu render lại
+            if (data.userAnswer === opt) {
+                btn.style.backgroundColor = 'var(--highlight-color)';
+                btn.style.color = '#fff';
+            }
+            
+            btn.onclick = () => selectTranslationOption(opt, btn);
+            optionsArea.appendChild(btn);
+        });
+    } 
+    // === NẾU LÀ CÂU HỎI ĐIỀN TỪ (MẶC ĐỊNH CŨ) ===
+    else {
+        
+        // Cập nhật câu hướng dẫn về mặc định
+        if (instructionText) instructionText.innerText = "Select the words below to fill in the blanks:";
+
+        optionsArea.style.flexDirection = 'row'; // Trả về layout cũ
+        optionsArea.style.alignItems = 'center';
+
+        // 1. Render Sentence with Blanks
+        data.originalWords.forEach((word, i) => {
+            if (data.hiddenIndices.includes(i)) {
+                const blankIdx = data.hiddenIndices.indexOf(i);
+                const span = document.createElement('span');
+                span.className = 'quiz-blank';
+                span.dataset.wordIndex = i;
+                span.dataset.blankIndex = blankIdx;
+                span.innerHTML = "&nbsp;&nbsp;&nbsp;";
+                
+                span.onclick = () => clearBlank(blankIdx);
+                sentenceArea.appendChild(span);
+            } else {
+                const span = document.createElement('span');
+                span.innerText = word + " ";
+                sentenceArea.appendChild(span);
+            }
+        });
+
+        // 2. Render Word Bank
+        data.wordBank.forEach((word, i) => {
+            const btn = document.createElement('div');
+            btn.className = 'quiz-option';
+            btn.innerText = word;
+            btn.dataset.optIndex = i;
+            btn.onclick = () => selectOption(i, word);
+            optionsArea.appendChild(btn);
+        });
+    }
+}
+
+// Hàm chọn đáp án cho câu hỏi Dịch tiếng Việt
+function selectTranslationOption(optText, btnElement) {
+    const data = quizQueue[currentQuizIndex];
+    if (!data || data.type !== 'translation') return;
+    
+    data.userAnswer = optText;
+    
+    // Đặt lại style cho tất cả các nút
+    const allOpts = document.querySelectorAll('.translation-option');
+    allOpts.forEach(el => {
+        el.style.backgroundColor = '';
+        el.style.color = '';
     });
+    
+    // Highlight nút được chọn
+    btnElement.style.backgroundColor = 'var(--highlight-color)';
+    btnElement.style.color = '#fff';
+    
+    checkStepCompletion();
 }
 
 function selectOption(optIndex, word) {
@@ -3379,49 +3964,75 @@ function clearBlank(blankIdx) {
 
 function checkStepCompletion() {
     const data = quizQueue[currentQuizIndex];
-    const isFull = data.userAnswers.every(ans => ans !== null);
-    
     const btnNext = document.getElementById('btn-quiz-next');
     
-    if (isFull) {
-        // Auto validate or wait for user? Let's wait for user to click "Next/Check"
-        btnNext.disabled = false;
-        btnNext.onclick = validateCurrentQuestion;
+    if (data.type === 'translation') {
+        if (data.userAnswer !== null) {
+            btnNext.disabled = false;
+            btnNext.onclick = validateCurrentQuestion;
+        } else {
+            btnNext.disabled = true;
+        }
     } else {
-        btnNext.disabled = true;
+        const isFull = data.userAnswers.every(ans => ans !== null);
+        if (isFull) {
+            btnNext.disabled = false;
+            btnNext.onclick = validateCurrentQuestion;
+        } else {
+            btnNext.disabled = true;
+        }
     }
 }
 
-/* --- 3. VALIDATION LOGIC (Ensure comparison uses cleaner) --- */
 function validateCurrentQuestion() {
     const data = quizQueue[currentQuizIndex];
     let isCorrect = true;
 
-    data.hiddenIndices.forEach((wordIdx, i) => {
-        // Compare CLEANED original vs User Answer (which is already clean from wordBank)
-        const correctWordClean = cleanPaliWord(data.originalWords[wordIdx]);
-        const userWord = data.userAnswers[i] ? data.userAnswers[i].word : ""; 
+    if (data.type === 'translation') {
+        isCorrect = (data.userAnswer === data.correctTranslation);
+        
+        // Highlight Đúng/Sai
+        const allOpts = document.querySelectorAll('.translation-option');
+        allOpts.forEach(el => {
+            // FIX: Only apply colors to the option the user actually clicked
+            if (el.innerText === data.userAnswer) {
+                if (isCorrect) {
+                    el.style.backgroundColor = '#27ae60'; // Xanh lá = Đúng
+                    el.style.color = 'white';
+                    el.style.borderColor = '#27ae60';
+                } else {
+                    el.style.backgroundColor = '#c0392b'; // Đỏ = Sai
+                    el.style.color = 'white';
+                    el.style.borderColor = '#c0392b';
+                }
+            }
+        });
+    } else {
+        // Logic kiểm tra câu điền từ cũ
+        data.hiddenIndices.forEach((wordIdx, i) => {
+            const correctWordClean = cleanPaliWord(data.originalWords[wordIdx]);
+            const userWord = data.userAnswers[i] ? data.userAnswers[i].word : ""; 
+            const blankEl = document.querySelector(`.quiz-blank[data-blank-index="${i}"]`);
 
-        const blankEl = document.querySelector(`.quiz-blank[data-blank-index="${i}"]`);
-
-        if (correctWordClean !== userWord) {
-            isCorrect = false;
-            blankEl.classList.add('error');
-        } else {
-            blankEl.classList.remove('error');
-            blankEl.classList.add('filled');
-        }
-    });
+            if (correctWordClean !== userWord) {
+                isCorrect = false;
+                blankEl.classList.add('error');
+            } else {
+                blankEl.classList.remove('error');
+                blankEl.classList.add('filled');
+            }
+        });
+    }
 
     if (isCorrect) {
         if (currentQuizIndex < quizQueue.length - 1) {
-            // Wait a moment so user sees green, then move on
+            // Đợi 1 giây để người dùng nhìn thấy đáp án xanh lá rồi mới qua câu
             setTimeout(() => {
                 currentQuizIndex++;
                 renderQuizStep();
-            }, 500);
+            }, 1000); 
         } else {
-            finishQuizSuccess();
+            setTimeout(finishQuizSuccess, 1000);
         }
     } else {
         const btnReset = document.getElementById('btn-quiz-reset');
@@ -3432,38 +4043,37 @@ function validateCurrentQuestion() {
 }
 
 function resetCurrentQuestion() {
-    // Reset Data
     const data = quizQueue[currentQuizIndex];
-    data.userAnswers.fill(null);
-    renderQuizStep(); // Re-render
+    if (data.type === 'translation') {
+        data.userAnswer = null;
+    } else {
+        data.userAnswers.fill(null);
+    }
+    renderQuizStep(); 
 }
 
 function finishQuizSuccess() {
-    // 1. Update the local line state immediately
-    if (!isSectionExam && currentTargetLineIndex !== -1) {
-        // Visually check the box
+    // 1. Logic for "Check Mode" (Đã thuộc)
+    if (!isSectionExam && !isPracticeMode && currentTargetLineIndex !== -1) {
         const checkbox = document.getElementById(`checkbox-${currentTargetLineIndex}`);
         if (checkbox) checkbox.checked = true;
-        
-        // Save to localStorage
         saveLineScore(currentTargetLineIndex, 100);
     }
 
-    // --- CỘNG ĐIỂM XP ---
-    // Cộng điểm tương đương số câu hỏi trong phiên kiểm tra/ôn tập
+    // 2. XP REWARD
     const currentSectionId = sections[currentSectionIndex].id;
-    addSectionXP(currentSectionId, quizQueue.length);
-    // --------------------
+    let xpEarned = quizQueue.length; // Default base
+        alert(`Completed! You received +${quizQueue.length} XP.`);
 
-    // 2. Close the modal UI
+    addSectionXP(currentSectionId, xpEarned);
+
+    // 3. Cleanup
     closeQuizModal();
     
-    // 3. Use a Timeout to run the heavy "Overall Stats" logic.
     setTimeout(() => {
         if (isSectionExam) {
             completeSectionExam();
         } else {
-            // Refresh percentages and check if the Final Exam button should appear
             updateOverallStats(); 
         }
     }, 150); 
@@ -3533,6 +4143,7 @@ function navigateRecitation(d) {
 
     function toggleSpeedControl() {
         document.getElementById('btn-show-speed').style.display = 'none';
+		document.getElementById('btn-show-speed2').style.display = 'none';
         document.getElementById('speed-control-area').style.display = 'flex';
     }
 
@@ -3551,6 +4162,7 @@ function navigateRecitation(d) {
         document.getElementById('recitation-interval-label').innerText = "3.0s";
         document.getElementById('speed-control-area').style.display = 'none';
         document.getElementById('btn-show-speed').style.display = 'inline-block';
+		document.getElementById('btn-show-speed2').style.display = 'inline-block';
         loadSection(currentSectionIndex);
     }
     
