@@ -72,7 +72,12 @@
 </div>
     </div>
 </div>
-    <h2 id="section-title">Đang tải...</h2>
+    <div class="section-header-wrapper">
+        <h2 id="section-title">Đang tải...</h2>
+        <i id="btn-section-info" class="fas fa-circle-info btn-info-icon" onclick="showSectionInfo()" title="Về kinh này"></i>
+    </div>
+    
+    <h2 id="section-title-vn" style="font-weight: normal; font-size: 18px; margin-top: 0; opacity: 0.9;"></h2>
     <div id="display-area" class="text-content"></div>
 </div>
 
@@ -269,13 +274,14 @@ Thật xứng gọi Tỷ-kheo."
     </div>
 </div>
 <div id="stats-modal" class="modal-overlay">
-    <div class="modal-content stats-content" style="max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 20px;">
-        <div class="quiz-header" style="margin-bottom: 20px;">
+    <div class="modal-content stats-content" style="max-width: 900px; width: 95%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 0;">
+        
+        <div class="quiz-header" style="padding: 15px 20px; margin: 0; flex-shrink: 0; border-bottom: 1px solid rgba(128,128,128, 0.3); display: flex; justify-content: space-between; align-items: center; background: inherit;">
             <h3 style="margin: 0;">Thống Kê Tu Tập</h3>
             <button class="btn-close-simple" onclick="closeStatsModal()"><i class="fas fa-times"></i></button>
         </div>
         
-        <div class="stats-body" style="padding: 0;">
+        <div class="stats-body" style="padding: 20px; overflow-y: auto; flex-grow: 1;">
             <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
                     
