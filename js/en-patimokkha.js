@@ -83,24 +83,111 @@ function lookupWordHandler(event) {
     if (!window.paliDictionary) return;
     if ($(this).children().is("span.meaning")) return;
 
-    // Get text
+    const isRecitationActive = document.body.classList.contains('recitation-active-mode');
+
+    if (isRecitationActive) {
+        const rawText = this.innerText || "";
+        const cleanText = rawText.toLowerCase().replace(/[.,:;!?'"“”‘’()\[\]{}...–-]/g, '').trim();
+
+        // 1. FIND WORD POSITION (Index in the sentence/line)
+        // This finds how many '.word' siblings are before this one
+        const wordIndex = $(this).parent().find('.word').index(this);
+
+        // 2. DEFINE THEME-SPECIFIC COLORS (20 for each)
+        const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+
+        // High-contrast, darker colors for Light Mode
+        const lightModeColors = [
+            '#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#d35400', 
+            '#2c3e50', '#16a085', '#b53471', '#5758bb', '#1b1464',
+            '#006266', '#6F1E51', '#1289A7', '#D980FA', '#0652DD',
+            '#c23616', '#192a56', '#2f3640', '#44bd32', '#833471'
+        ];
+
+        // Vibrant, glowing colors for Dark Mode
+        const darkModeColors = [
+            '#ff7675', '#74b9ff', '#55e6c1', '#a29bfe', '#fab1a0',
+			'#18dcff', '#7d5fff', '#ffaf40', '#32ff7e', '#ff3838',
+            '#ffeaa7', '#81ecec', '#fdcb6e', '#fd79a8', '#55efc4',
+            '#00d2d3', '#00cec9', '#fab1a0', '#ff9f43', '#fffa65',
+        ];
+
+        const colorPalette = isDarkMode ? darkModeColors : lightModeColors;
+        // Use Modulo to cycle colors so neighbor words are always different
+        const wordColor = colorPalette[wordIndex % colorPalette.length];
+
+        // 3. ACCURATE PALI RHYTHM ANALYSIS
+        const longVowels = ['ā', 'ī', 'ū', 'e', 'o'];
+        const vowels = 'aāiīuūeo';
+        const aspirates = ['kh', 'gh', 'ch', 'jh', 'ṭh', 'ḍh', 'th', 'dh', 'ph', 'bh'];
+        
+        let rhythm = [];
+        for (let i = 0; i < cleanText.length; i++) {
+            let char = cleanText[i];
+            if (vowels.includes(char)) {
+                let isGuru = false;
+                if (longVowels.includes(char)) {
+                    isGuru = true;
+                } else {
+                    let nextPart = cleanText.slice(i + 1);
+                    if (nextPart.startsWith('ṁ')) {
+                        isGuru = true;
+                    } else {
+                        let following = nextPart.match(/^([^aāiīuūeo]+)/);
+                        if (following) {
+                            let cluster = following[0];
+                            let tempCluster = cluster;
+                            aspirates.forEach(a => { tempCluster = tempCluster.replace(a, 'K'); });
+                            if (tempCluster.length > 1) isGuru = true;
+                        }
+                    }
+                }
+                rhythm.push(isGuru ? 'fa-minus' : 'fa-circle');
+            }
+        }
+
+        // 4. RENDER
+        let symbolsHtml = rhythm.map(icon => {
+            const size = (icon === 'fa-minus') ? '18px' : '10px';
+            // Slight text-shadow added for "pop" against background textures
+            return `<i class="fas ${icon}" style="font-size: ${size}; margin: 0 4px; text-shadow: 1px 1px 1px rgba(0,0,0,0.1);"></i>`;
+        }).join('');
+
+        const textBox = $(`
+            <span class="meaning" style="min-width: 60px; padding: 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div style="color: ${wordColor}; display: flex; align-items: center; justify-content: center; gap: 2px;">
+                    ${symbolsHtml}
+                </div>
+            </span>
+        `);
+        
+        $(this).append(textBox);
+        
+        var offset = $(this).offset();
+        if (offset.left + textBox.outerWidth() > $(window).width()) {
+             textBox.css({left: 'auto', right: 0});
+        }
+        return; 
+    }
+
+ 
+
+    // ... [Rest of function for Dictionary Logic remains exactly the same] ...
     var rawText = $(this).text();
     var word = rawText.toLowerCase().trim();
 
-    // --- CRITICAL FIX: Remove punctuation from edges ---
-    // The original script split text by punctuation. Since your HTML 
-    // includes punctuation in the span (e.g., "dhammo,"), we must strip it here.
-    word = word.replace(/^[“‘"(\[]+|[”’"),.\]?!:;]+$/g, '');
 
-    // Standard replacements from original script
-    word = word.replace(/­/g, ''); // optional hyphen
-    // Fix specific Pali spelling variations handled in original script
+    // CRITICAL FIX: Remove punctuation from edges
+    word = word.replace(/^[“‘"(\[]+|[”’"),‚.\]?!:–;]+$/g, '');
+
+    // Standard replacements
+    word = word.replace(/­/g, ''); 
     word = word.replace(/ṁg/g, 'ṅg')
                .replace(/ṁk/g, 'ṅk')
-               .replace(/ṁ/g, 'ṁ'); // (Original had this, keeping for safety)
+               .replace(/ṁ/g, 'ṁ'); 
 
     // Perform Lookup
-    var meaning = lookupWord(word, rawText); // Pass rawText for display title
+    var meaning = lookupWord(word, rawText); 
     
     if (meaning) {
         var textBox = $('<span class="meaning">' + meaning + '</span>');
@@ -175,7 +262,7 @@ Namo tassa Bhagavato Arahato Sammāsambuddhassa. [5.042]
 Homage to the Blessed One, the Worthy One, the Rightly Self-awakened One.
 Namo tassa Bhagavato Arahato Sammāsambuddhassa. [6.308]
 Homage to the Blessed One, the Worthy One, the Rightly Self-awakened One.
-Suṇātu me (bhante/āvuso) saṅgho. Ajjuposatho pannaraso, yadi saṅghassa pattakallaṃ, saṅgho uposathaṃ kareyya, pātimokkhaṃ uddiseyya. [12.409]
+Suṇātu me bhante (āvuso) saṅgho. Ajjuposatho pannaraso, yadi saṅghassa pattakallaṃ, saṅgho uposathaṃ kareyya, pātimokkhaṃ uddiseyya. [12.409]
 Let the community listen to me, (venerable sirs/friends). Today is the fifteenth day Uposatha. If the community is ready, it should perform the Uposatha and recite the Pātimokkha.
 Kiṃ saṅghassa pubbakiccaṃ? Pārisuddhiṃ āyasmanto ārocetha, [5.733]
 What is the preliminary duty of the community? Venerable sirs, announce your purity.
@@ -423,7 +510,7 @@ te bhikkhū bhikkhūhi yāvatatiyaṃ samanubhāsitabbā tassa paṭinissaggāya
 they should be admonished by the monks up to the third time for the relinquishing of that course.
 yāvatatiyañce samanubhāsiyamānā taṃ paṭinissajjeyyuṃ, iccetaṃ kusalaṃ, [4.7]
 If, being admonished up to the third time, they relinquish it, that is good.
-no ce paṭinissajjeyyuṃ , saṅghādiseso. [3.6]
+no ce paṭinissajjeyyuṃ, saṅghādiseso. [3.6]
 If they do not relinquish it, it is a Saṅghādisesa.`
 },
 
@@ -545,7 +632,7 @@ The third section, on Community-Initial-and-Subsequent-Meeting, is finished.`
     id: 'Ay.1', title: 'Aniyata 1', audio: '3Ay-01.mp3',
     text: `Ime kho panāyasmanto dve aniyatā dhammā uddesaṃ āgacchanti. [5.1]
 Venerable sirs, these two Indefinite rules come into recitation.
-Yo pana bhikkhu mātugāmena saddhiṃ eko ekāya raho paṭicchanne āsane alaṃkammaniye nisajjaṃ kappeyya, [6.7]
+Yo pana bhikkhu mātugāmena saddhiṃ eko ekāya raho paṭicchanne āsane alaṅkammaniye nisajjaṃ kappeyya, [6.7]
 Whatever monk should sit in private, on a secluded and suitable seat, alone with a woman,
 tamenaṃ saddheyyavacasā upāsikā disvā tiṇṇaṃ dhammānaṃ aññatarena vadeyya [4.7]
 and a trustworthy female lay follower, having seen him, should charge him with any one of three rules:
@@ -563,7 +650,7 @@ This rule is indefinite.`
 
 {
     id: 'Ay.2', title: 'Aniyata 2', audio: '3Ay-02.mp3',
-    text: `Na heva kho pana paṭicchannaṃ āsanaṃ hoti nālaṃkammaniyaṃ, [4.2]
+    text: `Na heva kho pana paṭicchannaṃ āsanaṃ hoti nālaṅkammaniyaṃ, [4.2]
 And if the seat is not secluded and not suitable for sexual intercourse,
 alañca kho hoti mātugāmaṃ duṭṭhullāhi vācāhi obhāsituṃ, [4.1]
 but is suitable for addressing a woman with lewd words,
@@ -601,7 +688,7 @@ The fourth section, on the Indefinite Rules, is finished.`
     id: 'NP.1', title: 'Nissaggiya Pācittiya 1', audio: '4NP-01.mp3',
     text: `Ime kho panāyasmanto tiṃsa nissaggiyā pācittiyā Dhammā uddesaṃ āgacchanti. [5.8]
 Venerable sirs, these thirty rules for formal confession with forfeiture come into recitation.
-Niṭṭhitacīvarasmiṃ bhikkhunā ubbhatasmiṃ kaṭhine dasāhaparamaṃ atirekacīvaraṃ dhāretabbaṃ, [5.6]
+Niṭṭhitacīvarasmiṃ bhikkhunā ubbhatasmiṃ kathine dasāhaparamaṃ atirekacīvaraṃ dhāretabbaṃ, [5.6]
 When the robe-making is finished and the Kaṭhina frame is dismantled, an extra robe may be kept for at most ten days.
 taṃ atikkāmayato nissaggiyaṃ pācittiyaṃ. [3.5]
 For him who exceeds that, it is an offense of confession with forfeiture.`
@@ -609,13 +696,13 @@ For him who exceeds that, it is an offense of confession with forfeiture.`
 
 {
     id: 'NP.2', title: 'Nissaggiya Pācittiya 2', audio: '4NP-02.mp3',
-    text: `Niṭṭhitacīvarasmiṃ bhikkhunā ubbhatasmiṃ kaṭhine ekarattampi ce bhikkhu ticīvarena vippavaseyya, aññatra bhikkhusammutiyā nissaggiyaṃ pācittiyaṃ. [9.0]
+    text: `Niṭṭhitacīvarasmiṃ bhikkhunā ubbhatasmiṃ kathine ekarattampi ce bhikkhu ticīvarena vippavaseyya, aññatra bhikkhusammutiyā nissaggiyaṃ pācittiyaṃ. [9.0]
 When the robe-making is finished and the Kaṭhina frame is dismantled, if a monk should be away from his set of three robes for even one night—except by the formal agreement of the monks—it is an offense of confession with forfeiture.`
 },
 
 {
     id: 'NP.3', title: 'Nissaggiya Pācittiya 3', audio: '4NP-03.mp3',
-    text: `Niṭṭhitacīvarasmiṃ bhikkhunā ubbhatasmiṃ kaṭhine bhikkhuno paneva akālacīvaraṃ uppajjeyya, [5.6]
+    text: `Niṭṭhitacīvarasmiṃ bhikkhunā ubbhatasmiṃ kathine bhikkhuno paneva akālacīvaraṃ uppajjeyya, [5.6]
 When the robe-making is finished and the Kaṭhina frame is dismantled, if an "out-of-season" robe should accrue to a monk,
 ākaṅkhamānena bhikkhunā paṭiggahetabbaṃ, paṭiggahetvā khippameva kāretabbaṃ, [5.0]
 it may be accepted by the monk if he so desires. Having accepted it, he should have it made up quickly.
@@ -853,7 +940,7 @@ For him who exceeds that, it is an offense of confession with forfeiture.`
 When one month of the hot season remains, a monk should search for a rains-residence cloth.
 “addhamāso seso gimhānan”ti katvā nivāsetabbaṃ. Orena ce “māso seso gimhānan”ti [5.2]
 When half a month remains, he should have it made and wear it. If, more than a month before the end of the hot season,
-vassikasāṭikacīvaraṃ pariyeseyya, orena“ddhamāso seso gimhānan”ti katvā nivāseyya, [4.9]
+vassikasāṭikacīvaraṃ pariyeseyya, orena"ddhamāso seso gimhānan”ti katvā nivāseyya, [4.9]
 he should search for a rains-residence cloth, or more than half a month before, he should have it made and wear it,
 nissaggiyaṃ pācittiyaṃ. [2.6]
 it is an offense of confession with forfeiture.`
@@ -1064,7 +1151,7 @@ Even if a monk has been authorized, if he should teach the nuns after the sun ha
 
 {
     id: 'Pc.23', title: 'Pācittiya 23', audio: '5Pc-23.mp3',
-    text: `Yo pana bhikkhu bhikkhūnupassayaṃ upasaṅkamitvā bhikkhuniyo ovadeyya [3.8]
+    text: `Yo pana bhikkhu bhikkhunupassayaṃ upasaṅkamitvā bhikkhuniyo ovadeyya [3.8]
 Whatever monk, having gone to the nuns' quarters, should teach the nuns,
 aññatra samayā, pācittiyaṃ. Tatthāyaṃ samayo, gilānā hoti bhikkhunī, ayaṃ tattha samayo. [5.5]
 except at the proper time, it is an offense of confession. Here, the proper time is when a nun is ill. This is the proper time.`
@@ -1102,15 +1189,15 @@ this is the proper time.`
 
 {
     id: 'Pc.28', title: 'Pācittiya 28', audio: '5Pc-28.mp3',
-    text: `Yo pana bhikkhu bhikkhuniyā saddhiṃ saṃvidhāya ekaṃ nāvaṃ abhirūheyya [4.4]
+    text: `Yo pana bhikkhu bhikkhuniyā saddhiṃ saṃvidhāya ekaṃ nāvaṃ abhiruheyya [4.4]
 Whatever monk, by arrangement, should board the same boat with a nun,
-uddhaṃgāminiṃ vā adhogāminiṃ vā aññatra tiriyaṃ taraṇāya, pācittiyaṃ. [4.8]
+uddhaṅgāminiṃ vā adhogāminiṃ vā aññatra tiriyaṃ taraṇāya, pācittiyaṃ. [4.8]
 going either upstream or downstream, except for crossing over, it is an offense of confession.`
 },
 
 {
     id: 'Pc.29', title: 'Pācittiya 29', audio: '5Pc-29.mp3',
-    text: `Yo pana bhikkhu jānaṃ bhikkhuniparipācitaṃ piṇḍapātaṃ bhuñjeyya aññatra pubbe gihīsamārambhā, pācittiyaṃ. [7.1]
+    text: `Yo pana bhikkhu jānaṃ bhikkhuniparipācitaṃ piṇḍapātaṃ bhuñjeyya aññatra pubbe gihisamārambhā, pācittiyaṃ. [7.1]
 Whatever monk should knowingly eat alms-food whose preparation was prompted by a nun, except if the laypeople had already begun preparing it, it is an offense of confession.`
 },
 
@@ -1132,7 +1219,7 @@ A monk who is not ill may eat one meal at a public rest-house. If he should eat 
     id: 'Pc.32', title: 'Pācittiya 32', audio: '5Pc-32.mp3',
     text: `Gaṇabhojane aññatra samayā pācittiyaṃ. Tatthāyaṃ samayo, gilānasamayo, cīvaradānasamayo, [5.1]
 Eating in a group, except at the proper time, is an offense of confession. Here, the proper time is: when ill; when robes are being given;
-cīvarakārasamayo, addhānagamanasamayo, nāvahirūhanasamayo, mahāsamayo, samaṇabhattasamayo, ayaṃ tattha samayo. [6.6]
+cīvarakārasamayo, addhānagamanasamayo, nāvābhiruhanasamayo, mahāsamayo, samaṇabhattasamayo, ayaṃ tattha samayo. [6.6]
 when robes are being made; when on a journey; when on a boat; at a great occasion; at a meal for ascetics. This is the proper time.`
 },
 
@@ -1182,7 +1269,7 @@ Whatever monk should eat or consume staple or non-staple food that has been stor
 
 {
     id: 'Pc.39', title: 'Pācittiya 39', audio: '5Pc-39.mp3',
-    text: `Yāni kho pana tāni paṇītabhojanāni, seyyathīdaṃ – sappi, navanītaṃ, telaṃ, madhu, phāṇitaṃ, maccho, maṃsaṃ, khīraṃ, dadhi. [6.55]
+    text: `Yāni kho pana tāni paṇītabhojanāni, seyyathidaṃ – sappi, navanītaṃ, telaṃ, madhu, phāṇitaṃ, maccho, maṃsaṃ, khīraṃ, dadhi. [6.55]
 These are superior foods, namely: ghee, butter, oil, honey, molasses, fish, meat, milk, and curd.
 Yo pana bhikkhu evarūpāni paṇītabhojanāni agilāno attano atthāya viññāpetvā bhuñjeyya, pācittiyaṃ. [6.3]
 Whatever monk who is not ill should ask for such superior foods for his own use and eat them, it is an offense of confession.`
@@ -1190,7 +1277,7 @@ Whatever monk who is not ill should ask for such superior foods for his own use 
 
 {
     id: 'Pc.40', title: 'Pācittiya 40', audio: '5Pc-40.mp3',
-    text: `Yo pana bhikkhu adinnaṃ mukhadvāraṃ āhāraṃ āhareyya aññatra udakadantapoṇā, pācittiyaṃ. Bhojanavaggo catuttho. [7.5]
+    text: `Yo pana bhikkhu adinnaṃ mukhadvāraṃ āhāraṃ āhareyya aññatra udakadantaponā, pācittiyaṃ. Bhojanavaggo catuttho. [7.5]
 Whatever monk should put food into his mouth that has not been given, except for water and tooth-sticks, it is an offense of confession. The fourth chapter, on Food.`
 },
 
@@ -1244,7 +1331,7 @@ Here, the proper time is: the robe-giving season; the robe-making time. This is 
 
 {
     id: 'Pc.47', title: 'Pācittiya 47', audio: '5Pc-47.mp3',
-    text: `Agilānena bhikkhunā cātumāsappaccayapavāraṇā sāditabbā [3.8]
+    text: `Agilānena bhikkhunā catumāsappaccayapavāraṇā sāditabbā [3.8]
 A monk who is not ill may accept a four-month invitation to ask for requisites,
 aññatra punapavāraṇāya, aññatra niccapavāraṇāya. Tato ce uttariṃ sādiyeyya, pācittiyaṃ. [5.5]
 unless the invitation is renewed or is permanent. If he should accept for longer than that, it is an offense of confession.`
@@ -1274,7 +1361,7 @@ The fifth chapter, on Naked Ascetics.`
 
 {
     id: 'Pc.51-54', title: 'Pācittiya 51-54', audio: '5Pc-51-54.mp3',
-    text: `Surāmerayapāne pācittiyaṃ. Aṅgulipatodake pācittiyaṃ. Udake hassadhamme pācittiyaṃ. Anādariye pācittiyaṃ. [7.0]
+    text: `Surāmerayapāne pācittiyaṃ. Aṅgulipatodake pācittiyaṃ. Udake hasadhamme pācittiyaṃ. Anādariye pācittiyaṃ. [7.0]
 For the drinking of alcohol or fermented liquor, there is an offense of confession. For poking with the fingers (tickling), there is an offense of confession. For playing in the water, there is an offense of confession. For disrespect, there is an offense of confession.`
 },
 
@@ -1312,7 +1399,7 @@ should use a new robe, it is an offense of confession.`
     id: 'Pc.59', title: 'Pācittiya 59', audio: '5Pc-59.mp3',
     text: `Yo pana bhikkhu bhikkhussa vā bhikkhuniyā vā sikkhamānāya vā sāmaṇerassa vā sāmaṇeriyā vā sāmaṃ cīvaraṃ vikappetvā [6.8]
 Whatever monk, having personally assigned a robe to a monk, a nun, a female trainee, a male novice, or a female novice,
-apaccuddhārakaṃ paribhuñjeyya, pācittiyaṃ. [3.0]
+appaccuddhāraṇaṃ paribhuñjeyya, pācittiyaṃ. [3.0]
 should use it without it having been rescinded, it is an offense of confession.`
 },
 
@@ -1320,7 +1407,7 @@ should use it without it having been rescinded, it is an offense of confession.`
     id: 'Pc.60', title: 'Pācittiya 60', audio: '5Pc-60.mp3',
     text: `Yo pana bhikkhu bhikkhussa pattaṃ vā cīvaraṃ vā nisīdanaṃ vā sūcigharaṃ vā kāyabandhanaṃ vā apanidheyya vā [5.6]
 Whatever monk should hide, or have hidden, a monk’s bowl, robe, sitting-mat, needle-case, or belt,
-apanidhāpeyya vā antamaso hassāpekkhopi, pācittiyaṃ. Surāpānavaggo chaṭṭho. [5.5]
+apanidhāpeyya vā antamaso hasāpekkhopi, pācittiyaṃ. Surāpānavaggo chaṭṭho. [5.5]
 even as a joke, it is an offense of confession. The sixth chapter, on Alcohol.`
 },
 
@@ -1425,7 +1512,7 @@ so samaṇuddeso bhikkhūhi evamassa vacanīyo [2.8]
 he should be spoken to by the monks thus:
 “ajjatagge te, āvuso, samaṇuddesa na ceva so bhagavā satthā apadisitabbo, [4.5]
 "From this day forth, friend novice, you are not to claim the Blessed One as your teacher,
-yampi cañne samaṇuddesā labhanti bhikkhūhi saddhiṃ dirattatirattaṃ sahaseyyaṃ, [4.6]
+yampi caññe samaṇuddesā labhanti bhikkhūhi saddhiṃ dirattatirattaṃ sahaseyyaṃ, [4.6]
 nor do you have the right to lie down in the same place for two or three nights with monks as other novices do.
 sāpi te natthi, cara pire, vinassā”ti. [2.4]
 Go away! Be gone!"
@@ -1465,9 +1552,9 @@ They only lead to worry, frustration, and confusion," in disparagement of the tr
 Whatever monk, while the Pātimokkha is being recited every half-month, should say:
 “idāneva kho ahaṃ jānāmi, ayampi kira dhammo suttāgato suttapariyāpanno anvaddhamāsaṃ uddesaṃ āgacchatī”ti. [6.6]
 "Only now do I realize that this rule is handed down in the Suttas, included in the Suttas, and comes into recitation every half-month."
-Tañce bhikkhuṃ aññe bhikkhū jāneyyuṃ: “nisinnapubbaṁ iminā bhikkhunā [4.3]
+Tañce bhikkhuṃ aññe bhikkhū jāneyyuṃ: “nisinnapubbaṃ iminā bhikkhunā [4.3]
 If the other monks should know: "This monk has sat there before
-dvattikkhattuṁ pātimokkhe uddissamāne, ko pana vādo bhiyyo” ti, [3.9]
+dvattikkhattuṁ pātimokkhe uddissamāne, ko pana vādo bhiyyo”ti, [3.9]
 two or three times while the Pātimokkha was being recited, let alone more,"
 na ca tassa bhikkhuno aññāṇakena mutti atthi, yañca tattha āpattiṃ āpanno, [4.4]
 there is no release for that monk on account of his ignorance. Whatever offense he has committed,
@@ -1475,7 +1562,7 @@ tañca yathādhammo kāretabbo, uttariṃ cassa moho āropetabbo [4.3]
 he should be dealt with in accordance with the rule, and furthermore, a charge of delusion should be laid:
 “tassa te, āvuso, alābhā, tassa te dulladdhaṃ, [3.1]
 "It is no gain for you, friend, it is poorly attained by you,
-yaṃ tvaṃ pātimokkhe uddissamāne na sādhukaṃ aṭṭhikatvā manasi karosī”ti, [4.7]
+yaṃ tvaṃ pātimokkhe uddissamāne na sādhukaṃ aṭṭhiṁ katvā manasi karosī”ti, [4.7]
 that you do not pay proper attention and take it to heart when the Pātimokkha is being recited."
 idaṃ tasmiṃ mohanake pācittiyaṃ. [2.7]
 This is an offense of confession for deceptive behavior.`
@@ -1676,7 +1763,7 @@ we acknowledge it."`
 
 {
     id: 'Pd.3', title: 'Pāṭidesanīya 3', audio: '6Pd-03.mp3',
-    text: `Yāni kho pana tāni sekhasammatāni kulāni, yo pana bhikkhu tathārūpesu sekhasammatesukulesu pubbe animantito [6.85]
+    text: `Yāni kho pana tāni sekkhasammatāni kulāni, yo pana bhikkhu tathārūpesu sekkhasammatesu kulesu pubbe animantito [6.85]
 Regarding those families designated as "trainees," whatever monk, in such families, without being previously invited
 agilāno khādanīyaṃ vā, bhojanīyaṃ vā sahatthā paṭiggahetvā [3.9]
 and not being ill, should personally receive staple or non-staple food
@@ -1724,7 +1811,7 @@ Parimaṇḍalaṃ nivāsessāmīti sikkhā karaṇīyā. Parimaṇḍalaṃ pā
 
 {
     id: 'Sk.3-4', title: 'Sekhiya 3-4', audio: '7Sk-03-04.mp3',
-    text: `Supaṭicchanno antaraghare gamissāmīti sikkhā karaṇīyā. Supaṭicchanno antaraghare nisīdissāmīti sikkhā karaṇīyā. [6.0]
+    text: `Suppaṭicchanno antaraghare gamissāmīti sikkhā karaṇīyā. Suppaṭicchanno antaraghare nisīdissāmīti sikkhā karaṇīyā. [6.0]
 "I will go well-covered in inhabited areas," is a training to be observed. "I will sit well-covered in inhabited areas," is a training to be observed.`
 },
 
@@ -1946,13 +2033,13 @@ Na oṭṭhanillehakaṃ bhuñjissāmīti sikkhā karaṇīyā. [3.6]
 
 {
     id: 'Sk.61', title: 'Sekhiya 61', audio: '7Sk-61.mp3',
-    text: `Na pādukārūḷhassa agilānassa dhammaṃ desessāmīti sikkhā karaṇīyā. [4.8]
+    text: `Na pādukāruḷhassa agilānassa dhammaṃ desessāmīti sikkhā karaṇīyā. [4.8]
 "I will not teach the Dhamma to someone who is not ill and is wearing wooden sandals," is a training to be observed.`
 },
 
 {
     id: 'Sk.62', title: 'Sekhiya 62', audio: '7Sk-62.mp3',
-    text: `Na upāhanārūḷhassa agilānassa dhammaṃ desessāmīti sikkhā karaṇīyā. [4.2]
+    text: `Na upāhanāruḷhassa agilānassa dhammaṃ desessāmīti sikkhā karaṇīyā. [4.2]
 "I will not teach the Dhamma to someone who is not ill and is wearing shoes (footwear)," is a training to be observed.`
 },
 
@@ -2052,9 +2139,9 @@ You are pure in this, therefore you are silent. Thus do I understand it. The tra
     id: 'As', title: 'Adhikaraṇa-samatha', audio: '8As.mp3',
     text: `Ime kho panāyasmanto satta adhikaraṇasamathā Dhammā uddesaṃ āgacchanti. [5.0]
 Venerable sirs, these seven rules for the settling of disputes come into recitation.
-Uppannupannānaṃ adhikaraṇānaṃ samathāya vūpasamāya: Sammukhāvinayo dātabbo, Sativinayo dātabbo, [5.9]
+Uppannuppannānaṃ adhikaraṇānaṃ samathāya vūpasamāya: Sammukhāvinayo dātabbo, Sativinayo dātabbo, [5.9]
 For the settling and quieting of disputes as they arise: (1) Removal in the presence, (2) Removal through mindfulness,
-Amūḷhavinayo dātabbo, Paṭiññāya kāretabbaṃ, Yebhuyyasikā, Tassapāpiyyasikā, Tiṇavatthārako’ti. [6.9]
+Amūḷhavinayo dātabbo, Paṭiññāya kāretabbaṃ, Yebhuyyasikā, Tassapāpiyasikā, Tiṇavatthārako’ti. [6.9]
 (3) Removal for one who is past insanity, (4) Acting in accordance with what is admitted, (5) Decision by a majority, (6) Acting in accordance with the further misconduct (of the accused), (7) Covering over as if with grass.`
 },
 
@@ -2084,7 +2171,7 @@ ettakaṃ tassa bhagavato suttāgataṃ suttapariyāpannaṃ anvaddhamāsaṃ ud
 So much of the Blessed One's word, handed down in the Suttas, included in the Suttas, comes into recitation every half-month.
 tattha sabbeheva samaggehi sammodamānehi avivadamānehi sikkhitabbanti. [4.9]
 Therein, all should train in harmony, in mutual appreciation, without disputing.
-Bhikkhupātimokkhaṃ Niṭṭhitaṃ. [3.6]
+Bhikkhu Pātimokkhaṃ Niṭṭhitaṃ. [3.6]
 The Bhikkhu's Pātimokkha is finished.`
 }
 		
@@ -2247,7 +2334,40 @@ function closeHelpModal(event) {
         document.getElementById('help-modal').style.display = 'none';
     }
 }
-    // --- INIT ---
+   /* --- GLOBAL VARIABLE FOR WORD COUNTING --- */
+let sectionWordOffsets = [];
+
+function calculateGlobalWordOffsets() {
+    let runningTotal = 0;
+    sectionWordOffsets = [];
+
+    sections.forEach(section => {
+        sectionWordOffsets.push(runningTotal); // Store the starting word index for this section
+        
+        // Calculate words in this section
+        const lines = section.text.split('\n');
+        let sectionWordCount = 0;
+        
+        lines.forEach(line => {
+            let cleanLine = line.trim();
+            if (cleanLine === '') return;
+            
+            // Identify Pali lines by time marker
+            const timeMatch = cleanLine.match(/\s*\[(\d+(\.\d+)?)\]\s*$/);
+            
+            if (timeMatch) {
+                // Remove time marker to get pure text
+                const textContent = cleanLine.replace(timeMatch[0], '').trim();
+                // Count words
+                const words = textContent.split(/\s+/);
+                const validWords = words.filter(w => w.trim() !== '');
+                sectionWordCount += validWords.length;
+            }
+        });
+        
+        runningTotal += sectionWordCount;
+    });
+}
     function init() {
         
         // --- 1. TẢI CÀI ĐẶT GIAO DIỆN VÀ TỐC ĐỘ BAN ĐẦU ---
@@ -2304,7 +2424,7 @@ function closeHelpModal(event) {
             speedControlArea.style.display = 'none';
             btnShowSpeed.style.display = 'inline-block';
         }
-
+calculateGlobalWordOffsets();
         // --- 2. SETUP PHẦN CÒN LẠI ---
         sections.forEach((sec, index) => {
             let option = document.createElement("option");
@@ -2459,9 +2579,11 @@ function loadSection(index) {
 /* --- NEW RENDER LOGIC --- */
 function renderText(rawText) {
     displayArea.innerHTML = '';
-    allLines = []; // Reset recitation lines array
+    allLines = []; 
     
-    // Split text by new line
+    // Get the starting Global Index for the current section
+    let currentGlobalIndex = sectionWordOffsets[currentSectionIndex] || 0;
+
     const lines = rawText.split('\n');
     
     let cumulativeStartTimeMs = 0;
@@ -2471,18 +2593,16 @@ function renderText(rawText) {
         let cleanLine = line.trim();
         if (cleanLine === '') return;
 
-        // Check if this line is Pali (Recitation line) by looking for time marker [x.x]
         const timeMatch = cleanLine.match(/\s*\[(\d+(\.\d+)?)\]\s*$/);
 
         if (timeMatch) {
             // === IS PALI LINE ===
             let customDuration = parseFloat(timeMatch[1]) * 1000;
-            cleanLine = cleanLine.replace(timeMatch[0], ''); // Remove time marker for display
+            cleanLine = cleanLine.replace(timeMatch[0], ''); 
 
             const lineDiv = document.createElement('div');
             lineDiv.className = 'line-break';
             
-            // Logic for duration (Original vs Override)
             let currentLineDuration; 
             if (overrideIntervalMs !== null) {
                 currentLineDuration = overrideIntervalMs;
@@ -2503,7 +2623,11 @@ function renderText(rawText) {
                 const span = document.createElement('span');
                 span.className = 'word';
                 span.innerText = wordStr;
-                // Click to reveal hidden words logic
+                
+                // --- NEW: Assign Global Index ---
+                span.dataset.globalIndex = currentGlobalIndex++;
+                // --------------------------------
+
                 span.onclick = function() {
                     if (this.classList.contains('hidden')) {
                         this.classList.remove('hidden');
@@ -2514,10 +2638,10 @@ function renderText(rawText) {
             });
 
             displayArea.appendChild(lineDiv);
-            allLines.push(lineDiv); // Add ONLY Pali lines to the recitation array
+            allLines.push(lineDiv); 
 
         } else {
-            // === IS TRANSLATION LINE (No time marker) ===
+            // === IS TRANSLATION LINE ===
             const transDiv = document.createElement('div');
             transDiv.className = 'translation-line';
             transDiv.innerText = cleanLine;

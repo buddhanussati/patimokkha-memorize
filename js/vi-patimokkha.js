@@ -80,24 +80,111 @@ function lookupWordHandler(event) {
     if (!window.paliDictionary) return;
     if ($(this).children().is("span.meaning")) return;
 
-    // Get text
+    const isRecitationActive = document.body.classList.contains('recitation-active-mode');
+
+    if (isRecitationActive) {
+        const rawText = this.innerText || "";
+        const cleanText = rawText.toLowerCase().replace(/[.,:;!?'"“”‘’()\[\]{}...–-]/g, '').trim();
+
+        // 1. FIND WORD POSITION (Index in the sentence/line)
+        // This finds how many '.word' siblings are before this one
+        const wordIndex = $(this).parent().find('.word').index(this);
+
+        // 2. DEFINE THEME-SPECIFIC COLORS (20 for each)
+        const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+
+        // High-contrast, darker colors for Light Mode
+        const lightModeColors = [
+            '#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#d35400', 
+            '#2c3e50', '#16a085', '#b53471', '#5758bb', '#1b1464',
+            '#006266', '#6F1E51', '#1289A7', '#D980FA', '#0652DD',
+            '#c23616', '#192a56', '#2f3640', '#44bd32', '#833471'
+        ];
+
+        // Vibrant, glowing colors for Dark Mode
+        const darkModeColors = [
+            '#ff7675', '#74b9ff', '#55e6c1', '#a29bfe', '#fab1a0',
+			'#18dcff', '#7d5fff', '#ffaf40', '#32ff7e', '#ff3838',
+            '#ffeaa7', '#81ecec', '#fdcb6e', '#fd79a8', '#55efc4',
+            '#00d2d3', '#00cec9', '#fab1a0', '#ff9f43', '#fffa65',
+        ];
+
+        const colorPalette = isDarkMode ? darkModeColors : lightModeColors;
+        // Use Modulo to cycle colors so neighbor words are always different
+        const wordColor = colorPalette[wordIndex % colorPalette.length];
+
+        // 3. ACCURATE PALI RHYTHM ANALYSIS
+        const longVowels = ['ā', 'ī', 'ū', 'e', 'o'];
+        const vowels = 'aāiīuūeo';
+        const aspirates = ['kh', 'gh', 'ch', 'jh', 'ṭh', 'ḍh', 'th', 'dh', 'ph', 'bh'];
+        
+        let rhythm = [];
+        for (let i = 0; i < cleanText.length; i++) {
+            let char = cleanText[i];
+            if (vowels.includes(char)) {
+                let isGuru = false;
+                if (longVowels.includes(char)) {
+                    isGuru = true;
+                } else {
+                    let nextPart = cleanText.slice(i + 1);
+                    if (nextPart.startsWith('ṁ')) {
+                        isGuru = true;
+                    } else {
+                        let following = nextPart.match(/^([^aāiīuūeo]+)/);
+                        if (following) {
+                            let cluster = following[0];
+                            let tempCluster = cluster;
+                            aspirates.forEach(a => { tempCluster = tempCluster.replace(a, 'K'); });
+                            if (tempCluster.length > 1) isGuru = true;
+                        }
+                    }
+                }
+                rhythm.push(isGuru ? 'fa-minus' : 'fa-circle');
+            }
+        }
+
+        // 4. RENDER
+        let symbolsHtml = rhythm.map(icon => {
+            const size = (icon === 'fa-minus') ? '18px' : '10px';
+            // Slight text-shadow added for "pop" against background textures
+            return `<i class="fas ${icon}" style="font-size: ${size}; margin: 0 4px; text-shadow: 1px 1px 1px rgba(0,0,0,0.1);"></i>`;
+        }).join('');
+
+        const textBox = $(`
+            <span class="meaning" style="min-width: 60px; padding: 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div style="color: ${wordColor}; display: flex; align-items: center; justify-content: center; gap: 2px;">
+                    ${symbolsHtml}
+                </div>
+            </span>
+        `);
+        
+        $(this).append(textBox);
+        
+        var offset = $(this).offset();
+        if (offset.left + textBox.outerWidth() > $(window).width()) {
+             textBox.css({left: 'auto', right: 0});
+        }
+        return; 
+    }
+
+ 
+
+    // ... [Rest of function for Dictionary Logic remains exactly the same] ...
     var rawText = $(this).text();
     var word = rawText.toLowerCase().trim();
 
-    // --- CRITICAL FIX: Remove punctuation from edges ---
-    // The original script split text by punctuation. Since your HTML 
-    // includes punctuation in the span (e.g., "dhammo,"), we must strip it here.
-    word = word.replace(/^[“‘"(\[]+|[”’"),.\]?!:;]+$/g, '');
 
-    // Standard replacements from original script
-    word = word.replace(/­/g, ''); // optional hyphen
-    // Fix specific Pali spelling variations handled in original script
+    // CRITICAL FIX: Remove punctuation from edges
+    word = word.replace(/^[“‘"(\[]+|[”’"),‚.\]?!:–;]+$/g, '');
+
+    // Standard replacements
+    word = word.replace(/­/g, ''); 
     word = word.replace(/ṁg/g, 'ṅg')
                .replace(/ṁk/g, 'ṅk')
-               .replace(/ṁ/g, 'ṁ'); // (Original had this, keeping for safety)
+               .replace(/ṁ/g, 'ṁ'); 
 
     // Perform Lookup
-    var meaning = lookupWord(word, rawText); // Pass rawText for display title
+    var meaning = lookupWord(word, rawText); 
     
     if (meaning) {
         var textBox = $('<span class="meaning">' + meaning + '</span>');
@@ -171,7 +258,7 @@ Namo tassa Bhagavato Arahato Sammāsambuddhassa. [5.042]
 Đảnh Lễ Đức Thế Tôn, Bậc A-La-Hán, Chánh Đẳng Giác.
 Namo tassa Bhagavato Arahato Sammāsambuddhassa. [6.308]
 Đảnh Lễ Đức Thế Tôn, Bậc A-La-Hán, Chánh Đẳng Giác.
-Suṇātu me (bhante/āvuso) saṅgho. Ajjuposatho pannaraso, yadi saṅghassa pattakallaṃ, saṅgho uposathaṃ kareyya, pātimokkhaṃ uddiseyya. [12.409]
+Suṇātu me bhante (āvuso) saṅgho. Ajjuposatho pannaraso, yadi saṅghassa pattakallaṃ, saṅgho uposathaṃ kareyya, pātimokkhaṃ uddiseyya. [12.409]
 Bạch chư Đại đức Tăng, xin Tăng hãy nghe tôi. Hôm nay ngày mười lăm là ngày Uposatha. Nếu là thời điểm thích hợp cho hội chúng, hội chúng nên làm lễ Uposatha, nên đọc tụng giới bổn Pātimokkha.
 Kiṃ saṅghassa pubbakiccaṃ? Pārisuddhiṃ āyasmanto ārocetha, [5.733]
 Phận sự trước tiên của hội chúng là gì? Các đại đức hãy tuyên bố sự trong sạch
@@ -548,7 +635,7 @@ Phần tụng đọc về tội Tăng Tàn là phần thứ ba.`
     id: 'Ay.1', title: 'Aniyata 1', audio: '3Ay-01.mp3',
     text: `Ime kho panāyasmanto dve aniyatā dhammā uddesaṃ āgacchanti. [5.1]
 Này các đại đức, đây là hai pháp Bất Định được tụng đọc đến.
-Yo pana bhikkhu mātugāmena saddhiṃ eko ekāya raho paṭicchanne āsane alaṃkammaniye nisajjaṃ kappeyya, [6.7]
+Yo pana bhikkhu mātugāmena saddhiṃ eko ekāya raho paṭicchanne āsane alaṅkammaniye nisajjaṃ kappeyya, [6.7]
 Vị tỳ khưu nào cùng với một người nữ, ngồi ở nơi khuất tầm mắt, trên chỗ ngồi kín đáo và tiện lợi cho việc hành dâm,
 tamenaṃ saddheyyavacasā upāsikā disvā tiṇṇaṃ dhammānaṃ aññatarena vadeyya [4.7]
 có một cận sự nữ đáng tin cậy nhìn thấy và nói đến một trong ba tội:
@@ -566,7 +653,7 @@ pháp này gọi là Bất Định.`
 
 {
     id: 'Ay.2', title: 'Aniyata 2', audio: '3Ay-02.mp3',
-    text: `Na heva kho pana paṭicchannaṃ āsanaṃ hoti nālaṃkammaniyaṃ, [4.2]
+    text: `Na heva kho pana paṭicchannaṃ āsanaṃ hoti nālaṅkammaniyaṃ, [4.2]
 Lại nữa, nếu chỗ ngồi ấy không phải là nơi khuất tầm mắt và không tiện lợi cho việc hành dâm,
 alañca kho hoti mātugāmaṃ duṭṭhullāhi vācāhi obhāsituṃ, [4.1]
 nhưng là nơi có thể tán tỉnh người nữ bằng những lời thô tục,
@@ -600,7 +687,7 @@ Phần tụng đọc về các pháp Bất Định là phần thứ tư.`
     id: 'NP.1', title: 'Nissaggiya Pācittiya 1', audio: '4NP-01.mp3',
     text: `Ime kho panāyasmanto tiṃsa nissaggiyā pācittiyā Dhammā uddesaṃ āgacchanti. [5.8]
 Này các đại đức, đây là ba mươi pháp Ưng Xả Đối Trị được tụng đọc đến.
-Niṭṭhitacīvarasmiṃ bhikkhunā ubbhatasmiṃ kaṭhine dasāhaparamaṃ atirekacīvaraṃ dhāretabbaṃ, [5.6]
+Niṭṭhitacīvarasmiṃ bhikkhunā ubbhatasmiṃ kathine dasāhaparamaṃ atirekacīvaraṃ dhāretabbaṃ, [5.6]
 Khi y đã làm xong, sau khi lễ Kaṭhina đã hoàn tất, vị tỳ khưu có thể cất giữ y dư tối đa là mười ngày,
 taṃ atikkāmayato nissaggiyaṃ pācittiyaṃ. [3.5]
 nếu để quá thời hạn ấy, thì phạm tội Ưng Xả Đối Trị.`
@@ -608,13 +695,13 @@ nếu để quá thời hạn ấy, thì phạm tội Ưng Xả Đối Trị.`
 
 {
     id: 'NP.2', title: 'Nissaggiya Pācittiya 2', audio: '4NP-02.mp3',
-    text: `Niṭṭhitacīvarasmiṃ bhikkhunā ubbhatasmiṃ kaṭhine ekarattampi ce bhikkhu ticīvarena vippavaseyya, aññatra bhikkhusammutiyā nissaggiyaṃ pācittiyaṃ. [9.0]
+    text: `Niṭṭhitacīvarasmiṃ bhikkhunā ubbhatasmiṃ kathine ekarattampi ce bhikkhu ticīvarena vippavaseyya, aññatra bhikkhusammutiyā nissaggiyaṃ pācittiyaṃ. [9.0]
 Khi y đã làm xong, sau khi lễ Kaṭhina đã hoàn tất, nếu vị tỳ khưu sống lìa khỏi tam y dù chỉ một đêm, trừ khi được sự cho phép của Tăng chúng, thì phạm tội Ưng Xả Đối Trị.`
 },
 
 {
     id: 'NP.3', title: 'Nissaggiya Pācittiya 3', audio: '4NP-03.mp3',
-    text: `Niṭṭhitacīvarasmiṃ bhikkhunā ubbhatasmiṃ kaṭhine bhikkhuno paneva akālacīvaraṃ uppajjeyya, [5.6]
+    text: `Niṭṭhitacīvarasmiṃ bhikkhunā ubbhatasmiṃ kathine bhikkhuno paneva akālacīvaraṃ uppajjeyya, [5.6]
 Khi y đã làm xong, sau khi lễ Kaṭhina đã hoàn tất, nếu có "y ngoài hạn kỳ" phát sinh đến cho vị tỳ khưu,
 ākaṅkhamānena bhikkhunā paṭiggahetabbaṃ, paṭiggahetvā khippameva kāretabbaṃ, [5.0]
 vị tỳ khưu nếu muốn thì hãy thọ nhận; sau khi thọ nhận rồi, phải mau chóng làm thành y,
@@ -846,7 +933,7 @@ Nếu để quá thời hạn ấy, thì phạm tội Ưng Xả Đối Trị.`
 "Còn một tháng nữa là hết mùa nóng", vị tỳ khưu nên tìm kiếm y tắm mưa,
 “addhamāso seso gimhānan”ti katvā nivāsetabbaṃ. Orena ce “māso seso gimhānan”ti [5.2]
 "Còn nửa tháng nữa là hết mùa nóng", nên làm thành y và mặc vào. Nếu tìm kiếm y tắm mưa khi còn hơn một tháng nữa mới hết mùa nóng,
-vassikasāṭikacīvaraṃ pariyeseyya, orena“ddhamāso seso gimhānan”ti katvā nivāseyya, [4.9]
+vassikasāṭikacīvaraṃ pariyeseyya, orena"ddhamāso seso gimhānan”ti katvā nivāseyya, [4.9]
 hoặc mặc y tắm mưa khi còn hơn nửa tháng nữa mới hết mùa nóng,
 nissaggiyaṃ pācittiyaṃ. [2.6]
 thì phạm tội Ưng Xả Đối Trị.`
@@ -1054,7 +1141,7 @@ Dù đã được chỉ định, nếu vị tỳ khưu giáo giới các tỳ kh
 
 {
     id: 'Pc.23', title: 'Pācittiya 23', audio: '5Pc-23.mp3',
-    text: `Yo pana bhikkhu bhikkhūnupassayaṃ upasaṅkamitvā bhikkhuniyo ovadeyya [3.8]
+    text: `Yo pana bhikkhu bhikkhunupassayaṃ upasaṅkamitvā bhikkhuniyo ovadeyya [3.8]
 Vị tỳ khưu nào đi đến trú xá của các tỳ khưu ni để giáo giới,
 aññatra samayā, pācittiyaṃ. Tatthāyaṃ samayo, gilānā hoti bhikkhunī, ayaṃ tattha samayo. [5.5]
 trừ khi vào lúc thích hợp, phạm tội Ưng Đối Trị. Lúc thích hợp ở đây là khi tỳ khưu ni bị bệnh.`
@@ -1092,15 +1179,15 @@ ayaṃ tattha samayo. [2.3]
 
 {
     id: 'Pc.28', title: 'Pācittiya 28', audio: '5Pc-28.mp3',
-    text: `Yo pana bhikkhu bhikkhuniyā saddhiṃ saṃvidhāya ekaṃ nāvaṃ abhirūheyya [4.4]
+    text: `Yo pana bhikkhu bhikkhuniyā saddhiṃ saṃvidhāya ekaṃ nāvaṃ abhiruheyya [4.4]
 Vị tỳ khưu nào hẹn trước với tỳ khưu ni rồi cùng đi chung một chiếc thuyền,
-uddhaṃgāminiṃ vā adhogāminiṃ vā aññatra tiriyaṃ taraṇāya, pācittiyaṃ. [4.8]
+uddhaṅgāminiṃ vā adhogāminiṃ vā aññatra tiriyaṃ taraṇāya, pācittiyaṃ. [4.8]
 đi ngược dòng hay xuôi dòng, ngoại trừ khi đi ngang qua sông, phạm tội Ưng Đối Trị.`
 },
 
 {
     id: 'Pc.29', title: 'Pācittiya 29', audio: '5Pc-29.mp3',
-    text: `Yo pana bhikkhu jānaṃ bhikkhuniparipācitaṃ piṇḍapātaṃ bhuñjeyya aññatra pubbe gihīsamārambhā, pācittiyaṃ. [7.1]
+    text: `Yo pana bhikkhu jānaṃ bhikkhuniparipācitaṃ piṇḍapātaṃ bhuñjeyya aññatra pubbe gihisamārambhā, pācittiyaṃ. [7.1]
 Vị tỳ khưu nào biết rõ vật thực do tỳ khưu ni sắp đặt (xúi giục gia chủ làm) mà vẫn thọ thực, trừ khi vật thực ấy đã được các gia chủ chuẩn bị từ trước, phạm tội Ưng Đối Trị.`
 },
 
@@ -1122,7 +1209,7 @@ Một vị tỳ khưu không bị bệnh chỉ nên ăn một bữa tại phư�
     id: 'Pc.32', title: 'Pācittiya 32', audio: '5Pc-32.mp3',
     text: `Gaṇabhojane aññatra samayā pācittiyaṃ. Tatthāyaṃ samayo, gilānasamayo, cīvaradānasamayo, [5.1]
 Dùng bữa theo nhóm (được mời đích danh), trừ khi vào lúc thích hợp, phạm tội Ưng Đối Trị. Lúc thích hợp ở đây là: lúc bị bệnh, lúc dâng y,
-cīvarakārasamayo, addhānagamanasamayo, nāvahirūhanasamayo, mahāsamayo, samaṇabhattasamayo, ayaṃ tattha samayo. [6.6]
+cīvarakārasamayo, addhānagamanasamayo, nāvābhiruhanasamayo, mahāsamayo, samaṇabhattasamayo, ayaṃ tattha samayo. [6.6]
 lúc làm y, lúc đi đường xa, lúc đi thuyền, lúc đông đảo tỳ khưu, lúc có bữa ăn dành cho sa-môn; đó là lúc thích hợp trong trường hợp này.`
 },
 
@@ -1172,7 +1259,7 @@ Vị tỳ khưu nào dùng thức ăn cứng hoặc thức ăn mềm đã đư�
 
 {
     id: 'Pc.39', title: 'Pācittiya 39', audio: '5Pc-39.mp3',
-    text: `Yāni kho pana tāni paṇītabhojanāni, seyyathīdaṃ – sappi, navanītaṃ, telaṃ, madhu, phāṇitaṃ, maccho, maṃsaṃ, khīraṃ, dadhi. [6.55]
+    text: `Yāni kho pana tāni paṇītabhojanāni, seyyathidaṃ – sappi, navanītaṃ, telaṃ, madhu, phāṇitaṃ, maccho, maṃsaṃ, khīraṃ, dadhi. [6.55]
 Có những loại thức ăn hảo hạng, đó là: bơ tươi, bơ lỏng, dầu, mật ong, đường phèn, cá, thịt, sữa, sữa chua.
 Yo pana bhikkhu evarūpāni paṇītabhojanāni agilāno attano atthāya viññāpetvā bhuñjeyya, pācittiyaṃ. [6.3]
 Vị tỳ khưu nào không bị bệnh mà lại xin các loại thức ăn hảo hạng như thế cho riêng mình rồi dùng, phạm tội Ưng Đối Trị.`
@@ -1180,7 +1267,7 @@ Vị tỳ khưu nào không bị bệnh mà lại xin các loại thức ăn h�
 
 {
     id: 'Pc.40', title: 'Pācittiya 40', audio: '5Pc-40.mp3',
-    text: `Yo pana bhikkhu adinnaṃ mukhadvāraṃ āhāraṃ āhareyya aññatra udakadantapoṇā, pācittiyaṃ. Bhojanavaggo catuttho. [7.5]
+    text: `Yo pana bhikkhu adinnaṃ mukhadvāraṃ āhāraṃ āhareyya aññatra udakadantaponā, pācittiyaṃ. Bhojanavaggo catuttho. [7.5]
 Vị tỳ khưu nào đưa vào miệng vật thực chưa được dâng cúng, ngoại trừ nước lọc và tăm xỉa răng, phạm tội Ưng Đối Trị. Chương về Vật thực là chương thứ tư.`
 },
 
@@ -1234,7 +1321,7 @@ Lúc thích hợp ở đây là: lúc dâng y, lúc làm y; đó là lúc thích
 
 {
     id: 'Pc.47', title: 'Pācittiya 47', audio: '5Pc-47.mp3',
-    text: `Agilānena bhikkhunā cātumāsappaccayapavāraṇā sāditabbā [3.8]
+    text: `Agilānena bhikkhunā catumāsappaccayapavāraṇā sāditabbā [3.8]
 Vị tỳ khưu không bị bệnh chỉ nên thọ nhận sự cung thỉnh về vật dụng tối đa trong bốn tháng;
 aññatra punapavāraṇāya, aññatra niccapavāraṇāya. Tato ce uttariṃ sādiyeyya, pācittiyaṃ. [5.5]
 trừ khi có sự cung thỉnh lại, hoặc cung thỉnh mãi mãi. Nếu thọ nhận quá mức đó, phạm tội Ưng Đối Trị.`
@@ -1264,7 +1351,7 @@ Chương về Du sĩ Khỏa thân là chương thứ năm.`
 
 {
     id: 'Pc.51-54', title: 'Pācittiya 51-54', audio: '5Pc-51-54.mp3',
-    text: `Surāmerayapāne pācittiyaṃ. Aṅgulipatodake pācittiyaṃ. Udake hassadhamme pācittiyaṃ. Anādariye pācittiyaṃ. [7.0]
+    text: `Surāmerayapāne pācittiyaṃ. Aṅgulipatodake pācittiyaṃ. Udake hasadhamme pācittiyaṃ. Anādariye pācittiyaṃ. [7.0]
 Uống rượu và các chất say, phạm tội Ưng Đối Trị. Dùng ngón tay thọc léc nhau, phạm tội Ưng Đối Trị. Nghịch ngợm dưới nước, phạm tội Ưng Đối Trị. Có thái độ vô lễ (đối với lời khuyên bảo), phạm tội Ưng Đối Trị.`
 },
 
@@ -1302,7 +1389,7 @@ mà đã sử dụng, phạm tội Ưng Đối Trị.`
     id: 'Pc.59', title: 'Pācittiya 59', audio: '5Pc-59.mp3',
     text: `Yo pana bhikkhu bhikkhussa vā bhikkhuniyā vā sikkhamānāya vā sāmaṇerassa vā sāmaṇeriyā vā sāmaṃ cīvaraṃ vikappetvā [6.8]
 Vị tỳ khưu nào sau khi đã làm phép gởi y (vikappa) đến tỳ khưu, hoặc tỳ khưu ni, hoặc tập sự nữ, hoặc sa di, hoặc sa di ni,
-apaccuddhārakaṃ paribhuñjeyya, pācittiyaṃ. [3.0]
+appaccuddhāraṇaṃ paribhuñjeyya, pācittiyaṃ. [3.0]
 mà lại sử dụng khi chưa được vị kia trả lại, phạm tội Ưng Đối Trị.`
 },
 
@@ -1310,7 +1397,7 @@ mà lại sử dụng khi chưa được vị kia trả lại, phạm tội Ưng
     id: 'Pc.60', title: 'Pācittiya 60', audio: '5Pc-60.mp3',
     text: `Yo pana bhikkhu bhikkhussa pattaṃ vā cīvaraṃ vā nisīdanaṃ vā sūcigharaṃ vā kāyabandhanaṃ vā apanidheyya vā [5.6]
 Vị tỳ khưu nào tự mình cất giấu hoặc bảo người khác cất giấu bát, hoặc y, hoặc tọa cụ, hoặc ống kim, hoặc dây thắt lưng của một vị tỳ khưu khác,
-apanidhāpeyya vā antamaso hassāpekkhopi, pācittiyaṃ. Surāpānavaggo chaṭṭho. [5.5]
+apanidhāpeyya vā antamaso hasāpekkhopi, pācittiyaṃ. Surāpānavaggo chaṭṭho. [5.5]
 dù chỉ là để đùa giỡn, phạm tội Ưng Đối Trị. Chương về Uống rượu là chương thứ sáu.`
 },
 
@@ -1456,9 +1543,9 @@ chúng chỉ dẫn đến sự hối hận, phiền muộn và bối rối mà t
 Vị tỳ khưu nào trong khi giới bổn Pātimokkha đang được tụng đọc mỗi nửa tháng mà lại nói như vầy:
 “idāneva kho ahaṃ jānāmi, ayampi kira dhammo suttāgato suttapariyāpanno anvaddhamāsaṃ uddesaṃ āgacchatī”ti. [6.6]
 "Đến bây giờ tôi mới biết, hóa ra pháp này đã có trong kinh điển, thuộc về kinh điển, và được tụng đọc mỗi nửa tháng".
-Tañce bhikkhuṃ aññe bhikkhū jāneyyuṃ: “nisinnapubbaṁ iminā bhikkhunā [4.3]
+Tañce bhikkhuṃ aññe bhikkhū jāneyyuṃ: “nisinnapubbaṃ iminā bhikkhunā [4.3]
 Nếu các vị tỳ khưu khác biết rằng vị tỳ khưu này đã từng ngồi dự
-dvattikkhattuṁ pātimokkhe uddissamāne, ko pana vādo bhiyyo” ti, [3.9]
+dvattikkhattuṁ pātimokkhe uddissamāne, ko pana vādo bhiyyo”ti, [3.9]
 buổi tụng Pātimokkha hai hoặc ba lần, hoặc thậm chí nhiều hơn nữa,
 na ca tassa bhikkhuno aññāṇakena mutti atthi, yañca tattha āpattiṃ āpanno, [4.4]
 thì vị tỳ khưu ấy không thể thoát tội bằng cách lấy lý do không biết; và đối với tội mà vị ấy đã phạm,
@@ -1466,7 +1553,7 @@ tañca yathādhammo kāretabbo, uttariṃ cassa moho āropetabbo [4.3]
 vị ấy phải bị xử lý theo đúng pháp, và hơn nữa phải bị kết tội cố ý làm ngơ rằng:
 “tassa te, āvuso, alābhā, tassa te dulladdhaṃ, [3.1]
 "Này đạo hữu, đó là sự mất mát của ông, đó là điều không may cho ông,
-yaṃ tvaṃ pātimokkhe uddissamāne na sādhukaṃ aṭṭhikatvā manasi karosī”ti, [4.7]
+yaṃ tvaṃ pātimokkhe uddissamāne na sādhukaṃ aṭṭhiṁ katvā manasi karosī”ti, [4.7]
 khi giới bổn Pātimokkha đang được tụng đọc mà ông không chịu chú tâm lắng nghe một cách kỹ lưỡng";
 idaṃ tasmiṃ mohanake pācittiyaṃ. [2.7]
 đây là tội Ưng Đối Trị vì sự cố ý làm ngơ.`
@@ -1664,8 +1751,8 @@ chúng tôi xin phát lộ lỗi ấy".`
 
 {
     id: 'Pd.3', title: 'Pāṭidesanīya 3', audio: '6Pd-03.mp3',
-    text: `Yāni kho pana tāni sekhasammatāni kulāni, yo pana bhikkhu tathārūpesu sekhasammatesukulesu pubbe animantito [6.85]
-Có những gia đình được (Tăng) công nhận là đang trong giai đoạn tu học (cần được hỗ trợ); vị tỳ khưu nào không được mời trước mà đến những gia đình như vậy,
+    text: `Yāni kho pana tāni sekkhasammatāni kulāni, yo pana bhikkhu tathārūpesu sekkhasammatesu kulesu pubbe animantito [6.85]
+Có những gia đình được (Tăng) công nhận là bậc hữu học; vị tỳ khưu nào không được mời trước mà đến những gia đình như vậy,
 agilāno khādanīyaṃ vā, bhojanīyaṃ vā sahatthā paṭiggahetvā [3.9]
 trong khi không bị bệnh, lại tự tay thọ nhận thức ăn cứng hoặc thức ăn mềm
 khādeyya vā, bhuñjeyya vā, paṭidesetabbaṃ [2.85]
@@ -1717,7 +1804,7 @@ Parimaṇḍalaṃ nivāsessāmīti sikkhā karaṇīyā. Parimaṇḍalaṃ pā
 
 {
     id: 'Sk.3-4', title: 'Sekhiya 3-4', audio: '7Sk-03-04.mp3',
-    text: `Supaṭicchanno antaraghare gamissāmīti sikkhā karaṇīyā. Supaṭicchanno antaraghare nisīdissāmīti sikkhā karaṇīyā. [6.0]
+    text: `Suppaṭicchanno antaraghare gamissāmīti sikkhā karaṇīyā. Suppaṭicchanno antaraghare nisīdissāmīti sikkhā karaṇīyā. [6.0]
 "Ta sẽ khéo che kín thân mình khi đi vào xóm nhà", là điều cần phải học tập. "Ta sẽ khéo che kín thân mình khi ngồi trong xóm nhà", là điều cần phải học tập.`
 },
 
@@ -1939,13 +2026,13 @@ Na oṭṭhanillehakaṃ bhuñjissāmīti sikkhā karaṇīyā. [3.6]
 
 {
     id: 'Sk.61', title: 'Sekhiya 61', audio: '7Sk-61.mp3',
-    text: `Na pādukārūḷhassa agilānassa dhammaṃ desessāmīti sikkhā karaṇīyā. [4.8]
+    text: `Na pādukāruḷhassa agilānassa dhammaṃ desessāmīti sikkhā karaṇīyā. [4.8]
 "Ta sẽ không thuyết Pháp cho người không bị bệnh mà đang mang guốc (giày cứng)", là điều cần phải học tập.`
 },
 
 {
     id: 'Sk.62', title: 'Sekhiya 62', audio: '7Sk-62.mp3',
-    text: `Na upāhanārūḷhassa agilānassa dhammaṃ desessāmīti sikkhā karaṇīyā. [4.2]
+    text: `Na upāhanāruḷhassa agilānassa dhammaṃ desessāmīti sikkhā karaṇīyā. [4.2]
 "Ta sẽ không thuyết Pháp cho người không bị bệnh mà đang mang dép", là điều cần phải học tập.`
 },
 
@@ -2047,9 +2134,9 @@ Các đại đức trong sạch, do đó mới im lặng. Tôi xin ghi nhận s�
     id: 'As', title: 'Adhikaraṇa-samatha', audio: '8As.mp3',
     text: `Ime kho panāyasmanto satta adhikaraṇasamathā Dhammā uddesaṃ āgacchanti. [5.0]
 Này các đại đức, đây là bảy pháp Diệt Tranh được tụng đọc đến.
-Uppannupannānaṃ adhikaraṇānaṃ samathāya vūpasamāya: Sammukhāvinayo dātabbo, Sativinayo dātabbo, [5.9]
+Uppannuppannānaṃ adhikaraṇānaṃ samathāya vūpasamāya: Sammukhāvinayo dātabbo, Sativinayo dātabbo, [5.9]
 Để dàn xếp và dập tắt các vụ tranh chấp phát sinh: Pháp hành xử Luật với sự hiện diện nên được thực hiện, pháp hành xử Luật bằng nhớ lại nên được thực hiện,
-Amūḷhavinayo dātabbo, Paṭiññāya kāretabbaṃ, Yebhuyyasikā, Tassapāpiyyasikā, Tiṇavatthārako’ti. [6.9]
+Amūḷhavinayo dātabbo, Paṭiññāya kāretabbaṃ, Yebhuyyasikā, Tassapāpiyasikā, Tiṇavatthārako’ti. [6.9]
 pháp hành xử Luật khi không điên cuồng nên được thực hiện, pháp nên xử lý theo sự tự thú, xử lý theo đa số, xử lý theo tội trạng của người đó, và pháp trải cỏ che lấp.`
 },
 
@@ -2079,7 +2166,7 @@ ettakaṃ tassa bhagavato suttāgataṃ suttapariyāpannaṃ anvaddhamāsaṃ ud
 Bấy nhiêu pháp của Đức Thế Tôn ấy đã được truyền lại trong Kinh, nằm trong phạm vi của Kinh, và được tụng đọc mỗi nửa tháng.
 tattha sabbeheva samaggehi sammodamānehi avivadamānehi sikkhitabbanti. [4.9]
 Trong các pháp ấy, tất cả chúng ta phải cùng nhau hòa hợp, hoan hỷ, không tranh cãi mà cùng học tập.
-Bhikkhupātimokkhaṃ Niṭṭhitaṃ. [3.6]
+Bhikkhu Pātimokkhaṃ Niṭṭhitaṃ. [3.6]
 Dứt Giới Bổn Pātimokkha Của Tỳ Khưu.`
 },
 		
@@ -2242,7 +2329,40 @@ function closeHelpModal(event) {
         document.getElementById('help-modal').style.display = 'none';
     }
 }
-    // --- INIT ---
+    /* --- GLOBAL VARIABLE FOR WORD COUNTING --- */
+let sectionWordOffsets = [];
+
+function calculateGlobalWordOffsets() {
+    let runningTotal = 0;
+    sectionWordOffsets = [];
+
+    sections.forEach(section => {
+        sectionWordOffsets.push(runningTotal); // Store the starting word index for this section
+        
+        // Calculate words in this section
+        const lines = section.text.split('\n');
+        let sectionWordCount = 0;
+        
+        lines.forEach(line => {
+            let cleanLine = line.trim();
+            if (cleanLine === '') return;
+            
+            // Identify Pali lines by time marker
+            const timeMatch = cleanLine.match(/\s*\[(\d+(\.\d+)?)\]\s*$/);
+            
+            if (timeMatch) {
+                // Remove time marker to get pure text
+                const textContent = cleanLine.replace(timeMatch[0], '').trim();
+                // Count words
+                const words = textContent.split(/\s+/);
+                const validWords = words.filter(w => w.trim() !== '');
+                sectionWordCount += validWords.length;
+            }
+        });
+        
+        runningTotal += sectionWordCount;
+    });
+}
     function init() {
         
         // --- 1. TẢI CÀI ĐẶT GIAO DIỆN VÀ TỐC ĐỘ BAN ĐẦU ---
@@ -2299,7 +2419,7 @@ function closeHelpModal(event) {
             speedControlArea.style.display = 'none';
             btnShowSpeed.style.display = 'inline-block';
         }
-
+calculateGlobalWordOffsets();
         // --- 2. SETUP PHẦN CÒN LẠI ---
         sections.forEach((sec, index) => {
             let option = document.createElement("option");
@@ -2451,12 +2571,13 @@ function loadSection(index) {
         // Optional: Scroll to top to ensure user sees the new title
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-/* --- NEW RENDER LOGIC --- */
 function renderText(rawText) {
     displayArea.innerHTML = '';
-    allLines = []; // Reset recitation lines array
+    allLines = []; 
     
-    // Split text by new line
+    // Get the starting Global Index for the current section
+    let currentGlobalIndex = sectionWordOffsets[currentSectionIndex] || 0;
+
     const lines = rawText.split('\n');
     
     let cumulativeStartTimeMs = 0;
@@ -2466,18 +2587,16 @@ function renderText(rawText) {
         let cleanLine = line.trim();
         if (cleanLine === '') return;
 
-        // Check if this line is Pali (Recitation line) by looking for time marker [x.x]
         const timeMatch = cleanLine.match(/\s*\[(\d+(\.\d+)?)\]\s*$/);
 
         if (timeMatch) {
             // === IS PALI LINE ===
             let customDuration = parseFloat(timeMatch[1]) * 1000;
-            cleanLine = cleanLine.replace(timeMatch[0], ''); // Remove time marker for display
+            cleanLine = cleanLine.replace(timeMatch[0], ''); 
 
             const lineDiv = document.createElement('div');
             lineDiv.className = 'line-break';
             
-            // Logic for duration (Original vs Override)
             let currentLineDuration; 
             if (overrideIntervalMs !== null) {
                 currentLineDuration = overrideIntervalMs;
@@ -2498,7 +2617,11 @@ function renderText(rawText) {
                 const span = document.createElement('span');
                 span.className = 'word';
                 span.innerText = wordStr;
-                // Click to reveal hidden words logic
+                
+                // --- NEW: Assign Global Index ---
+                span.dataset.globalIndex = currentGlobalIndex++;
+                // --------------------------------
+
                 span.onclick = function() {
                     if (this.classList.contains('hidden')) {
                         this.classList.remove('hidden');
@@ -2509,10 +2632,10 @@ function renderText(rawText) {
             });
 
             displayArea.appendChild(lineDiv);
-            allLines.push(lineDiv); // Add ONLY Pali lines to the recitation array
+            allLines.push(lineDiv); 
 
         } else {
-            // === IS TRANSLATION LINE (No time marker) ===
+            // === IS TRANSLATION LINE ===
             const transDiv = document.createElement('div');
             transDiv.className = 'translation-line';
             transDiv.innerText = cleanLine;

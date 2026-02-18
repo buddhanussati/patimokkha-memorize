@@ -1695,6 +1695,9 @@ dpd_i2h = {
     "orenaddhamāsa",
     "orenaddhamāsaṃ"
   ],
+    "orenaddhamāso": [
+    "orenaddhamāsa"
+  ],
   "olokessāmīti": [
     "oloketi"
   ],
@@ -6203,5 +6206,99 @@ dpd_i2h = {
     "hoti 1",
     "hoti 2",
     "hoti 3"
+  ],
+  
+  "pārājikuddeso": [
+    "pārājika 1",
+    "pārājika 2",
+    "uddesa 1",
+    "uddesa 2",
+  ],
+
+  "āyasmantānampi": [
+   "āyasmant 1",
+    "āyasmant 2",
+	"api 1.2",
+  ],
+  
+  "abhiruheyya": [
+    "abhiruhati 1",
+    "abhiruhati 2",
+    "abhiruhati 3"
+  ],
+  "alaṅkammaniye": [
+    "alaṅkammaniya"
+  ],
+    "appaccuddhāraṇaṃ": [
+    "appaccuddhāraṇa",
+    "appaccuddhāraṇaṃ"
+  ],
+  "aṭṭhiṃ": [
+    "aṭṭhā",
+    "aṭṭhi 1.1",
+    "aṭṭhi 1.2",
+    "aṭṭhi 2.1"
+  ],
+  
+    "bhikkhunupassayaṃ": [
+    "bhikkhunupassaya"
+  ],
+   "catumāsappaccayapavāraṇā": [
+    "catumāsappaccayapavāraṇā"
+  ],
+  
+    "gihisamārambhā": [
+    "gihisamārambha"
+  ],
+    "hasadhamme": [
+    "hasadhamma"
+  ],
+    "hasāpekkhopi": [
+    "hasāpekkha"
+  ],
+  
+    "kathine": [
+    "kathina 1",
+    "kathina 2",
+  ],
+   "nisinnapubbaṃ": [
+    "nisinnapubba"
+  ],
+    "nālaṅkammaniyaṃ": [
+    "nālaṅkammaniya"
+  ],
+    "nāvābhiruhanasamayo": [
+    "nāvābhiruhanasamaya"
+  ],
+    "pādukāruḷhassa": [
+    "pādukāruḷha"
+  ],
+    "sekkhasammatesu": [
+    "sekkhasammata"
+  ],
+  
+    "sekkhasammatāni": [
+    "sekkhasammata"
+  ],
+  
+    "suppaṭicchanno": [
+    "suppaṭicchanna"
+  ],
+  
+    "tassapāpiyasikā": [
+    "tassapāpiyasikā"
+  ],
+    "udakadantaponā": [
+    "udakadantapona"
+  ],
+  "uddhaṅgāminiṃ": [
+    "uddhaṅgāmī"
+  ],
+
+    "uppannuppannānaṃ": [
+    "uppannuppanna"
+  ],
+    "upāhanāruḷhassa": [
+    "upāhanāruḷha"
   ],
 }

@@ -80,24 +80,111 @@ function lookupWordHandler(event) {
     if (!window.paliDictionary) return;
     if ($(this).children().is("span.meaning")) return;
 
-    // Get text
+    const isRecitationActive = document.body.classList.contains('recitation-active-mode');
+
+    if (isRecitationActive) {
+        const rawText = this.innerText || "";
+        const cleanText = rawText.toLowerCase().replace(/[.,:;!?'"“”‘’()\[\]{}...–-]/g, '').trim();
+
+        // 1. FIND WORD POSITION (Index in the sentence/line)
+        // This finds how many '.word' siblings are before this one
+        const wordIndex = $(this).parent().find('.word').index(this);
+
+        // 2. DEFINE THEME-SPECIFIC COLORS (20 for each)
+        const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+
+        // High-contrast, darker colors for Light Mode
+        const lightModeColors = [
+            '#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#d35400', 
+            '#2c3e50', '#16a085', '#b53471', '#5758bb', '#1b1464',
+            '#006266', '#6F1E51', '#1289A7', '#D980FA', '#0652DD',
+            '#c23616', '#192a56', '#2f3640', '#44bd32', '#833471'
+        ];
+
+        // Vibrant, glowing colors for Dark Mode
+        const darkModeColors = [
+            '#ff7675', '#74b9ff', '#55e6c1', '#a29bfe', '#fab1a0',
+			'#18dcff', '#7d5fff', '#ffaf40', '#32ff7e', '#ff3838',
+            '#ffeaa7', '#81ecec', '#fdcb6e', '#fd79a8', '#55efc4',
+            '#00d2d3', '#00cec9', '#fab1a0', '#ff9f43', '#fffa65',
+        ];
+
+        const colorPalette = isDarkMode ? darkModeColors : lightModeColors;
+        // Use Modulo to cycle colors so neighbor words are always different
+        const wordColor = colorPalette[wordIndex % colorPalette.length];
+
+        // 3. ACCURATE PALI RHYTHM ANALYSIS
+        const longVowels = ['ā', 'ī', 'ū', 'e', 'o'];
+        const vowels = 'aāiīuūeo';
+        const aspirates = ['kh', 'gh', 'ch', 'jh', 'ṭh', 'ḍh', 'th', 'dh', 'ph', 'bh'];
+        
+        let rhythm = [];
+        for (let i = 0; i < cleanText.length; i++) {
+            let char = cleanText[i];
+            if (vowels.includes(char)) {
+                let isGuru = false;
+                if (longVowels.includes(char)) {
+                    isGuru = true;
+                } else {
+                    let nextPart = cleanText.slice(i + 1);
+                    if (nextPart.startsWith('ṁ')) {
+                        isGuru = true;
+                    } else {
+                        let following = nextPart.match(/^([^aāiīuūeo]+)/);
+                        if (following) {
+                            let cluster = following[0];
+                            let tempCluster = cluster;
+                            aspirates.forEach(a => { tempCluster = tempCluster.replace(a, 'K'); });
+                            if (tempCluster.length > 1) isGuru = true;
+                        }
+                    }
+                }
+                rhythm.push(isGuru ? 'fa-minus' : 'fa-circle');
+            }
+        }
+
+        // 4. RENDER
+        let symbolsHtml = rhythm.map(icon => {
+            const size = (icon === 'fa-minus') ? '18px' : '10px';
+            // Slight text-shadow added for "pop" against background textures
+            return `<i class="fas ${icon}" style="font-size: ${size}; margin: 0 4px; text-shadow: 1px 1px 1px rgba(0,0,0,0.1);"></i>`;
+        }).join('');
+
+        const textBox = $(`
+            <span class="meaning" style="min-width: 60px; padding: 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <div style="color: ${wordColor}; display: flex; align-items: center; justify-content: center; gap: 2px;">
+                    ${symbolsHtml}
+                </div>
+            </span>
+        `);
+        
+        $(this).append(textBox);
+        
+        var offset = $(this).offset();
+        if (offset.left + textBox.outerWidth() > $(window).width()) {
+             textBox.css({left: 'auto', right: 0});
+        }
+        return; 
+    }
+
+ 
+
+    // ... [Rest of function for Dictionary Logic remains exactly the same] ...
     var rawText = $(this).text();
     var word = rawText.toLowerCase().trim();
 
-    // --- CRITICAL FIX: Remove punctuation from edges ---
-    // The original script split text by punctuation. Since your HTML 
-    // includes punctuation in the span (e.g., "dhammo,"), we must strip it here.
+
+    // CRITICAL FIX: Remove punctuation from edges
     word = word.replace(/^[“‘"(\[]+|[”’"),‚.\]?!:–;]+$/g, '');
 
-    // Standard replacements from original script
-    word = word.replace(/­/g, ''); // optional hyphen
-    // Fix specific Pali spelling variations handled in original script
+    // Standard replacements
+    word = word.replace(/­/g, ''); 
     word = word.replace(/ṁg/g, 'ṅg')
                .replace(/ṁk/g, 'ṅk')
-               .replace(/ṁ/g, 'ṁ'); // (Original had this, keeping for safety)
+               .replace(/ṁ/g, 'ṁ'); 
 
     // Perform Lookup
-    var meaning = lookupWord(word, rawText); // Pass rawText for display title
+    var meaning = lookupWord(word, rawText); 
     
     if (meaning) {
         var textBox = $('<span class="meaning">' + meaning + '</span>');
@@ -1780,7 +1867,40 @@ function closeHelpModal(event) {
         document.getElementById('help-modal').style.display = 'none';
     }
 }
-    // --- INIT ---
+    /* --- GLOBAL VARIABLE FOR WORD COUNTING --- */
+let sectionWordOffsets = [];
+
+function calculateGlobalWordOffsets() {
+    let runningTotal = 0;
+    sectionWordOffsets = [];
+
+    sections.forEach(section => {
+        sectionWordOffsets.push(runningTotal); // Store the starting word index for this section
+        
+        // Calculate words in this section
+        const lines = section.text.split('\n');
+        let sectionWordCount = 0;
+        
+        lines.forEach(line => {
+            let cleanLine = line.trim();
+            if (cleanLine === '') return;
+            
+            // Identify Pali lines by time marker
+            const timeMatch = cleanLine.match(/\s*\[(\d+(\.\d+)?)\]\s*$/);
+            
+            if (timeMatch) {
+                // Remove time marker to get pure text
+                const textContent = cleanLine.replace(timeMatch[0], '').trim();
+                // Count words
+                const words = textContent.split(/\s+/);
+                const validWords = words.filter(w => w.trim() !== '');
+                sectionWordCount += validWords.length;
+            }
+        });
+        
+        runningTotal += sectionWordCount;
+    });
+}
     function init() {
         
         // --- 1. TẢI CÀI ĐẶT GIAO DIỆN VÀ TỐC ĐỘ BAN ĐẦU ---
@@ -1837,7 +1957,7 @@ function closeHelpModal(event) {
             speedControlArea.style.display = 'none';
             btnShowSpeed.style.display = 'inline-block';
         }
-
+calculateGlobalWordOffsets();
         // --- 2. SETUP PHẦN CÒN LẠI ---
         sections.forEach((sec, index) => {
             let option = document.createElement("option");
@@ -2018,9 +2138,11 @@ function loadSection(index) {
 /* --- NEW RENDER LOGIC --- */
 function renderText(rawText) {
     displayArea.innerHTML = '';
-    allLines = []; // Reset recitation lines array
+    allLines = []; 
     
-    // Split text by new line
+    // Get the starting Global Index for the current section
+    let currentGlobalIndex = sectionWordOffsets[currentSectionIndex] || 0;
+
     const lines = rawText.split('\n');
     
     let cumulativeStartTimeMs = 0;
@@ -2030,18 +2152,16 @@ function renderText(rawText) {
         let cleanLine = line.trim();
         if (cleanLine === '') return;
 
-        // Check if this line is Pali (Recitation line) by looking for time marker [x.x]
         const timeMatch = cleanLine.match(/\s*\[(\d+(\.\d+)?)\]\s*$/);
 
         if (timeMatch) {
             // === IS PALI LINE ===
             let customDuration = parseFloat(timeMatch[1]) * 1000;
-            cleanLine = cleanLine.replace(timeMatch[0], ''); // Remove time marker for display
+            cleanLine = cleanLine.replace(timeMatch[0], ''); 
 
             const lineDiv = document.createElement('div');
             lineDiv.className = 'line-break';
             
-            // Logic for duration (Original vs Override)
             let currentLineDuration; 
             if (overrideIntervalMs !== null) {
                 currentLineDuration = overrideIntervalMs;
@@ -2062,7 +2182,11 @@ function renderText(rawText) {
                 const span = document.createElement('span');
                 span.className = 'word';
                 span.innerText = wordStr;
-                // Click to reveal hidden words logic
+                
+                // --- NEW: Assign Global Index ---
+                span.dataset.globalIndex = currentGlobalIndex++;
+                // --------------------------------
+
                 span.onclick = function() {
                     if (this.classList.contains('hidden')) {
                         this.classList.remove('hidden');
@@ -2073,10 +2197,10 @@ function renderText(rawText) {
             });
 
             displayArea.appendChild(lineDiv);
-            allLines.push(lineDiv); // Add ONLY Pali lines to the recitation array
+            allLines.push(lineDiv); 
 
         } else {
-            // === IS TRANSLATION LINE (No time marker) ===
+            // === IS TRANSLATION LINE ===
             const transDiv = document.createElement('div');
             transDiv.className = 'translation-line';
             transDiv.innerText = cleanLine;
