@@ -1431,7 +1431,8 @@ Tương Ưng duyên, Bất Tương Ưng duyên,
 atthipaccayo, natthipaccayo, [3.536]
 Hiện Hữu duyên, Vô Hữu duyên,
 vigatapaccayo, avigatapaccayoti. [5.486]
-Ly duyên, Bất Ly duyên.Jayanto bodhiyā mūle, Sakyānaṃ nandivaḍḍhano, [6.000]
+Ly duyên, Bất Ly duyên.
+Jayanto bodhiyā mūle, Sakyānaṃ nandivaḍḍhano, [6.000]
 Vị đạt đến tối thắng, khiến vương tộc Thích Ca, tăng trưởng niềm hoan hỷ;
 Evameva jayo hotu, jayassu jayamaṅgale. [5.426]
 Bên cội cây Bồ Đề, trên bồ đoàn bất thối,
