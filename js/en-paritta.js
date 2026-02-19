@@ -1736,28 +1736,47 @@ function generateQuizData(lineIdx, hideRatio = 0.4) {
     const allWords = wordSpans.map(span => span.innerText);
     
     // 1. Identify Valid Indices (Skip words that become empty after cleaning)
-    const validIndices = allWords.map((w, i) => cleanPaliWord(w) ? i : -1).filter(i => i !== -1);
+    const allValidIndices = allWords.map((w, i) => cleanPaliWord(w) ? i : -1).filter(i => i !== -1);
     
-    // 2. Determine number of blanks
-    let countToHide = Math.ceil(validIndices.length * hideRatio);
-    if (countToHide < 1) countToHide = 1;
-    if (countToHide > validIndices.length) countToHide = validIndices.length;
+    // 2. Filter eligible indices: ONLY words longer than 2 characters
+    let eligibleIndices = allValidIndices.filter(i => cleanPaliWord(allWords[i]).length > 2);
+    
+    // Fallback: If a sentence ONLY has short words (<= 2 chars), pick the longest one 
+    // to ensure the quiz doesn't break by having 0 questions.
+    if (eligibleIndices.length === 0 && allValidIndices.length > 0) {
+        let longestIndex = allValidIndices[0];
+        let maxLength = 0;
+        allValidIndices.forEach(i => {
+            const len = cleanPaliWord(allWords[i]).length;
+            if (len > maxLength) {
+                maxLength = len;
+                longestIndex = i;
+            }
+        });
+        eligibleIndices = [longestIndex];
+    }
 
-    // 3. Randomly select indices to hide
-    const shuffledIndices = validIndices.sort(() => 0.5 - Math.random());
+    // 3. Determine number of blanks based on the TOTAL valid words to maintain the 40% ratio
+    let countToHide = Math.ceil(allValidIndices.length * hideRatio);
+    if (countToHide < 1) countToHide = 1;
+    
+    // Cap it so we don't try to hide more words than we have eligible (> 2 chars)
+    if (countToHide > eligibleIndices.length) countToHide = eligibleIndices.length;
+
+    // 4. Randomly select indices to hide FROM ELIGIBLE INDICES ONLY
+    const shuffledIndices = eligibleIndices.sort(() => 0.5 - Math.random());
     const hiddenIndices = shuffledIndices.slice(0, countToHide).sort((a, b) => a - b);
     
-    // 4. Get Correct Words (CLEANED)
+    // 5. Get Correct Words (CLEANED)
     const correctHiddenWords = hiddenIndices.map(i => cleanPaliWord(allWords[i]));
     
-    // 5. Generate Distractors (CLEANED)
-    // We need: (Total hidden * 3) - Correct Words = Total Distractors needed
+    // 6. Generate Distractors (CLEANED)
     const totalOptionsNeeded = hiddenIndices.length * 3;
     const distractorCount = totalOptionsNeeded - correctHiddenWords.length;
     
     const distractors = getDistractors(lineIdx, distractorCount);
     
-    // 6. Create Word Bank (All Cleaned)
+    // 7. Create Word Bank (All Cleaned)
     let wordBank = [...correctHiddenWords, ...distractors];
     
     // Shuffle Word Bank
