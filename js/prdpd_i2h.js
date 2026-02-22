@@ -363,8 +363,11 @@ dpd_i2h = {
   "akkhātaṃ": [
     "akkhāta"
   ],
-  "caṇḍahatthī": [
-     "caṇḍahatthī"
+  "caṇḍa": [
+     "caṇḍa 1"
+  ],
+  "hatthī": [
+     "hatthī 1"
   ],
   "aggappatto": [
     "aggappatta"

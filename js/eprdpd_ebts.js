@@ -2500,7 +2500,7 @@ let dpd_ebts = {
   "byāma": "masc. <b>fathom; measure of length; from head to foot, or two arms extended</b> [vi + √yam + *a]",
   "cariyā 1.1": "fem. <b>conduct; behaviour; way of behaving; state of being</b> [√car + iyā]",
   "caṇḍa 1": "adj. <b>fierce; violent; savage; hostile</b> [√caṇḍ + a]",
-  "caṇḍahatthī": "masc. fierce elephant",
+  "hatthī 1": "masc. <b>elephant</b>; lit. having a hand; i.e. trunk [hattha + ī]",
   "cintayi": "aor. <b>thought (about); reflected (on)</b> [√cint + *aya + i]",
   "cunda 1": "masc. <b>name of a monk</b>",
   "dasabala 1": "nt. <b>ten powers</b> [dasa + bala]",

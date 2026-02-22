@@ -497,7 +497,7 @@ let dpd_ebts = {
   "catuppada 3": "(tính từ) <b>bốn chân</b> [catu + pada]",
   "caññe": "(sandhi) <b>và những người khác</b> [ca + aññe]",
   "caṇḍa 1": "(tính từ) <b>hung dữ; bạo lực; man rợ; thù địch</b> [√caṇḍ + a]",
-  "caṇḍahatthī": "(dt.nam) <b>con voi hung dữ</b>",
+  "hatthī 1": "(dt.nam) <b>con voi</b>; (nghĩa đen) có một bàn tay; tức là vòi [hattha + ī]",
   "ce 1": "(bất biến) <b>nếu</b>",
   "ce 2": "(bất biến) <b>nhưng; hơn</b>",
   "cetas": "(dt.nam) <b>tâm; tư tưởng; ý định</b> [√cit + *as]",

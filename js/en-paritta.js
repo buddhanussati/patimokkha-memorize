@@ -79,28 +79,63 @@ function lookupWordHandler(event) {
     if (!window.paliDictionary) return;
     if ($(this).children().is("span.meaning")) return;
 
+    const $wordElement = $(this);
+    const rawElementText = this.innerText || $(this).text();
     const isRecitationActive = document.body.classList.contains('recitation-active-mode');
 
+    // --- HELPER: Dictionary Rendering Logic ---
+    function showDictionary() {
+        var word = rawElementText.toLowerCase().trim();
+
+        // CRITICAL FIX: Remove punctuation from edges
+        word = word.replace(/^[“‘"(\[]+|[”’"),‚.\]?!:–;]+$/g, '');
+
+        // Standard replacements
+        word = word.replace(/­/g, ''); 
+        word = word.replace(/ṁg/g, 'ṅg')
+                   .replace(/ṁk/g, 'ṅk')
+                   .replace(/ṁ/g, 'ṁ'); 
+
+        // Perform Lookup
+        var meaning = lookupWord(word, rawElementText); 
+        
+        if (meaning) {
+            var dictBox = $('<span class="meaning">' + meaning + '</span>');
+            
+            // Prevent bubbling on the dictionary box too
+            dictBox.on('click touchstart', function(e) {
+                e.stopPropagation();
+            });
+
+            $wordElement.append(dictBox);
+            
+            // Prevent popup from going off-screen (Right edge detection)
+            var offset = $wordElement.offset();
+            var width = 300; // approx max width
+            if (offset.left + width > $(window).width()) {
+                 dictBox.css({left: 'auto', right: 0});
+            }
+        }
+    }
+
+    // --- RECITATION MODE: Rhythm Box Logic ---
     if (isRecitationActive) {
-        const rawText = this.innerText || "";
-        const cleanText = rawText.toLowerCase().replace(/[.,:;!?'"“”‘’()\[\]{}...–-]/g, '').trim();
+        const cleanText = rawElementText.toLowerCase().replace(/[.,:;!?'"“”‘’()\[\]{}...–-]/g, '').trim();
 
         // 1. FIND WORD POSITION (Index in the sentence/line)
-        const wordIndex = $(this).parent().find('.word').index(this);
+        const wordIndex = $wordElement.parent().find('.word').index(this);
 
         // 2. DEFINE THEME-SPECIFIC COLORS
         const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
-
         const lightModeColors = [
             '#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#d35400', 
             '#2c3e50', '#16a085', '#b53471', '#5758bb', '#1b1464',
             '#006266', '#6F1E51', '#1289A7', '#D980FA', '#0652DD',
             '#c23616', '#192a56', '#2f3640', '#44bd32', '#833471'
         ];
-
         const darkModeColors = [
             '#ff7675', '#74b9ff', '#55e6c1', '#a29bfe', '#fab1a0',
-			'#18dcff', '#7d5fff', '#ffaf40', '#32ff7e', '#ff3838',
+            '#18dcff', '#7d5fff', '#ffaf40', '#32ff7e', '#ff3838',
             '#ffeaa7', '#81ecec', '#fdcb6e', '#fd79a8', '#55efc4',
             '#00d2d3', '#00cec9', '#fab1a0', '#ff9f43', '#fffa65',
         ];
@@ -138,99 +173,42 @@ function lookupWordHandler(event) {
             }
         }
 
-        // 4. RENDER
+        // 4. RENDER RHYTHM BOX
         let symbolsHtml = rhythm.map(icon => {
             const size = (icon === 'fa-minus') ? '18px' : '10px';
             return `<i class="fas ${icon}" style="font-size: ${size}; margin: 0 4px; text-shadow: 1px 1px 1px rgba(0,0,0,0.1);"></i>`;
         }).join('');
 
-        // ADDED cursor: pointer and a title tooltip for better UX
+        // Added 'cursor: pointer' so it's obviously clickable
         const textBox = $(`
-            <span class="meaning" style="min-width: 60px; padding: 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;" title="Click to see meaning">
+            <span class="meaning rhythm-box" style="min-width: 60px; padding: 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;">
                 <div style="color: ${wordColor}; display: flex; align-items: center; justify-content: center; gap: 2px;">
                     ${symbolsHtml}
                 </div>
+                <div style="font-size: 10px; margin-top: 4px; opacity: 0.6; color: inherit;">Tap to look up</div>
             </span>
         `);
         
-        // --- NEW: CLICK TO REVEAL DICTIONARY LOGIC ---
-        textBox.on('click', function(e) {
-            e.stopPropagation(); // Prevent bubbling up
+        // --- CLICK EVENT: Switch to Dictionary ---
+        textBox.on('click touchstart', function(e) {
+            e.stopPropagation(); // Stop event bubbling on mobile
+            if (e.type === 'touchstart') e.preventDefault(); // Stop double-firing from emulated clicks
             
-            // Re-grab and clean the word for the dictionary lookup
-            let parentRawText = $(this).parent().text();
-            let dictWord = parentRawText.toLowerCase().trim();
-
-            dictWord = dictWord.replace(/^[“‘"(\[]+|[”’"),‚.\]?!:–;]+$/g, '');
-            dictWord = dictWord.replace(/­/g, ''); 
-            dictWord = dictWord.replace(/ṁg/g, 'ṅg')
-                               .replace(/ṁk/g, 'ṅk')
-                               .replace(/ṁ/g, 'ṁ'); 
-
-            let meaning = lookupWord(dictWord, parentRawText); 
-            
-            if (meaning) {
-                // Replace the rhythm symbols with the dictionary meaning
-                $(this).html(meaning);
-                // Reset the specific flexbox styles so it looks like a normal dictionary popup
-                $(this).css({
-                    'min-width': '250px',
-                    'padding': '10px',
-                    'text-align': 'left',
-                    'display': 'block',
-                    'flex-direction': 'unset',
-                    'align-items': 'unset',
-                    'justify-content': 'unset',
-                    'cursor': 'default'
-                });
-                
-                // Recalculate right-edge offset to prevent it from going off-screen
-                let offset = $(this).parent().offset();
-                if (offset.left + $(this).outerWidth() > $(window).width()) {
-                     $(this).css({left: 'auto', right: 0});
-                }
-            } else {
-                $(this).html('<i style="font-size: 14px; color: #888;">Not found in the dictionary.</i>');
-                $(this).css({'cursor': 'default'});
-            }
+            $(this).remove(); // Hide the rhythm box
+            showDictionary(); // Fire the dictionary meaning script
         });
+
+        $wordElement.append(textBox);
         
-        $(this).append(textBox);
-        
-        var offset = $(this).offset();
+        var offset = $wordElement.offset();
         if (offset.left + textBox.outerWidth() > $(window).width()) {
              textBox.css({left: 'auto', right: 0});
         }
         return; 
     }
 
-    // ... [Dictionary Logic for Standard Mode remains the same] ...
-    var rawText = $(this).text();
-    var word = rawText.toLowerCase().trim();
-
-    // CRITICAL FIX: Remove punctuation from edges
-    word = word.replace(/^[“‘"(\[]+|[”’"),‚.\]?!:–;]+$/g, '');
-
-    // Standard replacements
-    word = word.replace(/­/g, ''); 
-    word = word.replace(/ṁg/g, 'ṅg')
-               .replace(/ṁk/g, 'ṅk')
-               .replace(/ṁ/g, 'ṁ'); 
-
-    // Perform Lookup
-    var meaning = lookupWord(word, rawText); 
-    
-    if (meaning) {
-        var textBox = $('<span class="meaning">' + meaning + '</span>');
-        $(this).append(textBox);
-        
-        // Prevent popup from going off-screen (Right edge detection)
-        var offset = $(this).offset();
-        var width = 300; // approx max width
-        if (offset.left + width > $(window).width()) {
-             textBox.css({left: 'auto', right: 0});
-        }
-    }
+    // --- NORMAL MODE: Direct Dictionary Lookup ---
+    showDictionary();
 }
 
 /* --- LOOKUP LOGIC (Exact copy of logic from pali-lookup-standalone.js) --- */
@@ -451,7 +429,7 @@ Kaṇṭakato vā, nakkhattato vā, janapadarogato vā, asaddhammato vā, [9.516
 From thorns, unlucky stars, epidemics, and false teachings,
 Asandiṭṭhito vā, asappurisato vā, [5.777]
 From wrong views and evil persons,
-Caṇḍahatthī assa miga goṇa kukkura ahivicchikā maṇisappa dīpi [10.524]
+Caṇḍa hatthī assa miga goṇa kukkura ahivicchikā maṇisappa dīpi [10.524]
 From wild elephants, horses, deer, bulls, dogs, snakes, scorpions, vipers, and leopards,
 Accha taraccha sūkara mahiṃsa yakkha rakkhasādīhi, [7.120]
 From bears, hyenas, wild boars, buffaloes, spirits, and demons,
