@@ -1,5 +1,6 @@
 let dpd_ebts = {
   "abhabba 1": "(thể khả năng) <b>không thể (làm); bất khả thi (làm); không có khả năng (làm); không có khả năng (xảy ra)</b>; (nghĩa đen) không nên là [na + √bhū + *ya]",
+  "aṭṭhattiṃsa": "(số đếm) <b>ba mươi tám (38)</b> [aṭṭha + tiṃsā]",
   "abhabba 2": "(thể khả năng) <b>không hiệu quả; không có tác dụng; không có khả năng tạo ra kết quả</b>; (nghĩa đen) không nên là [na + √bhū + *ya]",
   "abhabba 3": "(thể khả năng) <b>bất tài; không có năng lực</b>; (nghĩa đen) không nên là [na + √bhū + *ya]",
   "abhabbatā": "(dt.nữ) <b>sự bất khả thi (đối với); điều không có khả năng xảy ra (đối với)</b> [na + √bhū + *ya + tā]",

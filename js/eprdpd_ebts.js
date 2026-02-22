@@ -2,6 +2,7 @@ let dpd_ebts = {
   "abhabba 1": "ptp. <b>unable (to); impossible (to); incapable (of); unlikely (to)</b>; lit. not to be [na + √bhū + *ya]",
   "abhabba 2": "ptp. <b>ineffective; inoperative; incapable of producing a result</b>; lit. not to be [na + √bhū + *ya]",
   "abhabba 3": "ptp. <b>incompetent; incapable</b>; lit. not to be [na + √bhū + *ya]",
+  "aṭṭhattiṃsa": "(card.) <b>thirty-eight (38)</b> [aṭṭha + tiṃsā]",
   "abhabbatā": "fem. <b>impossibility; something incapable of happening (for)</b> [na + √bhū + *ya + tā]",
   "abhikkanta 1": "pp. <b>superb; surpassing; excellent</b>; lit. gone forward [abhi + √kam + ta]",
   "abhikkanta 2": "nt. <b>going forward; going along; progressing</b>; lit. gone forward [abhi + √kam + ta]",

@@ -75,7 +75,6 @@ function disablePaliLookup() {
     $('.meaning').remove();
 }
 
-/* --- CORE HANDLER (Adapted from pali-lookup-standalone.js) --- */
 function lookupWordHandler(event) {
     if (!window.paliDictionary) return;
     if ($(this).children().is("span.meaning")) return;
@@ -87,13 +86,11 @@ function lookupWordHandler(event) {
         const cleanText = rawText.toLowerCase().replace(/[.,:;!?'"“”‘’()\[\]{}...–-]/g, '').trim();
 
         // 1. FIND WORD POSITION (Index in the sentence/line)
-        // This finds how many '.word' siblings are before this one
         const wordIndex = $(this).parent().find('.word').index(this);
 
-        // 2. DEFINE THEME-SPECIFIC COLORS (20 for each)
+        // 2. DEFINE THEME-SPECIFIC COLORS
         const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
 
-        // High-contrast, darker colors for Light Mode
         const lightModeColors = [
             '#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#d35400', 
             '#2c3e50', '#16a085', '#b53471', '#5758bb', '#1b1464',
@@ -101,7 +98,6 @@ function lookupWordHandler(event) {
             '#c23616', '#192a56', '#2f3640', '#44bd32', '#833471'
         ];
 
-        // Vibrant, glowing colors for Dark Mode
         const darkModeColors = [
             '#ff7675', '#74b9ff', '#55e6c1', '#a29bfe', '#fab1a0',
 			'#18dcff', '#7d5fff', '#ffaf40', '#32ff7e', '#ff3838',
@@ -110,7 +106,6 @@ function lookupWordHandler(event) {
         ];
 
         const colorPalette = isDarkMode ? darkModeColors : lightModeColors;
-        // Use Modulo to cycle colors so neighbor words are always different
         const wordColor = colorPalette[wordIndex % colorPalette.length];
 
         // 3. ACCURATE PALI RHYTHM ANALYSIS
@@ -146,17 +141,59 @@ function lookupWordHandler(event) {
         // 4. RENDER
         let symbolsHtml = rhythm.map(icon => {
             const size = (icon === 'fa-minus') ? '18px' : '10px';
-            // Slight text-shadow added for "pop" against background textures
             return `<i class="fas ${icon}" style="font-size: ${size}; margin: 0 4px; text-shadow: 1px 1px 1px rgba(0,0,0,0.1);"></i>`;
         }).join('');
 
+        // ADDED cursor: pointer and a title tooltip for better UX
         const textBox = $(`
-            <span class="meaning" style="min-width: 60px; padding: 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <span class="meaning" style="min-width: 60px; padding: 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;" title="Click to see meaning">
                 <div style="color: ${wordColor}; display: flex; align-items: center; justify-content: center; gap: 2px;">
                     ${symbolsHtml}
                 </div>
             </span>
         `);
+        
+        // --- NEW: CLICK TO REVEAL DICTIONARY LOGIC ---
+        textBox.on('click', function(e) {
+            e.stopPropagation(); // Prevent bubbling up
+            
+            // Re-grab and clean the word for the dictionary lookup
+            let parentRawText = $(this).parent().text();
+            let dictWord = parentRawText.toLowerCase().trim();
+
+            dictWord = dictWord.replace(/^[“‘"(\[]+|[”’"),‚.\]?!:–;]+$/g, '');
+            dictWord = dictWord.replace(/­/g, ''); 
+            dictWord = dictWord.replace(/ṁg/g, 'ṅg')
+                               .replace(/ṁk/g, 'ṅk')
+                               .replace(/ṁ/g, 'ṁ'); 
+
+            let meaning = lookupWord(dictWord, parentRawText); 
+            
+            if (meaning) {
+                // Replace the rhythm symbols with the dictionary meaning
+                $(this).html(meaning);
+                // Reset the specific flexbox styles so it looks like a normal dictionary popup
+                $(this).css({
+                    'min-width': '250px',
+                    'padding': '10px',
+                    'text-align': 'left',
+                    'display': 'block',
+                    'flex-direction': 'unset',
+                    'align-items': 'unset',
+                    'justify-content': 'unset',
+                    'cursor': 'default'
+                });
+                
+                // Recalculate right-edge offset to prevent it from going off-screen
+                let offset = $(this).parent().offset();
+                if (offset.left + $(this).outerWidth() > $(window).width()) {
+                     $(this).css({left: 'auto', right: 0});
+                }
+            } else {
+                $(this).html('<i style="font-size: 14px; color: #888;">Not found in the dictionary.</i>');
+                $(this).css({'cursor': 'default'});
+            }
+        });
         
         $(this).append(textBox);
         
@@ -167,12 +204,9 @@ function lookupWordHandler(event) {
         return; 
     }
 
- 
-
-    // ... [Rest of function for Dictionary Logic remains exactly the same] ...
+    // ... [Dictionary Logic for Standard Mode remains the same] ...
     var rawText = $(this).text();
     var word = rawText.toLowerCase().trim();
-
 
     // CRITICAL FIX: Remove punctuation from edges
     word = word.replace(/^[“‘"(\[]+|[”’"),‚.\]?!:–;]+$/g, '');
@@ -255,7 +289,7 @@ const introContent = `
         
         <p><i>“Monks, learn the Āṭānāṭiya protection, study the Āṭānāṭiya protection, hold in your hearts the Āṭānāṭiya protection. Monks, beneficial is the Āṭānāṭiya protection for security, protection, freedom from harm and living in ease for monks, nuns (bhikkhunis) and male and female lay followers”.</i></p>
         
-        <p>With these words the Buddha exhorted His monks to learn the Āṭānāṭiya protection for their protection and thus began the tradition of chanting the Sutta (discourses) for protection and good results. The Sutta chanted for protection, etc., is also known as ‘Paritta’ which means “the Sutta that protects those who chant and who listen to it against dangers, calamities, etc., from all around.” Through the ages other Suttas were added to the list of ‘Suttas for chanting’. Thus we find in Milindapañha and the Commentaries by the Venerable Buddhaghosa the following nine Suttas mentioned as Parittas: Ratanasutta, Mettāsutta, Khandhasutta, Morasutta, Dhajaggasutta, Āṭānāṭiyasutta. Aṅgulimālasutta, Bojhaṅgasutta and Isigilisutta.</p>
+        <p>With these words the Buddha exhorted His monks to learn the Āṭānāṭiya protection for their protection and thus began the tradition of chanting the Sutta (discourses) for protection and good results. The Sutta chanted for protection, etc., is also known as ‘Paritta’ which means “the Sutta that protects those who chant and who listen to it against dangers, calamities, etc., from all around.” Through the ages other Suttas were added to the list of ‘Suttas for chanting’. Thus we find in Milindapañha and the Commentaries by the Venerable Buddhaghosa the following nine Suttas mentioned as Parittas: <b>Ratanasutta, Mettāsutta, Khandhasutta, Morasutta, Dhajaggasutta, Āṭānāṭiyasutta, Aṅgulimālasutta, Bojhaṅgasutta</b> and <b>Isigilisutta</b>.</p>
         
         <p>The collection presented here includes the first eight Suttas and in addition, Maṅgalasutta, Vaṭṭasutta and Pubbaṇhasutta, thus comprising altogether 11 Suttas, with further addition of introductory verses at the beginning of each Sutta. These are the 11 Suttas chanted everyday in every monastery and nunnery and in some houses of lay people in all Theravāda Buddhist countries. This collection is known in Myanmar as ‘The Great Paritta’, not because the Suttas in this collection are long ones, but probably because they have great power, if chanted and listened to in a correct way, could ward off dangers and bring in results.</p>
         
@@ -2621,7 +2655,72 @@ function changeStatsMonth(offset) {
     statsCurrentMonth.setMonth(statsCurrentMonth.getMonth() + offset);
     renderStatsCharts();
 }
+/* --- HÀM RENDER LỊCH TU TẬP DỰA TRÊN XP --- */
+function renderCalendar() {
+    const grid = document.getElementById('calendar-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    
+    // Sử dụng biến statsCurrentMonth có sẵn trong hệ thống Chart
+    const y = statsCurrentMonth.getFullYear(); 
+    const m = statsCurrentMonth.getMonth();
+    
+    document.getElementById('cal-month-year').innerText = new Date(y, m).toLocaleString('en-GB', { month: 'long', year: 'numeric' });
 
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'calendar-header';
+    ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(d => {
+        const h = document.createElement('div'); 
+        h.className = 'cal-head-day'; 
+        h.innerText = d;
+        grid.appendChild(h);
+    });
+
+    const firstDayRaw = new Date(y, m, 1).getDay();
+    // Chuyển Chủ nhật (0) thành vị trí cuối cùng trong tuần (6)
+    const blankSlots = firstDayRaw === 0 ? 6 : firstDayRaw - 1;
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    
+    for(let i=0; i<blankSlots; i++) { 
+        grid.appendChild(document.createElement('div')); 
+    }
+    
+    for(let i=1; i<=daysInMonth; i++) {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day'; 
+        dayEl.innerText = i;
+        
+        // Đồng bộ chuẩn cách tạo chuỗi ngày với cách App đang lưu (tránh lệch múi giờ UTC)
+        const d = new Date(y, m, i);
+        const offset = d.getTimezoneOffset() * 60000;
+        const dStr = new Date(d.getTime() - offset).toISOString().split('T')[0];
+        
+        // Lấy Tổng XP trong ngày từ localStorage
+        const totalXP = parseInt(localStorage.getItem(`daily_xp_log_${dStr}`) || 0);
+
+        if(totalXP > 0) {
+            dayEl.classList.add('has-data');
+            // Hiển thị tooltip lượng XP khi di chuột vào ô
+            dayEl.title = `${totalXP} XP`;
+
+            // Mức độ Level quy đổi theo điểm XP
+             if (totalXP >= 250) dayEl.classList.add('level-8');      
+            else if (totalXP >= 200) dayEl.classList.add('level-7'); 
+            else if (totalXP >= 150) dayEl.classList.add('level-6'); 
+            else if (totalXP >= 120) dayEl.classList.add('level-5'); 
+            else if (totalXP >= 90) dayEl.classList.add('level-4');  
+            else if (totalXP >= 60) dayEl.classList.add('level-3');  
+            else if (totalXP >= 30) dayEl.classList.add('level-2');  
+            else dayEl.classList.add('level-1');                 
+            
+            // ---> GẮN SỰ KIỆN ONCLICK ĐỂ MỞ BẢNG CHI TIẾT NGÀY <---
+            const formattedDate = `${String(i).padStart(2, '0')}/${String(m + 1).padStart(2, '0')}/${y}`;
+            dayEl.onclick = () => openDailyStatsModal(dStr, formattedDate);
+        }
+
+        grid.appendChild(dayEl);
+    }
+}
 function renderStatsCharts(resetDates = false) {
     if (typeof Chart === 'undefined') {
         alert("Loading chart library...");
@@ -2907,6 +3006,109 @@ function renderStatsCharts(resetDates = false) {
                 }
             }
         }
+           });
+	renderCalendar();
+}
+/* --- BIỂU ĐỒ CHI TIẾT THEO NGÀY (DOUGHNUT) --- */
+let dailyChartInstance = null;
+
+function openDailyStatsModal(dateStr, formattedDate) {
+    document.getElementById('daily-modal-title').innerText = `Daily stats for ${formattedDate}`;
+    document.getElementById('daily-stats-modal').style.display = 'flex';
+    renderDailyChart(dateStr);
+}
+
+function closeDailyStatsModal() {
+    document.getElementById('daily-stats-modal').style.display = 'none';
+}
+
+function renderDailyChart(dateStr) {
+    const ctx = document.getElementById('dailyXPChart').getContext('2d');
+    if (dailyChartInstance) dailyChartInstance.destroy();
+
+    const labels = [];
+    const data = [];
+    const colors = [];
+    let totalDayXP = 0;
+
+    // Sử dụng chung dải màu với bảng tổng quan
+    const bgColors = [
+        '#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', 
+        '#e67e22', '#1abc9c', '#e84393', '#f39c12', '#d35400',
+        '#55efc4', '#81ecec', '#74b9ff', '#a29bfe', '#ffeaa7', 
+        '#fab1a0', '#ff7675', '#fd79a8', '#badc58', '#dff9fb',
+        '#c0392b', '#2980b9', '#27ae60', '#f39c12', '#8e44ad', 
+        '#d35400', '#16a085', '#2c3e50', '#192a56', '#441d49',
+        '#00cec9', '#0984e3', '#6c5ce7', '#ff85a2', '#4cd137', 
+        '#fbc531', '#487eb0', '#e056fd', '#ffbe76', '#ff7979',
+        '#95afc0', '#22a6b3', '#be2edd', '#4834d4', '#130f40', 
+        '#6ab04c', '#f9ca24', '#eb4d4b', '#7ed6df', '#5758bb'
+    ];
+
+    // Lọc data theo các bài kinh đã học trong ngày đó
+    sections.forEach((sec, idx) => {
+        const val = parseInt(localStorage.getItem(`daily_section_xp_${sec.id}_${dateStr}`) || 0);
+        if (val > 0) {
+            labels.push(sec.title);
+            data.push(val);
+            colors.push(bgColors[idx % bgColors.length]);
+            totalDayXP += val;
+        }
+    });
+
+    const centerTextPlugin = {
+        id: 'centerTextDaily',
+        afterDatasetsDraw: function(chart) {
+            const { ctx, chartArea: { top, bottom, left, right } } = chart;
+            ctx.save();
+            const centerX = (left + right) / 2;
+            const centerY = (top + bottom) / 2;
+            const chartHeight = bottom - top;
+            const fontSizeMain = chartHeight / 10; 
+            const fontSizeSub = chartHeight / 20;
+
+            ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            ctx.font = `bold ${fontSizeMain}px sans-serif`;
+            // Tuỳ biến chữ trắng trên nền thẻ Card xám đen
+            ctx.fillStyle = "#FFFFFF"; 
+            ctx.fillText(totalDayXP.toLocaleString(), centerX, centerY - (fontSizeMain * 0.15));
+            ctx.font = `normal ${fontSizeSub}px sans-serif`;
+            ctx.fillStyle = "#9ca3af";
+            ctx.fillText("XP", centerX, centerY + (fontSizeMain * 0.75));
+            ctx.restore();
+        }
+    };
+
+    dailyChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{ 
+                data: data, 
+                backgroundColor: colors, 
+                borderWidth: 1, 
+                borderColor: '#1f2937' 
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#9ca3af' }, position: 'bottom' },
+                title: { display: data.length === 0, text: 'No Data', position: 'bottom', color: '#6b7280' },
+                tooltip: {
+                    backgroundColor: '#121821', titleColor: '#f3f4f6', bodyColor: '#f3f4f6', borderColor: '#374151', borderWidth: 1, padding: 10,
+                    callbacks: {
+                        label: function(context) {
+                            let value = context.raw;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
+                            return ` ${value} XP (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        },
+        plugins: [centerTextPlugin]
     });
 }
 function injectExamButton() {
