@@ -153,7 +153,7 @@
         <li><b>Giao Diện (<i class="fas fa-moon"></i>/<i class="fas fa-sun-bright"></i>):</b> Chuyển đổi giữa Chế độ Sáng và Tối.</li>
         <li><b>Chọn Mục:</b> Chuyển đến một điều học cụ thể (ví dụ: Pārājika 1).</li>
         <li><b>Ngẫu Nhiên (<i class="far fa-dharmachakra"></i>):</b> Chuyển đến một điều học bất kỳ.</li>
-        <li><b>Từ điển (<i class="fas fa-book-open"></i>):</b> Bật để tra cứu từ Pāli bằng cách di chuột qua từ. Trong <i>Chế độ Tụng đọc</i>, tính năng này sẽ hiển thị nhịp vận âm tụng (<i class="fas fa-dash"></i> cho âm dài, <i class="fas fa-dot"></i> cho âm ngắn) theo quy tắc <b>Vuttodaya</b> cổ điển.</li>
+        <li><b>Từ điển (<i class="fas fa-book-open"></i>):</b> Bật để tra cứu từ Pāli bằng cách di chuột qua từ. Trong <i>Chế độ Tụng đọc</i>, tính năng này sẽ hiển thị nhịp vận âm tụng (<i class="fas fa-dash"></i> cho âm dài, <i class="fas fa-dot"></i> cho âm ngắn) theo quy tắc <b>Vuttodaya</b> cổ điển. Ấn vào ô hiển thị cũng sẽ hiện ra định nghĩa của từ đó.</li>
 		<li><b>Thống Kê (<i class="fas fa-chart-pie"></i>):</b> Nhấn nút để xem biểu đồ XP, đặt <b>Mục tiêu hằng ngày</b> (<i class="fas fa-pen"></i>) và theo dõi lịch sử tu tập theo Tuần/Tháng.</li>
     </ul>
 
@@ -324,6 +324,29 @@ Thật xứng gọi Tỷ-kheo."
                     <div style="height: 300px;">
                         <canvas id="monthlyXPChart"></canvas>
                     </div>
+                </div>
+				<div class="card" style="margin-top: 5px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+                        <h4 id="cal-month-year" style="margin: 0; font-size: 16px; text-transform: capitalize;">Tháng Năm</h4>
+                        <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsMonth(1)"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <div class="calendar-grid" id="calendar-grid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="daily-stats-modal" class="modal-overlay" style="z-index: 10005;">
+    <div class="modal-content stats-content" style="max-width: 450px; width: 95%; padding: 0;">
+        <div class="quiz-header" style="padding: 15px 20px; margin: 0; border-bottom: 1px solid rgba(128,128,128, 0.3); display: flex; justify-content: space-between; align-items: center;">
+            <h3 id="daily-modal-title" style="margin: 0;">Chi tiết ngày</h3>
+            <button class="btn-close-simple" onclick="closeDailyStatsModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="stats-body" style="padding: 20px;">
+            <div class="card">
+                <div style="height: 300px; display:flex; justify-content:center; position: relative;">
+                    <canvas id="dailyXPChart"></canvas>
                 </div>
             </div>
         </div>
