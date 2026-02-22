@@ -15,7 +15,7 @@ This application is hosted online and can be accessed directly by clicking the l
 * **Theme Toggle (🌙/☀️):** Switch between Light and Dark modes.
 * **Section Selector:** Jump to a specific rule (e.g., Pārājika 1).
 * **Random (☸️):** Jump to a random rule to test your recall.
-* **Dictionary (📖):** Toggle to enable Pāli lookup by hovering over words. In *Recitation Mode*, it reveals the rhythmic meter (**—** for long, **●** for short) following the classical **Vuttodaya** standards.
+* **Dictionary (📖):** Toggle to enable Pāli lookup by hovering over words. In *Recitation Mode*, it reveals the rhythmic meter (**—** for long, **●** for short) following the classical **Vuttodaya** standards. Click on the popup will also reveal the definition.
 * **Statistics 📊:** Click the button to view XP charts, set your **Daily Goal**, and track your practice history by Week/Month.
 ### 2. Recitation Mode (🎤)
 
