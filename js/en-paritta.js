@@ -2419,8 +2419,12 @@ function addSectionXP(sectionId, amount) {
     const currentXP = getSectionXP(sectionId);
     localStorage.setItem(`section_xp_${sectionId}`, currentXP + amount);
     
-    // 2. Add to Daily XP Log (Existing logic)
-    const today = new Date().toISOString().split('T')[0];
+    // NEW: Track the last active timestamp for this section to limit chart legends
+    localStorage.setItem(`section_last_active_${sectionId}`, Date.now());
+    
+    const d = new Date();
+    const offset = d.getTimezoneOffset() * 60000;
+    const today = new Date(d.getTime() - offset).toISOString().split('T')[0];
     const dailyKey = `daily_xp_log_${today}`;
     const currentDaily = parseInt(localStorage.getItem(dailyKey) || 0);
     localStorage.setItem(dailyKey, currentDaily + amount);
@@ -2468,7 +2472,9 @@ function getDailyGoal() {
 }
 
 function getDailyXP() {
-    const today = new Date().toISOString().split('T')[0];
+    const d = new Date();
+    const offset = d.getTimezoneOffset() * 60000;
+    const today = new Date(d.getTime() - offset).toISOString().split('T')[0];
     return parseInt(localStorage.getItem(`daily_xp_log_${today}`) || 0);
 }
 
@@ -2673,7 +2679,9 @@ function renderCalendar() {
         const offset = d.getTimezoneOffset() * 60000;
         const dStr = new Date(d.getTime() - offset).toISOString().split('T')[0];
         
-        // Lấy Tổng XP trong ngày từ localStorage
+      // ---> GẮN SỰ KIỆN ONCLICK ĐỂ MỞ BẢNG CHI TIẾT NGÀY <---
+            const formattedDate = `${String(i).padStart(2, '0')}/${String(m + 1).padStart(2, '0')}/${y}`;
+            dayEl.onclick = () => openDailyStatsModal(dStr, formattedDate);
         const totalXP = parseInt(localStorage.getItem(`daily_xp_log_${dStr}`) || 0);
 
         if(totalXP > 0) {
@@ -2691,9 +2699,7 @@ function renderCalendar() {
             else if (totalXP >= 30) dayEl.classList.add('level-2');  
             else dayEl.classList.add('level-1');                 
             
-            // ---> GẮN SỰ KIỆN ONCLICK ĐỂ MỞ BẢNG CHI TIẾT NGÀY <---
-            const formattedDate = `${String(i).padStart(2, '0')}/${String(m + 1).padStart(2, '0')}/${y}`;
-            dayEl.onclick = () => openDailyStatsModal(dStr, formattedDate);
+            
         }
 
         grid.appendChild(dayEl);
@@ -2740,11 +2746,11 @@ function renderStatsCharts(resetDates = false) {
                 stacked: true,
                 grid: { color: '#374151' },
                 title: { display: false },
-                ticks: { color: '#9ca3af', font: { size: 11 } }
+                ticks: { precision:0, color: '#9ca3af', font: { size: 11 } }
             }
         },
         plugins: {
-            legend: { labels: { color: '#9ca3af', font: { size: 11 } } },
+            legend: { display: false, labels: { color: '#9ca3af', font: { size: 11 } } },
             tooltip: {
                 backgroundColor: '#121821', titleColor: '#f3f4f6', bodyColor: '#f3f4f6', borderColor: '#374151', borderWidth: 1, padding: 10, z: 999,
                 callbacks: {
@@ -2791,11 +2797,14 @@ function renderStatsCharts(resetDates = false) {
     '#6ab04c', '#f9ca24', '#eb4d4b', '#7ed6df', '#5758bb'
 ];
 
-    // 1. Doughnut Chart Data (Overall)
+   // 1. Doughnut Chart Data (Overall)
     const sectionLabels = [];
     const sectionData = [];
 	const doughnutColors = [];
     let totalXP = 0;
+    
+    // NEW: Array to track activity for legend filtering
+    const sectionActivity = [];
     
     // Array to hold dataset structures for Bar Charts
     let weeklyDatasets = [];
@@ -2812,6 +2821,10 @@ function renderStatsCharts(resetDates = false) {
             sectionData.push(xp);
 			doughnutColors.push(color);
             totalXP += xp;
+            
+            // NEW: Record last active time for this section
+            const lastActive = parseInt(localStorage.getItem(`section_last_active_${sec.id}`) || 0);
+            sectionActivity.push({ title: sec.title, lastActive: lastActive });
         }
 
         // Setup base structures for Stacked Bar charts
@@ -2880,7 +2893,9 @@ function renderStatsCharts(resetDates = false) {
     // Doughnut Chart
     const ctxSection = document.getElementById('sectionXPChart').getContext('2d');
     if (statsCharts.section) statsCharts.section.destroy();
-
+// NEW: Determine Top 5 Most Recent Titles
+    sectionActivity.sort((a, b) => b.lastActive - a.lastActive);
+    const top5Titles = sectionActivity.slice(0, 5).map(s => s.title);
     const centerTextPlugin = {
         id: 'centerText',
         afterDatasetsDraw: function(chart) {
@@ -2912,7 +2927,12 @@ function renderStatsCharts(resetDates = false) {
         options: {
             maintainAspectRatio: false,
             plugins: {
-                legend: { labels: { color: '#9ca3af' }, position: 'bottom' },
+                legend: { labels: { 
+                        color: '#9ca3af',
+                        // NEW: Filter to show only the top 5 recent legends
+                        filter: function(item, chart) {
+                            return top5Titles.includes(item.text);
+				}}, position: 'bottom' },
                 title: { display: sectionData.length === 0, text: 'No data available', position: 'bottom', color: '#6b7280' },
                 tooltip: {
                     backgroundColor: '#121821', titleColor: '#f3f4f6', bodyColor: '#f3f4f6', borderColor: '#374151', borderWidth: 1, padding: 10,
@@ -3009,7 +3029,8 @@ function renderDailyChart(dateStr) {
     const colors = [];
     let totalDayXP = 0;
 
-    // Sử dụng chung dải màu với bảng tổng quan
+   // NEW: Array to track activity for legend filtering
+    const sectionActivity = [];
     const bgColors = [
         '#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', 
         '#e67e22', '#1abc9c', '#e84393', '#f39c12', '#d35400',
@@ -3031,9 +3052,16 @@ function renderDailyChart(dateStr) {
             data.push(val);
             colors.push(bgColors[idx % bgColors.length]);
             totalDayXP += val;
+            
+            // NEW: Record last active time for this section
+            const lastActive = parseInt(localStorage.getItem(`section_last_active_${sec.id}`) || 0);
+            sectionActivity.push({ title: sec.title, lastActive: lastActive });
         }
     });
 
+    // NEW: Determine Top 5 Most Recent Titles
+    sectionActivity.sort((a, b) => b.lastActive - a.lastActive);
+    const top5Titles = sectionActivity.slice(0, 5).map(s => s.title);
     const centerTextPlugin = {
         id: 'centerTextDaily',
         afterDatasetsDraw: function(chart) {
@@ -3071,8 +3099,10 @@ function renderDailyChart(dateStr) {
         options: {
             maintainAspectRatio: false,
             plugins: {
-                legend: { labels: { color: '#9ca3af' }, position: 'bottom' },
-                title: { display: data.length === 0, text: 'No Data', position: 'bottom', color: '#6b7280' },
+                legend: { labels: { color: '#9ca3af', filter: function(item, chart) {
+                            return top5Titles.includes(item.text);
+                        } }, position: 'bottom' },
+                title: { display: data.length === 0, text: 'No data available', position: 'bottom', color: '#6b7280' },
                 tooltip: {
                     backgroundColor: '#121821', titleColor: '#f3f4f6', bodyColor: '#f3f4f6', borderColor: '#374151', borderWidth: 1, padding: 10,
                     callbacks: {
@@ -3914,9 +3944,9 @@ function validateCurrentQuestion() {
             setTimeout(() => {
                 currentQuizIndex++;
                 renderQuizStep();
-            }, 1000); 
+            }, 400); 
         } else {
-            setTimeout(finishQuizSuccess, 1000);
+            setTimeout(finishQuizSuccess, 400);
         }
     } else {
         const btnReset = document.getElementById('btn-quiz-reset');
