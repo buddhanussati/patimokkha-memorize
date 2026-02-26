@@ -1147,38 +1147,44 @@ gap: 3px; /* Tighter gap for the rightmost controls */
 /* Các cấp độ dựa trên XP */
 .calendar-day.level-1 { background: rgba(99, 102, 241, 0.3); border-color: rgba(99, 102, 241, 0.3); color: white; } 
 .calendar-day.level-2 { background: rgba(99, 102, 241, 0.6); border-color: rgba(99, 102, 241, 0.5); color: white; } 
-.calendar-day.level-3 { background: rgba(99, 102, 241, 1); border-color: var(--highlight-color); color: white; } 
+.calendar-day.level-3 { background: rgba(99, 102, 241, 1); border-color: #818cf8; color: white; } 
 .calendar-day.level-4 { 
     background: #4d5eff; 
     border: 1px solid rgba(255,255,255,0.2);
     color: white; 
 }
 .calendar-day.level-5 { 
-    background: var(--highlight-color); 
+    background: #818cf8; 
+	border-color: #6366f1;
     color: white; 
 } 
 .calendar-day.level-6 { 
-    background: linear-gradient(135deg, var(--highlight-color), #a78bfa);    
-    box-shadow: inset 0 0 8px rgba(255,255,255,0.3);  
-    border: 1px solid rgba(255,255,255,0.2);
-    color: white; 
-    border-color: gold;
-    box-shadow: 0 0 10px var(--highlight-color);  
-}
+background:  linear-gradient(135deg, #818cf8, #a78bfa);    box-shadow: inset 0 0 8px rgba(255,255,255,0.3);  border: 1px solid rgba(255,255,255,0.2);
+	    color: white; 
+			border-color: gold;
+box-shadow: 0 0 20px #ffffff, 0 0 40px #818cf8;	}
+
 .calendar-day.level-7 { 
-    background: linear-gradient(135deg, #a78bfa, #f472b6);
+background: linear-gradient(135deg, #a78bfa, #f472b6);
     border: 1px solid rgba(255,255,255,0.4);
-    box-shadow: 0 0 15px var(--highlight-color);    
-    color: white; 
-    border-color: rgba(251, 191, 36, 1);
+box-shadow: 0 0 12px rgba(198, 180, 253, 0.6);	    color: white; 
+
+border-color: rgba(251, 191, 36, 1);
+animation: pulse-silver 2s infinite;
 }
 .calendar-day.level-8 { 
     background: linear-gradient(135deg, #6d28d9, #8b5cf6);
     border: 1px solid #a78bfa;
-    color: white; 
+	color: white; 
     box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
-    border-color: gold;
-    animation: pulse-gold 2s infinite;
+	border-color: gold;
+	animation: pulse-gold 2s infinite;
+}
+
+@keyframes pulse-silver {
+    0% { transform: scale(1); }
+    50% { box-shadow: 0 0 20px rgba(198, 180, 253); }
+    100% { transform: scale(1); }
 }
 
 @keyframes pulse-gold {
