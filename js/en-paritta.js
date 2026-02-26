@@ -2436,8 +2436,8 @@ function addSectionXP(sectionId, amount) {
 }
 
 function getLevelInfo(xp) {
-    // Calculate level: Starts at 1, adds 1 level for every 100 XP
-    const level = Math.floor(xp / 100) + 1;
+    // Calculate level: Level 1 is 0-199 XP. Level 2 starts at 200 XP (100 XP per level thereafter).
+    const level = xp < 200 ? 1 : Math.floor(xp / 100);
     let iconStr = "";
 
     if (level === 1) {
