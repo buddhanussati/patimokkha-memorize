@@ -2736,7 +2736,26 @@ function renderStatsCharts(resetDates = false) {
             statsCurrentMonth = new Date(realThisMonthStart);
         }
     }
+ // --- Định nghĩa khoảng thời gian Filter cho biểu đồ Tròn ---
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    let filterStart = 0;
+    let filterEnd = Date.now() + 86400000;
 
+    if (rangeMode === 'today') filterStart = todayStart;
+    else if (rangeMode === 'yesterday') {
+        filterEnd = todayStart;
+        filterStart = todayStart - 86400000;
+    } else if (rangeMode === 'this_week') {
+        filterStart = realThisWeekStart.getTime();
+    } else if (rangeMode === 'last_week') {
+        filterEnd = realThisWeekStart.getTime();
+        filterStart = realThisWeekStart.getTime() - (7 * 24 * 60 * 60 * 1000);
+    } else if (rangeMode === 'this_month') {
+        filterStart = realThisMonthStart.getTime();
+    } else if (rangeMode === 'last_month') {
+        filterEnd = realThisMonthStart.getTime();
+        filterStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
+    }
     // --- CHART CONFIGURATION ---
     const commonOptions = {
         maintainAspectRatio: false,
@@ -2814,12 +2833,36 @@ function renderStatsCharts(resetDates = false) {
     sections.forEach((sec, idx) => {
         let color = bgColors[idx % bgColors.length];
         
+        // === BẮT ĐẦU SỬA LỖI: TÍNH XP THEO BỘ LỌC THỜI GIAN ===
+        let xp = 0;
+        
+        if (rangeMode === 'all') {
+            // Nếu chọn "Toàn bộ", lấy tổng XP như cũ
+            xp = getSectionXP(sec.id);
+        } else {
+            // Nếu có khoảng thời gian, quét qua từng ngày để cộng dồn
+            let currentDate = new Date(filterStart);
+            const endDate = new Date(filterEnd);
+            
+            while (currentDate < endDate) {
+                // Khử độ lệch múi giờ để format ngày chính xác (YYYY-MM-DD)
+                const offset = currentDate.getTimezoneOffset() * 60000;
+                const dateStr = new Date(currentDate.getTime() - offset).toISOString().split('T')[0];
+                
+                // Lấy lượng XP của bài kinh này trong ngày đó
+                xp += parseInt(localStorage.getItem(`daily_section_xp_${sec.id}_${dateStr}`) || 0);
+                
+                // Tăng lên 1 ngày
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+        }
+        // === KẾT THÚC SỬA LỖI ===
+
         // Setup Doughnut Data
-        const xp = getSectionXP(sec.id);
         if (xp > 0) {
             sectionLabels.push(sec.title);
             sectionData.push(xp);
-			doughnutColors.push(color);
+            doughnutColors.push(color);
             totalXP += xp;
             
             // NEW: Record last active time for this section
