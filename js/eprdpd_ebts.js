@@ -318,6 +318,8 @@ let dpd_ebts = {
   "bhikkhu": "masc. <b>monk; monastic; mendicant; fully ordained monk</b>; lit. beggar [√bhikkh + u]",
   "bhumma 1": "adj. <b>earthly; terrestrial</b> [√bhū + mi + ya]",
   "bhumma 2": "masc. <b>terrestrial deity; earth god</b> [√bhū + mi + ya]",
+  "bhumma": "masc. <b>terrestrial deity; earth god</b> [√bhū + mi + ya]",
+  "abhumma": "masc. <b>celestial deity; sky god</b> [√bhū + mi + ya]",
   "bhumma 3": "adj. having stages or stories [√bhū]",
   "bhumma 4": "masc. <b>planet Mars</b> [√bhū + mi + ya]",
   "bhumma 5": "nt. (gram) locative case [√bhū]",

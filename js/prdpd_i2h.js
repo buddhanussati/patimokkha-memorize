@@ -4545,6 +4545,11 @@ dpd_i2h = {
     "bhumma 4",
     "bhumma 5"
   ],
+  "bhummābhummā": [
+    "bhumma",
+	"abhumma",
+  ],
+  
   "bhummāni": [
     "bhumma 1",
     "bhumma 3",

@@ -396,7 +396,7 @@ Homage to Him, the Blessed One, the Worthy One, the Fully Enlightened One.
 
 Ye santā santacittā, tisaraṇasaraṇā, ettha lokantare vā, [9.673]
 Those peaceful ones with tranquil minds, who have taken refuge in the Triple Gem, whether in this world or other worlds,
-Bhummā bhummā ca devā, guṇagaṇagahaṇa byāvaṭā sabbakālaṃ, [9.472]
+Bhummābhummā ca devā, guṇagaṇagahaṇa byāvaṭā sabbakālaṃ, [9.472]
 And the terrestrial or celestial Devas, who are always engaged in accumulating a multitude of merits.
 Ete āyantu devā, varakanakamaye, Merurāje vasanto, [8.867]
 May those peaceful Devas come here, who dwell on the noble golden Mount Meru, the king of mountains.
@@ -3424,6 +3424,13 @@ function findRecitationLine(currentTime) {
         // --- FIX: Remove all slider containers from the text ---
         document.querySelectorAll('.memorize-slider-container').forEach(el => el.remove());
         // -------------------------------------------------------
+		
+		// --- NEW: Clear long-pressed boxes (Multi-loop selections) ---
+        selectedLoopIndices.clear();
+        document.querySelectorAll('.multi-loop-selected').forEach(box => {
+            box.classList.remove('multi-loop-selected');
+        });
+        // -------------------------------------------------------------
         updateOverallStats();
         updateButtonVisuals('inactive');
     }
