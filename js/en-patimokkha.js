@@ -84,7 +84,6 @@ function lookupWordHandler(event) {
 
     const $wordElement = $(this);
     const rawElementText = this.innerText || $(this).text();
-    const isRecitationActive = document.body.classList.contains('recitation-active-mode');
 
     // --- HELPER: Dictionary Rendering Logic ---
     function showDictionary() {
@@ -121,94 +120,7 @@ function lookupWordHandler(event) {
         }
     }
 
-    // --- RECITATION MODE: Rhythm Box Logic ---
-    if (isRecitationActive) {
-        const cleanText = rawElementText.toLowerCase().replace(/[.,:;!?'"“”‘’()\[\]{}...–-]/g, '').trim();
-
-        // 1. FIND WORD POSITION (Index in the sentence/line)
-        const wordIndex = $wordElement.parent().find('.word').index(this);
-
-        // 2. DEFINE THEME-SPECIFIC COLORS
-        const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
-        const lightModeColors = [
-            '#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#d35400', 
-            '#2c3e50', '#16a085', '#b53471', '#5758bb', '#1b1464',
-            '#006266', '#6F1E51', '#1289A7', '#D980FA', '#0652DD',
-            '#c23616', '#192a56', '#2f3640', '#44bd32', '#833471'
-        ];
-        const darkModeColors = [
-            '#ff7675', '#74b9ff', '#55e6c1', '#a29bfe', '#fab1a0',
-            '#18dcff', '#7d5fff', '#ffaf40', '#32ff7e', '#ff3838',
-            '#ffeaa7', '#81ecec', '#fdcb6e', '#fd79a8', '#55efc4',
-            '#00d2d3', '#00cec9', '#fab1a0', '#ff9f43', '#fffa65',
-        ];
-
-        const colorPalette = isDarkMode ? darkModeColors : lightModeColors;
-        const wordColor = colorPalette[wordIndex % colorPalette.length];
-
-        // 3. ACCURATE PALI RHYTHM ANALYSIS
-        const longVowels = ['ā', 'ī', 'ū', 'e', 'o'];
-        const vowels = 'aāiīuūeo';
-        const aspirates = ['kh', 'gh', 'ch', 'jh', 'ṭh', 'ḍh', 'th', 'dh', 'ph', 'bh'];
-        
-        let rhythm = [];
-        for (let i = 0; i < cleanText.length; i++) {
-            let char = cleanText[i];
-            if (vowels.includes(char)) {
-                let isGuru = false;
-                if (longVowels.includes(char)) {
-                    isGuru = true;
-                } else {
-                    let nextPart = cleanText.slice(i + 1);
-                    if (nextPart.startsWith('ṁ')) {
-                        isGuru = true;
-                    } else {
-                        let following = nextPart.match(/^([^aāiīuūeo]+)/);
-                        if (following) {
-                            let cluster = following[0];
-                            let tempCluster = cluster;
-                            aspirates.forEach(a => { tempCluster = tempCluster.replace(a, 'K'); });
-                            if (tempCluster.length > 1) isGuru = true;
-                        }
-                    }
-                }
-                rhythm.push(isGuru ? 'fa-minus' : 'fa-circle');
-            }
-        }
-
-        // 4. RENDER RHYTHM BOX
-        let symbolsHtml = rhythm.map(icon => {
-            const size = (icon === 'fa-minus') ? '18px' : '10px';
-            return `<i class="fas ${icon}" style="font-size: ${size}; margin: 0 4px; text-shadow: 1px 1px 1px rgba(0,0,0,0.1);"></i>`;
-        }).join('');
-
-        // Added 'cursor: pointer' so it's obviously clickable
-        const textBox = $(`
-            <span class="meaning rhythm-box" style="min-width: 60px; padding: 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer;">
-                <div style="color: ${wordColor}; display: flex; align-items: center; justify-content: center; gap: 2px;">
-                    ${symbolsHtml}
-                </div>
-                <div style="font-size: 10px; margin-top: 4px; opacity: 0.6; color: inherit;">Tap to look up</div>
-            </span>
-        `);
-        
-        // --- CLICK EVENT: Switch to Dictionary ---
-        textBox.on('click touchstart', function(e) {
-            e.stopPropagation(); // Stop event bubbling on mobile
-            if (e.type === 'touchstart') e.preventDefault(); // Stop double-firing from emulated clicks
-            
-            $(this).remove(); // Hide the rhythm box
-            showDictionary(); // Fire the dictionary meaning script
-        });
-
-        $wordElement.append(textBox);
-        
-        var offset = $wordElement.offset();
-        if (offset.left + textBox.outerWidth() > $(window).width()) {
-             textBox.css({left: 'auto', right: 0});
-        }
-        return; 
-    }
+    
 
     // --- NORMAL MODE: Direct Dictionary Lookup ---
     showDictionary();
@@ -2963,11 +2875,17 @@ function updateOverallStats() {
     document.getElementById('bar-total').style.width = globalPct + '%';
     document.getElementById('text-total').innerText = globalPct + '%';
 
-    // --- LOGIC FOR SECTION EXAM BUTTON & BANNER ---
+   // --- LOGIC FOR SECTION EXAM BUTTON & BANNER ---
     
-    // Check if user has ALREADY passed this section's final exam
     const sectionPassedKey = `section_passed_${sections[currentSectionIndex].id}`;
-    const hasPassedSection = localStorage.getItem(sectionPassedKey) === 'true';
+    let hasPassedSection = localStorage.getItem(sectionPassedKey) === 'true';
+
+    // --- NEW LOGIC: AUTO-PASS WHEN 100% REACHED ---
+    if (!hasPassedSection && sessionPct === 100) {
+        localStorage.setItem(sectionPassedKey, 'true');
+        hasPassedSection = true; // Update state immediately so the banner shows up
+    }
+
     const isRecitationActive = document.getElementById('display-area').classList.contains('recitation-active');
     const banner = document.getElementById('section-achievement-banner');
     let examContainer = document.getElementById('final-exam-container');
@@ -2989,15 +2907,12 @@ function updateOverallStats() {
         if (b) b.innerText = btnText;
     };
 
-    // LOGIC:
-    // 1. If 100% Memorized (regardless of pass status), show the Exam Button
+    // LOGIC: Show Banner and optional Practice button if passed
     if (hasPassedSection) {
-        // SCENARIO: ALREADY PASSED
-        
         // 1. Always show the banner
         banner.style.display = 'block';
         
-        // 2. Only show "Retake" button if inside Recitation Mode
+        // 2. Offer an optional "Review" button inside Recitation Mode
         if (isRecitationActive) {
             const currentSectionId = sections[currentSectionIndex].id;
             const currentXP = getSectionXP(currentSectionId);
@@ -3009,25 +2924,12 @@ function updateOverallStats() {
                 "Review Again"
             );
         } else {
-            // If viewing normal text, hide the exam button to keep it clean
             if (examContainer) examContainer.style.display = 'none';
         }
-
     } else {
-        // SCENARIO: NOT PASSED YET
+        // SCENARIO: NOT 100% YET
         banner.style.display = 'none';
-
-        if (sessionPct === 100) {
-            // If 100% memorized but not passed: Always show button (Normal & Recitation)
-            showExamButton(
-                "Congratulations! You've mastered 100% of the lines!", 
-            "Pass the final assessment to earn your Certification.", 
-            "Start Test"
-            );
-        } else {
-            // Not 100% yet
-            if (examContainer) examContainer.style.display = 'none';
-        }
+        if (examContainer) examContainer.style.display = 'none';
     }
 
     // --- BANNER CONTENT UPDATE (If Visible) ---
@@ -4000,10 +3902,10 @@ function injectSlider(lineElement, idx) {
         input.addEventListener('click', function(e) {
             const isChecked = this.checked;
             if (isChecked) {
-                e.preventDefault(); 
-                // Mode: 'check' -> Questions 1 & 2
-                startLineTest(idx, 'check');
+                // Directly save 100% score without triggering the quiz
+                saveLineScore(idx, 100);
             } else {
+                // Reset score to 0 when unchecked
                 saveLineScore(idx, 0);
             }
         });
