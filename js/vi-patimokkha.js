@@ -3759,12 +3759,7 @@ if (typeof Website2APK !== 'undefined') {
         document.querySelectorAll('.memorize-slider-container').forEach(el => el.remove());
         // -------------------------------------------------------
 		
-		// --- NEW: Clear long-pressed boxes (Multi-loop selections) ---
-        selectedLoopIndices.clear();
-        document.querySelectorAll('.multi-loop-selected').forEach(box => {
-            box.classList.remove('multi-loop-selected');
-        });
-        // -------------------------------------------------------------
+		
         updateOverallStats();
         updateButtonVisuals('inactive');
     }
