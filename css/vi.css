@@ -1200,5 +1200,133 @@ animation: pulse-silver 2s infinite;
     border: 1px solid white; 
 }
 
+.srs-rating-panel {
+    display: flex;
+    gap: 5px;
+    margin-left: 10px;
+}
 
+.btn-srs-rating {
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.1s ease;
+}
+
+.btn-srs-rating:active {
+    transform: scale(0.95);
+}
+
+
+/* SRS Notification Badge */
+.badge-notification {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 10px;
+    font-weight: bold;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    z-index: 10;
+    pointer-events: none;
+}
+
+#btn-stats {
+    position: relative; /* Required to anchor the absolute badge */
+}
+
+.srs-dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.srs-card {
+    background: var(--card-bg, #1f2937);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.srs-card i {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.srs-stat-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--text-color, #fff);
+    margin-bottom: 5px;
+}
+
+.srs-stat-label {
+    font-size: 13px;
+    color: #9ca3af;
+}
+
+/* Specific Card Accents */
+.due-card { border-top: 4px solid #e74c3c; }
+.due-card i { color: #e74c3c; }
+
+.learning-card { border-top: 4px solid #f39c12; }
+.learning-card i { color: #f39c12; }
+
+.mastered-card { border-top: 4px solid #27ae60; }
+.mastered-card i { color: #27ae60; }
+
+.new-card { border-top: 4px solid #7f8c8d; }
+.new-card i { color: #7f8c8d; }
+
+
+/* Card Hover Effects */
+.srs-card {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.srs-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* List View Styles */
+.srs-list-container {
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-right: 5px;
+}
+.srs-list-item {
+    background: var(--card-bg, #2d3748);
+    padding: 12px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    border-left: 4px solid transparent;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: background 0.1s;
+}
+.srs-list-item:hover {
+    background: #3a4a63; /* Lighter hover state */
+}
+
+/* Color coding for list items to match cards */
+.srs-list-item.type-due { border-left-color: #e74c3c; }
+.srs-list-item.type-learning { border-left-color: #f39c12; }
+.srs-list-item.type-mastered { border-left-color: #27ae60; }
+.srs-list-item.type-new { border-left-color: #7f8c8d; }
 
