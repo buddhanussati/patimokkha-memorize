@@ -2506,8 +2506,12 @@ function loadSection(index) {
     } else {
         // If mode was off, ensure we clean up any remnants
         exitRecitation();
+        }
+
+        // --- ADD THIS LINE ---
+        // Updates the notification dot the moment a new section loads
+        updateReviewBadge();
     }
-}
 
     function selectSection() { loadSection(parseInt(sectionSelect.value)); }
     function changeSection(d) { loadSection(currentSectionIndex + d); }
@@ -3041,8 +3045,13 @@ function openStatsModal() {
 
 function closeStatsModal() {
     document.getElementById('stats-modal').style.display = 'none';
+    
+    // 1. Reset the view back to the Dashboard Grid for the next time it opens
+    backToSRSDashboard();
+    
+    // 2. Force the notification dot to recalculate immediately
+    updateReviewBadge();
 }
-
 // Scan all SRS data and update the modal dashboard
 function renderSRSDashboard() {
     const now = Date.now();
@@ -3443,6 +3452,7 @@ if (typeof Website2APK !== 'undefined') {
 		
         updateOverallStats();
         updateButtonVisuals('inactive');
+		updateReviewBadge();
     }
 
     function runRecitationStep() {
