@@ -88,8 +88,8 @@
 		
 	           
             <button id="btn-dictionary" class="icon-btn" onclick="togglePaliLookup()" title="Pali Lookup"><i class="fas fa-book-open"></i></button>
-			<button id="btn-stats" class="icon-btn" onclick="openStatsModal()" title="Practice Statistics" style="background-color: #4834d4;">
-    <i class="fas fa-chart-pie"></i>
+			<button id="btn-stats" class="icon-btn" onclick="openStatsModal()" title="Spaced Repetition" style="background-color: #4834d4;">
+    <i class="fas fa-head-side-circuit"></i>
 </button>
 			<button id="settings-btn" class="icon-btn btn-settings" onclick="toggleSettings()" title="Settings"><i class="fas fa-gear"></i></button>
 			<button id="btn-exit-recitation" class="icon-btn" onclick="exitRecitation()" title="Exit Recitation"><i class="fas fa-xmark"></i></button> <button id="btn-loop" class="icon-btn" onclick="toggleLoopSentence()" title="Loop current sentence">
@@ -153,8 +153,8 @@
         <li><b>Theme Toggle (<i class="fas fa-moon"></i>/<i class="fas fa-sun-bright"></i>):</b> Switch between Light and Dark modes.</li>
         <li><b>Section Selector:</b> Jump to a specific rule (e.g., Pārājika 1).</li>
         <li><b>Random (<i class="far fa-dharmachakra"></i>):</b> Jump to a random rule to test your recall.</li>
-        <li><b>Dictionary (<i class="fas fa-book-open"></i>):</b> Toggle to enable Pāli lookup by hovering over words. In <i>Recitation Mode</i>, it reveals the rhythmic meter (<i class="fas fa-dash"></i> for long, <i class="fas fa-dot"></i> for short) following the classical <b>Vuttodaya</b> standards. Click on the popup will also reveal the definition.</li>
-		<li><b>Statistics (<i class="fas fa-chart-pie"></i>):</b> Click the button to view XP charts, set your <b>Daily Goal</b> (<i class="fas fa-pen"></i>), and track your practice history by Week/Month.</li>
+        <li><b>Dictionary (<i class="fas fa-book-open"></i>):</b> Toggle to enable Pāli lookup by hovering over words.
+		<li><b>Spaced Repetition (<i class="fas fa-head-side-circuit"></i>):</b> Open the SRS Dashboard to track your study progress (Not Learned, Learning, Mastered). Click on any status card to view the exact list of sentences and jump directly into reviewing them. You can also adjust your initial review intervals here.</li>
     </ul>
 
     <h4>2. Recitation Mode (<i class="fas fa-microphone"></i>)</h4>
@@ -275,81 +275,63 @@
     </div>
 </div>
 <div id="stats-modal" class="modal-overlay">
-    <div class="modal-content stats-content" style="max-width: 900px; width: 95%; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; padding: 0;">
+    <div class="modal-content stats-content" style="max-width: 600px; width: 95%; padding: 0; overflow-y: auto">
         
-        <div class="quiz-header" style="padding: 15px 20px; margin: 0; flex-shrink: 0; border-bottom: 1px solid rgba(128,128,128, 0.3); display: flex; justify-content: space-between; align-items: center; background: inherit;">
-            <h3 style="margin: 0;">Practice Statistics</h3>
+        <div class="quiz-header" style="padding: 15px 20px; margin: 0; border-bottom: 1px solid rgba(128,128,128, 0.3); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0;">Memorization Progress</h3>
             <button class="btn-close-simple" onclick="closeStatsModal()"><i class="fas fa-times"></i></button>
         </div>
         
-        <div class="stats-body" style="padding: 20px; overflow-y: auto; flex-grow: 1;">
-            <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr; gap: 20px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
-                    
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                            <h4 id="breakdown-title" style="margin: 0; font-size: 16px;">Overview</h4>
-                            <select id="report-range-select" class="form-control" style="width: auto; padding: 5px; font-size: 13px; height: 32px;" onchange="renderStatsCharts(true)">
-                             <option value="all">All Time</option>
-                             <option value="today">Today</option>
-			                 <option value="yesterday">Yesterday</option>
-                             <option value="this_week" selected>This Week</option>
-                             <option value="last_week">Last Week</option>
-                             <option value="this_month">This Month</option>
-                             <option value="last_month">Last Month</option>
-                            </select>
-                        </div>
-                        <div style="height: 300px; display:flex; justify-content:center;">
-                            <canvas id="sectionXPChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsWeek(-1)"><i class="fas fa-chevron-left"></i></button>
-                            <h4 id="weekly-report-title" style="margin: 0; font-size: 16px;">Weekly Focus</h4>
-                            <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsWeek(1)"><i class="fas fa-chevron-right"></i></button>
-                        </div>
-                        <div style="height: 300px;">
-                            <canvas id="weeklyXPChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsMonth(-1)"><i class="fas fa-chevron-left"></i></button>
-                        <h4 id="monthly-report-title" style="margin: 0; font-size: 16px;">Monthly Focus</h4>
-                        <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsMonth(1)"><i class="fas fa-chevron-right"></i></button>
-                    </div>
-                    <div style="height: 300px;">
-                        <canvas id="monthlyXPChart"></canvas>
-                    </div>
-                </div>
-				<div class="card" style="margin-top: 5px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsMonth(-1)"><i class="fas fa-chevron-left"></i></button>
-                        <h4 id="cal-month-year" style="margin: 0; font-size: 16px; text-transform: capitalize;">Month Year</h4>
-                        <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="changeStatsMonth(1)"><i class="fas fa-chevron-right"></i></button>
-                    </div>
-                    <div class="calendar-grid" id="calendar-grid"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<div id="daily-stats-modal" class="modal-overlay" style="z-index: 10005;">
-    <div class="modal-content stats-content" style="max-width: 450px; width: 95%; padding: 0;">
-        <div class="quiz-header" style="padding: 15px 20px; margin: 0; border-bottom: 1px solid rgba(128,128,128, 0.3); display: flex; justify-content: space-between; align-items: center;">
-            <h3 id="daily-modal-title" style="margin: 0;">Day Details</h3>
-            <button class="btn-close-simple" onclick="closeDailyStatsModal()"><i class="fas fa-times"></i></button>
-        </div>
         <div class="stats-body" style="padding: 20px;">
-            <div class="card">
-                <div style="height: 300px; display:flex; justify-content:center; position: relative;">
-                    <canvas id="dailyXPChart"></canvas>
+            <div class="srs-dashboard-grid" id="srs-dashboard-grid">
+                <div class="srs-card due-card" onclick="openSRSList('due')">
+                    <i class="fas fa-bell"></i>
+                    <div class="srs-stat-value" id="srs-stat-due">0</div>
+                    <div class="srs-stat-label">Due for Review Today</div>
+                </div>
+
+                <div class="srs-card learning-card" onclick="openSRSList('learning')">
+                    <i class="fas fa-book-open"></i>
+                    <div class="srs-stat-value" id="srs-stat-learning">0</div>
+                    <div class="srs-stat-label">Learning</div>
+                </div>
+
+                <div class="srs-card mastered-card" onclick="openSRSList('mastered')">
+                    <i class="fas fa-brain"></i>
+                    <div class="srs-stat-value" id="srs-stat-mastered">0</div>
+                    <div class="srs-stat-label">Mastered</div>
+                </div>
+
+                <div class="srs-card new-card" onclick="openSRSList('new')">
+                    <i class="fas fa-seedling"></i>
+                    <div class="srs-stat-value" id="srs-stat-new">0</div>
+                    <div class="srs-stat-label">Not Learned</div>
                 </div>
             </div>
+
+            <div id="srs-list-view" style="display: none;">
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <button onclick="backToSRSDashboard()" class="btn-secondary" style="margin-right: 10px; padding: 5px 10px;"><i class="fas fa-arrow-left"></i> Back</button>
+                    <h4 id="srs-list-title" style="margin: 0;">List</h4>
+                </div>
+                <div id="srs-list-content" class="srs-list-container">
+                    </div>
+            </div>
+            
+            
+			
+			<div class="srs-settings" style="margin-top: 25px; border-top: 1px solid rgba(128,128,128,0.3); padding-top: 15px; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-cog" style="color: #9ca3af;"></i>
+                <label for="srs-interval-select" style="font-size: 14px; font-weight: bold;">Initial Review Interval:</label>
+                <select id="srs-interval-select" onchange="saveSRSIntervalSetting(this.value)" style="padding: 5px 10px; border-radius: 4px; background: var(--card-bg, #2d3748); color: inherit; border: 1px solid #4a5568; cursor: pointer;">
+                    <option value="1">1 minute</option>
+                    <option value="5">5 minutes</option>
+                    <option value="10">10 minutes</option>
+                    <option value="30">30 minutes</option>
+                    <option value="60">1 hour</option>
+                </select>
+            </div>
+			
         </div>
     </div>
 </div>
