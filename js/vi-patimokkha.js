@@ -3026,17 +3026,7 @@ function updateOverallStats() {
     }
 }
 
-/* --- HỆ THỐNG BIỂU ĐỒ (Dựa trên renderreport.js) --- */
 
-let statsCharts = {
-    section: null,
-    weekly: null,
-    monthly: null
-};
-
-// State variables for navigating dates
-let statsCurrentWeekStart = null;
-let statsCurrentMonth = null;
 
 function openStatsModal() {
     document.getElementById('stats-modal').style.display = 'flex';
@@ -3633,15 +3623,24 @@ function injectSlider(lineElement, idx) {
         lineElement.appendChild(container);
     }
 
+   // -------------------------------------------------------------
     // Sync Checkbox UI with Legacy system to maintain Dashboard heatmaps
     const currentScore = getLineScore(idx);
     const inputCheckbox = container.querySelector('input');
     inputCheckbox.checked = (currentScore >= 100);
     
-    // Ensure the text and panel reflect the saved state when the line first loads
+    // THE FIX: Define the variables by looking inside the container
+    // so they are not trapped inside the scope of the IF block above.
+    const activeTextSpan = container.querySelector('label span');
+    const activeSrsPanel = container.querySelector('.srs-rating-panel');
+    
+    // Ensure the text and panel reflect the saved state
     if (inputCheckbox.checked) {
-        textSpan.style.display = 'none';
-        srsPanel.style.display = 'flex';
+        if (activeTextSpan) activeTextSpan.style.display = 'none';
+        if (activeSrsPanel) activeSrsPanel.style.display = 'flex';
+    } else {
+        if (activeTextSpan) activeTextSpan.style.display = 'inline';
+        if (activeSrsPanel) activeSrsPanel.style.display = 'none';
     }
 }
 function handleSRSRating(lineIdx, ratingValue, checkboxElement, panelElement) {
