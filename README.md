@@ -15,8 +15,8 @@ This application is hosted online and can be accessed directly by clicking the l
 * **Theme Toggle (🌙/☀️):** Switch between Light and Dark modes.
 * **Section Selector:** Jump to a specific rule (e.g., Pārājika 1).
 * **Random (☸️):** Jump to a random rule to test your recall.
-* **Dictionary (📖):** Toggle to enable Pāli lookup by hovering over words. In *Recitation Mode*, it reveals the rhythmic meter (**—** for long, **●** for short) following the classical **Vuttodaya** standards. Click on the popup will also reveal the definition.
-* **Statistics 📊:** Click the button to view XP charts, set your **Daily Goal**, and track your practice history by Week/Month.
+* **Dictionary (📖):** Toggle to enable Pāli lookup by hovering over words.
+* **Spaced Repetition 🧠:** Open the SRS Dashboard to track your study progress (Not Learned, Learning, Mastered). Click on any status card to view the exact list of sentences and jump directly into reviewing them. You can also adjust your initial review intervals here.
 ### 2. Recitation Mode (🎤)
 
 Click the **Mic button** to enter Recitation Mode. The text enlarges and syncs with the audio.
