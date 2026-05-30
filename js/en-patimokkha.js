@@ -2456,6 +2456,9 @@ audioPlayer.addEventListener('volumechange', () => {
         }
         
         loadSection(initialIndex);
+		
+		updateReviewBadge();
+		
     }
 
     // --- LOGIC GIAO DIỆN & PERSISTENCE ---
@@ -2634,9 +2637,87 @@ function toggleEnglish() {
         }
     }
 
-/* =========================================
-   MEMORIZATION DASHBOARD LOGIC
-   ========================================= */
+// Get the custom interval in minutes (Defaults to 5 if not set)
+function getFirstIntervalMins() {
+    return parseInt(localStorage.getItem('srs_first_interval')) || 5;
+}
+
+// Save the setting when the user changes the dropdown
+function saveSRSIntervalSetting(mins) {
+    localStorage.setItem('srs_first_interval', mins);
+    // Reload the current section so the UI button labels update immediately
+    loadSection(currentSectionIndex); 
+}
+
+// Sync the dashboard dropdown with the saved setting when the modal opens
+function syncSRSIntervalDropdown() {
+    const select = document.getElementById('srs-interval-select');
+    if (select) {
+        select.value = getFirstIntervalMins();
+    }
+}
+
+// Define the default SRS object structure
+function getDefaultSRSItem() {
+    return {
+        reps: 0,
+        ef: 2.5,          // Default Easiness Factor
+        interval: 0,      // Interval in days
+        nextReview: 0     // Timestamp for next review
+    };
+}
+
+// Generate a unique storage key for each sentence
+function getSRSKey(sectionId, lineIdx) {
+    return `srs_item_${sectionId}_${lineIdx}`;
+}
+
+// Retrieve SRS data from localStorage
+function getSRSItem(sectionId, lineIdx) {
+    const data = localStorage.getItem(getSRSKey(sectionId, lineIdx));
+    return data ? JSON.parse(data) : getDefaultSRSItem();
+}
+
+// Save SRS data to localStorage
+function saveSRSItem(sectionId, lineIdx, itemData) {
+    localStorage.setItem(getSRSKey(sectionId, lineIdx), JSON.stringify(itemData));
+}
+
+// Calculate the next interval and EF based on user rating
+function calculateSM2(rating, item) {
+    let q = rating === 1 ? 0 : (rating === 2 ? 3 : (rating === 3 ? 4 : 5));
+    
+    // Convert the user's setting from minutes to hours for the math
+    const firstIntervalHours = getFirstIntervalMins() / 60;
+
+    if (q < 3) {
+        // Failed: Reset repetitions, drop to custom first interval
+        item.reps = 0;
+        item.interval = firstIntervalHours; 
+    } else {
+        // Passed: Calculate new interval in hours
+        if (item.reps === 0) {
+            item.interval = firstIntervalHours; // 1st review: Custom interval
+        } else if (item.reps === 1) {
+            item.interval = 1;                  // 2nd review: 1 hour
+        } else if (item.reps === 2) {
+            item.interval = 6;                  // 3rd review: 6 hours
+        } else {
+            item.interval = Math.round(item.interval * item.ef); // 4th+ review
+        }
+        item.reps++;
+    }
+
+    // Update Easiness Factor (EF)
+    item.ef = item.ef + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
+    if (item.ef < 1.3) item.ef = 1.3;
+
+    // Calculate next review timestamp
+    const now = new Date();
+    item.nextReview = now.getTime() + (item.interval * 60 * 60 * 1000);
+
+    return item;
+}
 
 // Create a unique key for local storage: score_SectionID_LineIndex
 function getScoreKey(lineIdx) {
@@ -2964,545 +3045,148 @@ function openStatsModal() {
     document.getElementById('stats-modal').style.display = 'flex';
     // Khởi tạo/Reset lại UI khi mở (Render mặc định "Tuần này")
     setTimeout(() => renderStatsCharts(true), 100); 
+    renderSRSDashboard();
+    syncSRSIntervalDropdown(); // <-- Add this line
 }
 
 function closeStatsModal() {
     document.getElementById('stats-modal').style.display = 'none';
 }
 
-function changeStatsWeek(offset) {
-    if(!statsCurrentWeekStart) return;
-    statsCurrentWeekStart.setDate(statsCurrentWeekStart.getDate() + (offset * 7));
-    renderStatsCharts();
-}
+// Scan all SRS data and update the modal dashboard
+function renderSRSDashboard() {
+    const now = Date.now();
+    let stats = { new: 0, learning: 0, due: 0, mastered: 0 };
 
-function changeStatsMonth(offset) {
-    if(!statsCurrentMonth) return;
-    statsCurrentMonth.setMonth(statsCurrentMonth.getMonth() + offset);
-    renderStatsCharts();
-}
-/* --- HÀM RENDER LỊCH TU TẬP DỰA TRÊN XP --- */
-function renderCalendar() {
-    const grid = document.getElementById('calendar-grid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    
-    // Sử dụng biến statsCurrentMonth có sẵn trong hệ thống Chart
-    const y = statsCurrentMonth.getFullYear(); 
-    const m = statsCurrentMonth.getMonth();
-    
-    document.getElementById('cal-month-year').innerText = new Date(y, m).toLocaleString('en-GB', { month: 'long', year: 'numeric' });
-
-    const headerDiv = document.createElement('div');
-    headerDiv.className = 'calendar-header';
-    ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(d => {
-        const h = document.createElement('div'); 
-        h.className = 'cal-head-day'; 
-        h.innerText = d;
-        grid.appendChild(h);
+    sections.forEach(section => {
+        const lines = section.text.split('\n').filter(l => /\s*\[(\d+(\.\d+)?)\]\s*$/.test(l));
+        
+        lines.forEach((_, lineIdx) => {
+            const item = getSRSItem(section.id, lineIdx);
+            
+            // FIXED LOGIC: Differentiate based on the timer, not the rep count
+            if (!item.nextReview || item.nextReview === 0) {
+                stats.new++; // Truly new (never clicked)
+            } else if (item.nextReview <= now) {
+                stats.due++; // Timer has passed (Due right now)
+            } else if (item.interval >= 504) {
+                stats.mastered++; // High interval (> 21 days)
+            } else {
+                stats.learning++; // Timer is ticking in the future (Waiting for 5m, 1h, etc.)
+            }
+        });
     });
 
-    const firstDayRaw = new Date(y, m, 1).getDay();
-    // Chuyển Chủ nhật (0) thành vị trí cuối cùng trong tuần (6)
-    const blankSlots = firstDayRaw === 0 ? 6 : firstDayRaw - 1;
-    const daysInMonth = new Date(y, m + 1, 0).getDate();
-    
-    for(let i=0; i<blankSlots; i++) { 
-        grid.appendChild(document.createElement('div')); 
-    }
-    
-    for(let i=1; i<=daysInMonth; i++) {
-        const dayEl = document.createElement('div');
-        dayEl.className = 'calendar-day'; 
-        dayEl.innerText = i;
-        
-        // Đồng bộ chuẩn cách tạo chuỗi ngày với cách App đang lưu (tránh lệch múi giờ UTC)
-        const d = new Date(y, m, i);
-        const offset = d.getTimezoneOffset() * 60000;
-        const dStr = new Date(d.getTime() - offset).toISOString().split('T')[0];
-        
-       // ---> GẮN SỰ KIỆN ONCLICK ĐỂ MỞ BẢNG CHI TIẾT NGÀY <---
-            const formattedDate = `${String(i).padStart(2, '0')}/${String(m + 1).padStart(2, '0')}/${y}`;
-            dayEl.onclick = () => openDailyStatsModal(dStr, formattedDate);
-        const totalXP = parseInt(localStorage.getItem(`daily_xp_log_${dStr}`) || 0);
-
-        if(totalXP > 0) {
-            dayEl.classList.add('has-data');
-            // Hiển thị tooltip lượng XP khi di chuột vào ô
-            dayEl.title = `${totalXP} XP`;
-
-            // Mức độ Level quy đổi theo điểm XP
-             if (totalXP >= 250) dayEl.classList.add('level-8');      
-            else if (totalXP >= 200) dayEl.classList.add('level-7'); 
-            else if (totalXP >= 150) dayEl.classList.add('level-6'); 
-            else if (totalXP >= 120) dayEl.classList.add('level-5'); 
-            else if (totalXP >= 90) dayEl.classList.add('level-4');  
-            else if (totalXP >= 60) dayEl.classList.add('level-3');  
-            else if (totalXP >= 30) dayEl.classList.add('level-2');  
-            else dayEl.classList.add('level-1');                        
-            
-            
-        }
-
-        grid.appendChild(dayEl);
+    // Inject data into the UI
+    document.getElementById('srs-stat-new').innerText = stats.new;
+    document.getElementById('srs-stat-learning').innerText = stats.learning;
+    document.getElementById('srs-stat-due').innerText = stats.due;
+    document.getElementById('srs-stat-mastered').innerText = stats.mastered;
+}
+// Trở về giao diện tổng quan (Grid)
+function backToSRSDashboard() {
+    document.getElementById('srs-list-view').style.display = 'none';
+    document.getElementById('srs-dashboard-grid').style.display = 'grid';
+    if(document.getElementById('srs-settings-panel')) {
+        document.getElementById('srs-settings-panel').style.display = 'flex';
     }
 }
-function renderStatsCharts(resetDates = false) {
-    if (typeof Chart === 'undefined') {
-        alert("Loading chart library...");
-        return;
+
+// Mở danh sách các câu tương ứng với thẻ được click
+function openSRSList(type) {
+    // Ẩn Grid & Cài đặt, Hiện List
+    document.getElementById('srs-dashboard-grid').style.display = 'none';
+    if(document.getElementById('srs-settings-panel')) {
+        document.getElementById('srs-settings-panel').style.display = 'none';
     }
+    document.getElementById('srs-list-view').style.display = 'block';
 
-    const rangeSelect = document.getElementById('report-range-select');
-    const rangeMode = rangeSelect ? rangeSelect.value : 'all';
-
-    const now = new Date();
-    const realCurrentDay = now.getDay() || 7; // 1-7 (Mon-Sun)
-    const realThisWeekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - realCurrentDay + 1);
-    const realThisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    // Handle Reset / Adjust Dates
-    if (resetDates || !statsCurrentWeekStart || !statsCurrentMonth) {
-        if (rangeMode === 'last_week') {
-            statsCurrentWeekStart = new Date(realThisWeekStart);
-            statsCurrentWeekStart.setDate(statsCurrentWeekStart.getDate() - 7);
-            statsCurrentMonth = new Date(statsCurrentWeekStart.getFullYear(), statsCurrentWeekStart.getMonth(), 1);
-        } else if (rangeMode === 'last_month') {
-            statsCurrentMonth = new Date(realThisMonthStart);
-            statsCurrentMonth.setMonth(statsCurrentMonth.getMonth() - 1);
-            statsCurrentWeekStart = new Date(statsCurrentMonth.getFullYear(), statsCurrentMonth.getMonth(), 1);
-            const day = statsCurrentWeekStart.getDay() || 7;
-            statsCurrentWeekStart.setDate(statsCurrentWeekStart.getDate() - day + 1);
-        } else {
-            statsCurrentWeekStart = new Date(realThisWeekStart);
-            statsCurrentMonth = new Date(realThisMonthStart);
-        }
-    }
- // --- Định nghĩa khoảng thời gian Filter cho biểu đồ Tròn ---
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    let filterStart = 0;
-    let filterEnd = Date.now() + 86400000;
-
-    if (rangeMode === 'today') filterStart = todayStart;
-    else if (rangeMode === 'yesterday') {
-        filterEnd = todayStart;
-        filterStart = todayStart - 86400000;
-    } else if (rangeMode === 'this_week') {
-        filterStart = realThisWeekStart.getTime();
-    } else if (rangeMode === 'last_week') {
-        filterEnd = realThisWeekStart.getTime();
-        filterStart = realThisWeekStart.getTime() - (7 * 24 * 60 * 60 * 1000);
-    } else if (rangeMode === 'this_month') {
-        filterStart = realThisMonthStart.getTime();
-    } else if (rangeMode === 'last_month') {
-        filterEnd = realThisMonthStart.getTime();
-        filterStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
-    }
-    // --- CHART CONFIGURATION ---
-    const commonOptions = {
-        maintainAspectRatio: false,
-        scales: {
-            x: { stacked: true, grid: { color: '#374151' }, ticks: { color: '#9ca3af', font: { size: 11 } } },
-            y: {
-                stacked: true,
-                grid: { color: '#374151' },
-                title: { display: false },
-                ticks: { precision:0, color: '#9ca3af', font: { size: 11 } }
-            }
-        },
-        plugins: {
-            legend: { display: false, labels: { color: '#9ca3af', font: { size: 11 } } },
-            tooltip: {
-                backgroundColor: '#121821', titleColor: '#f3f4f6', bodyColor: '#f3f4f6', borderColor: '#374151', borderWidth: 1, padding: 10, z: 999,
-                callbacks: {
-                    label: function(context) {
-                        let label = context.dataset.label || '';
-                        let value = context.raw || 0;
-                        let total = 0;
-                        
-                        // Calculate the total of the stack for percentage
-                        context.chart.data.datasets.forEach((dataset, i) => {
-                            if (context.chart.isDatasetVisible(i)) {
-                                total += dataset.data[context.dataIndex] || 0;
-                            }
-                        });
-
-                        let percentage = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
-                        return `${label}: ${value} XP (${percentage}%)`;
-                    }
-                }
-            }
-        }
+    // Đặt tiêu đề
+    const titleMap = {
+        'due': 'Due for Review Today',
+        'learning': 'Learning',
+        'mastered': 'Mastered',
+        'new': 'Not Learned'
     };
+    document.getElementById('srs-list-title').innerText = titleMap[type];
+    
+    const listContent = document.getElementById('srs-list-content');
+    listContent.innerHTML = '';
 
-    // --- DATA PREPARATION ---
-    const bgColors = [
-    // 1-10: Nhóm màu rực rỡ (Vibrant)
-    '#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', 
-    '#e67e22', '#1abc9c', '#e84393', '#f39c12', '#d35400',
-    
-    // 11-20: Nhóm màu Pastel sáng (Light/Pastel)
-    '#55efc4', '#81ecec', '#74b9ff', '#a29bfe', '#ffeaa7', 
-    '#fab1a0', '#ff7675', '#fd79a8', '#badc58', '#dff9fb',
-    
-    // 21-30: Nhóm màu đậm/trầm (Deep/Dark)
-    '#c0392b', '#2980b9', '#27ae60', '#f39c12', '#8e44ad', 
-    '#d35400', '#16a085', '#2c3e50', '#192a56', '#441d49',
-    
-    // 31-40: Nhóm màu Neon và kẹo ngọt (Candy/Neon)
-    '#00cec9', '#0984e3', '#6c5ce7', '#ff85a2', '#4cd137', 
-    '#fbc531', '#487eb0', '#e056fd', '#ffbe76', '#ff7979',
-    
-    // 41-50: Nhóm màu trung tính và Earth tones (Earthy)
-    '#95afc0', '#22a6b3', '#be2edd', '#4834d4', '#130f40', 
-    '#6ab04c', '#f9ca24', '#eb4d4b', '#7ed6df', '#5758bb'
-];
+    const now = Date.now();
+    let itemsFound = 0;
 
-   // 1. Doughnut Chart Data (Overall)
-    const sectionLabels = [];
-    const sectionData = [];
-	const doughnutColors = [];
-    let totalXP = 0;
-    
-    // NEW: Array to track activity for legend filtering
-    const sectionActivity = [];
-    
-    // Array to hold dataset structures for Bar Charts
-    let weeklyDatasets = [];
-    let monthlyDatasets = [];
-    const daysInMonth = new Date(statsCurrentMonth.getFullYear(), statsCurrentMonth.getMonth() + 1, 0).getDate();
-
-    sections.forEach((sec, idx) => {
-        let color = bgColors[idx % bgColors.length];
+    // Duyệt qua toàn bộ dữ liệu để tìm câu phù hợp
+    sections.forEach((section, sIdx) => {
+        const lines = section.text.split('\n').filter(l => /\s*\[(\d+(\.\d+)?)\]\s*$/.test(l));
         
-        // === BẮT ĐẦU SỬA LỖI: TÍNH XP THEO BỘ LỌC THỜI GIAN ===
-        let xp = 0;
-        
-        if (rangeMode === 'all') {
-            // Nếu chọn "Toàn bộ", lấy tổng XP như cũ
-            xp = getSectionXP(sec.id);
-        } else {
-            // Nếu có khoảng thời gian, quét qua từng ngày để cộng dồn
-            let currentDate = new Date(filterStart);
-            const endDate = new Date(filterEnd);
+        lines.forEach((_, lIdx) => {
+            const item = getSRSItem(section.id, lIdx);
             
-            while (currentDate < endDate) {
-                // Khử độ lệch múi giờ để format ngày chính xác (YYYY-MM-DD)
-                const offset = currentDate.getTimezoneOffset() * 60000;
-                const dateStr = new Date(currentDate.getTime() - offset).toISOString().split('T')[0];
+            // Apply the exact same logic as the dashboard
+            const isNew = !item.nextReview || item.nextReview === 0;
+            const isDue = !isNew && item.nextReview <= now;
+            const isMastered = !isNew && !isDue && item.interval >= 504;
+            const isLearning = !isNew && !isDue && !isMastered;
+
+            let isMatch = false;
+            if (type === 'new' && isNew) isMatch = true;
+            else if (type === 'due' && isDue) isMatch = true;
+            else if (type === 'mastered' && isMastered) isMatch = true;
+            else if (type === 'learning' && isLearning) isMatch = true;
+
+            if (isMatch) {
+                itemsFound++;
+                const textData = getTranslationForLine(sIdx, lIdx);
                 
-                // Lấy lượng XP của bài kinh này trong ngày đó
-                xp += parseInt(localStorage.getItem(`daily_section_xp_${sec.id}_${dateStr}`) || 0);
+                const div = document.createElement('div');
+                div.className = `srs-list-item type-${type}`;
+                div.onclick = () => jumpToSRSSentence(sIdx, lIdx);
                 
-                // Tăng lên 1 ngày
-                currentDate.setDate(currentDate.getDate() + 1);
+                div.innerHTML = `
+                    <div style="font-size: 11px; color: #9ca3af;">
+                        ${section.title} - Line ${lIdx + 1}
+                    </div>
+                    <div style="font-size: 14px; color: #fff; font-weight: bold; line-height: 1.4;">
+                        ${textData.pali || "(Cannot find Pali Text)"}
+                    </div>
+                `;
+                listContent.appendChild(div);
             }
-        }
-        // === KẾT THÚC SỬA LỖI ===
-
-        // Setup Doughnut Data
-        if (xp > 0) {
-            sectionLabels.push(sec.title);
-            sectionData.push(xp);
-            doughnutColors.push(color);
-            totalXP += xp;
-            
-            // NEW: Record last active time for this section
-            const lastActive = parseInt(localStorage.getItem(`section_last_active_${sec.id}`) || 0);
-            sectionActivity.push({ title: sec.title, lastActive: lastActive });
-        }
-
-        // Setup base structures for Stacked Bar charts
-        weeklyDatasets.push({
-            label: sec.title,
-            data: new Array(7).fill(0),
-            backgroundColor: color,
-            stack: '0',
-            _sumWeek: 0
-        });
-        
-        monthlyDatasets.push({
-            label: sec.title,
-            data: new Array(daysInMonth).fill(0),
-            backgroundColor: color,
-            stack: '0',
-            _sumMonth: 0
         });
     });
 
-    // 2. Weekly Chart Data Population
-    const weekStartMs = statsCurrentWeekStart.getTime();
-    const weekEndMs = weekStartMs + (7 * 24 * 60 * 60 * 1000);
-    const weekEndDisp = new Date(weekEndMs - 1);
-    document.getElementById('weekly-report-title').innerText = `Week (${statsCurrentWeekStart.toLocaleDateString('en-GB', {month:'numeric', day:'numeric'})} - ${weekEndDisp.toLocaleDateString('en-GB', {month:'numeric', day:'numeric'})})`;
+    if (itemsFound === 0) {
+        listContent.innerHTML = '<div style="text-align: center; color: #9ca3af; padding: 20px;">There is no sentence on this list.</div>';
+    }
+}
 
-    const weeklyLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+// Hàm teleport: Chuyển thẳng đến câu được chọn
+function jumpToSRSSentence(sectionIdx, lineIdx) {
+    // Đóng Modal Thống kê
+    closeStatsModal();
     
-    for (let i = 0; i < 7; i++) {
-        const d = new Date(statsCurrentWeekStart);
-        d.setDate(d.getDate() + i);
-        const offset = d.getTimezoneOffset() * 60000;
-        const dateStr = new Date(d.getTime() - offset).toISOString().split('T')[0];
-        
-        sections.forEach((sec, sIdx) => {
-            const val = parseInt(localStorage.getItem(`daily_section_xp_${sec.id}_${dateStr}`) || 0);
-            weeklyDatasets[sIdx].data[i] = val;
-            weeklyDatasets[sIdx]._sumWeek += val;
-        });
+    // Nếu câu đó nằm ở chương (section) khác, load chương đó trước
+    if (currentSectionIndex !== sectionIdx) {
+        loadSection(sectionIdx);
     }
 
-    // 3. Monthly Chart Data Population
-    const mYear = statsCurrentMonth.getFullYear();
-    const mMonth = statsCurrentMonth.getMonth();
-    document.getElementById('monthly-report-title').innerText = `Month ${new Date(mYear, mMonth).toLocaleDateString('en-GB', { month: 'numeric', year: 'numeric' })}`;
-    const monthlyLabels = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-
-    for (let i = 1; i <= daysInMonth; i++) {
-        const d = new Date(mYear, mMonth, i);
-        const offset = d.getTimezoneOffset() * 60000;
-        const dateStr = new Date(d.getTime() - offset).toISOString().split('T')[0];
-        
-        sections.forEach((sec, sIdx) => {
-            const val = parseInt(localStorage.getItem(`daily_section_xp_${sec.id}_${dateStr}`) || 0);
-            monthlyDatasets[sIdx].data[i-1] = val;
-            monthlyDatasets[sIdx]._sumMonth += val;
-        });
+    // Đảm bảo chế độ Tụng Đọc (Recitation Mode) đang bật để hiện Slider/Checkbox
+    if (!document.getElementById('display-area').classList.contains('recitation-active')) {
+        startRecitationMode();
     }
 
-    // Filter out datasets that have 0 XP for the selected period to keep the legend clean
-    weeklyDatasets = weeklyDatasets.filter(ds => ds._sumWeek > 0);
-    monthlyDatasets = monthlyDatasets.filter(ds => ds._sumMonth > 0);
-
-    // --- DRAW CHARTS ---
-
-    // Doughnut Chart
-    const ctxSection = document.getElementById('sectionXPChart').getContext('2d');
-    if (statsCharts.section) statsCharts.section.destroy();
-// NEW: Determine Top 5 Most Recent Titles
-    sectionActivity.sort((a, b) => b.lastActive - a.lastActive);
-    const top5Titles = sectionActivity.slice(0, 5).map(s => s.title);
-    const centerTextPlugin = {
-        id: 'centerText',
-        afterDatasetsDraw: function(chart) {
-            const { ctx, chartArea: { top, bottom, left, right } } = chart;
-            ctx.save();
-            const centerX = (left + right) / 2;
-            const centerY = (top + bottom) / 2;
-            const chartHeight = bottom - top;
-            const fontSizeMain = chartHeight / 10; 
-            const fontSizeSub = chartHeight / 20;
-
-            ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.font = `bold ${fontSizeMain}px sans-serif`;
-            ctx.fillStyle = "#FFFFFF"; 
-            ctx.fillText(totalXP.toLocaleString(), centerX, centerY - (fontSizeMain * 0.15));
-            ctx.font = `normal ${fontSizeSub}px sans-serif`;
-            ctx.fillStyle = "#9ca3af";
-            ctx.fillText("XP", centerX, centerY + (fontSizeMain * 0.75));
-            ctx.restore();
+    // Cần 1 chút timeout nhỏ để DOM kịp render nếu vừa đổi section
+    setTimeout(() => {
+        // Dùng hàm jumpToLine có sẵn của app
+        jumpToLine(lineIdx);
+        
+        // Căn giữa màn hình vào câu đó
+        const lineDiv = allLines[lineIdx];
+        if (lineDiv) {
+            lineDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-    };
-
-    statsCharts.section = new Chart(ctxSection, {
-        type: 'doughnut',
-        data: {
-            labels: sectionLabels,
-            datasets: [{ data: sectionData, backgroundColor: doughnutColors, borderWidth: 1, borderColor: '#1f2937' }]
-        },
-        options: {
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { labels: { 
-                        color: '#9ca3af',
-                        // NEW: Filter to show only the top 5 recent legends
-                        filter: function(item, chart) {
-                            return top5Titles.includes(item.text);
-				}}, position: 'bottom' },
-                title: { display: sectionData.length === 0, text: 'No data available', position: 'bottom', color: '#6b7280' },
-                tooltip: {
-                    backgroundColor: '#121821', titleColor: '#f3f4f6', bodyColor: '#f3f4f6', borderColor: '#374151', borderWidth: 1, padding: 10,
-                    callbacks: {
-                        label: function(context) {
-                            let value = context.raw;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
-                            return ` ${value} XP (${percentage}%)`;
-                        }
-                    }
-                }
-            }
-        },
-        plugins: [centerTextPlugin]
-    });
-
-    // Weekly Stacked Bar Chart
-    const ctxWeekly = document.getElementById('weeklyXPChart').getContext('2d');
-    if (statsCharts.weekly) statsCharts.weekly.destroy();
-
-    statsCharts.weekly = new Chart(ctxWeekly, {
-        type: 'bar',
-        data: {
-            labels: weeklyLabels,
-            datasets: weeklyDatasets.length > 0 ? weeklyDatasets : [{ label: 'No data available', data: new Array(7).fill(0), backgroundColor: '#374151' }]
-        },
-        options: {
-            ...commonOptions,
-            plugins: {
-                ...commonOptions.plugins,
-                tooltip: {
-                    ...commonOptions.plugins.tooltip,
-                    callbacks: {
-                        ...commonOptions.plugins.tooltip.callbacks,
-                        title: (context) => {
-                            const index = context[0].dataIndex;
-                            const date = new Date(statsCurrentWeekStart);
-                            date.setDate(date.getDate() + index);
-                            
-                            return `${context[0].label} (${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')})`;
-                        }
-                    }
-                }
-            }
-        }
-    });
-
-    // Monthly Stacked Bar Chart
-    const ctxMonthly = document.getElementById('monthlyXPChart').getContext('2d');
-    if (statsCharts.monthly) statsCharts.monthly.destroy();
-
-    statsCharts.monthly = new Chart(ctxMonthly, {
-        type: 'bar',
-        data: {
-            labels: monthlyLabels,
-            datasets: monthlyDatasets.length > 0 ? monthlyDatasets : [{ label: 'No data available', data: new Array(daysInMonth).fill(0), backgroundColor: '#374151' }]
-        },
-        options: {
-            ...commonOptions,
-            plugins: {
-                ...commonOptions.plugins,
-                tooltip: {
-                    ...commonOptions.plugins.tooltip,
-                    callbacks: {
-                        ...commonOptions.plugins.tooltip.callbacks,
-                        title: (context) => `${String(context[0].label).padStart(2, '0')}/${String(mMonth + 1).padStart(2, '0')}`
-                    }
-                }
-            }
-        }
-           });
-	renderCalendar();
-}
-/* --- BIỂU ĐỒ CHI TIẾT THEO NGÀY (DOUGHNUT) --- */
-let dailyChartInstance = null;
-
-function openDailyStatsModal(dateStr, formattedDate) {
-    document.getElementById('daily-modal-title').innerText = `Daily stats for ${formattedDate}`;
-    document.getElementById('daily-stats-modal').style.display = 'flex';
-    renderDailyChart(dateStr);
-}
-
-function closeDailyStatsModal() {
-    document.getElementById('daily-stats-modal').style.display = 'none';
-}
-
-function renderDailyChart(dateStr) {
-    const ctx = document.getElementById('dailyXPChart').getContext('2d');
-    if (dailyChartInstance) dailyChartInstance.destroy();
-
-    const labels = [];
-    const data = [];
-    const colors = [];
-    let totalDayXP = 0;
-
-   // NEW: Array to track activity for legend filtering
-    const sectionActivity = [];
-    const bgColors = [
-        '#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', 
-        '#e67e22', '#1abc9c', '#e84393', '#f39c12', '#d35400',
-        '#55efc4', '#81ecec', '#74b9ff', '#a29bfe', '#ffeaa7', 
-        '#fab1a0', '#ff7675', '#fd79a8', '#badc58', '#dff9fb',
-        '#c0392b', '#2980b9', '#27ae60', '#f39c12', '#8e44ad', 
-        '#d35400', '#16a085', '#2c3e50', '#192a56', '#441d49',
-        '#00cec9', '#0984e3', '#6c5ce7', '#ff85a2', '#4cd137', 
-        '#fbc531', '#487eb0', '#e056fd', '#ffbe76', '#ff7979',
-        '#95afc0', '#22a6b3', '#be2edd', '#4834d4', '#130f40', 
-        '#6ab04c', '#f9ca24', '#eb4d4b', '#7ed6df', '#5758bb'
-    ];
-
-    // Lọc data theo các bài kinh đã học trong ngày đó
-    sections.forEach((sec, idx) => {
-        const val = parseInt(localStorage.getItem(`daily_section_xp_${sec.id}_${dateStr}`) || 0);
-        if (val > 0) {
-            labels.push(sec.title);
-            data.push(val);
-            colors.push(bgColors[idx % bgColors.length]);
-            totalDayXP += val;
-            
-            // NEW: Record last active time for this section
-            const lastActive = parseInt(localStorage.getItem(`section_last_active_${sec.id}`) || 0);
-            sectionActivity.push({ title: sec.title, lastActive: lastActive });
-        }
-    });
-
-    // NEW: Determine Top 5 Most Recent Titles
-    sectionActivity.sort((a, b) => b.lastActive - a.lastActive);
-    const top5Titles = sectionActivity.slice(0, 5).map(s => s.title);
-    const centerTextPlugin = {
-        id: 'centerTextDaily',
-        afterDatasetsDraw: function(chart) {
-            const { ctx, chartArea: { top, bottom, left, right } } = chart;
-            ctx.save();
-            const centerX = (left + right) / 2;
-            const centerY = (top + bottom) / 2;
-            const chartHeight = bottom - top;
-            const fontSizeMain = chartHeight / 10; 
-            const fontSizeSub = chartHeight / 20;
-
-            ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.font = `bold ${fontSizeMain}px sans-serif`;
-            // Tuỳ biến chữ trắng trên nền thẻ Card xám đen
-            ctx.fillStyle = "#FFFFFF"; 
-            ctx.fillText(totalDayXP.toLocaleString(), centerX, centerY - (fontSizeMain * 0.15));
-            ctx.font = `normal ${fontSizeSub}px sans-serif`;
-            ctx.fillStyle = "#9ca3af";
-            ctx.fillText("XP", centerX, centerY + (fontSizeMain * 0.75));
-            ctx.restore();
-        }
-    };
-
-    dailyChartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{ 
-                data: data, 
-                backgroundColor: colors, 
-                borderWidth: 1, 
-                borderColor: '#1f2937' 
-            }]
-        },
-        options: {
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { labels: { color: '#9ca3af', filter: function(item, chart) {
-                            return top5Titles.includes(item.text);
-                        } }, position: 'bottom' },
-                title: { display: data.length === 0, text: 'No data available', position: 'bottom', color: '#6b7280' },
-                tooltip: {
-                    backgroundColor: '#121821', titleColor: '#f3f4f6', bodyColor: '#f3f4f6', borderColor: '#374151', borderWidth: 1, padding: 10,
-                    callbacks: {
-                        label: function(context) {
-                            let value = context.raw;
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
-                            return ` ${value} XP (${percentage}%)`;
-                        }
-                    }
-                }
-            }
-        },
-        plugins: [centerTextPlugin]
-    });
+    }, 150);
 }
 function injectExamButton() {
     // Check if it already exists to avoid duplicates
@@ -3894,17 +3578,6 @@ function injectSlider(lineElement, idx) {
         input.className = 'memorize-checkbox';
         input.id = `checkbox-${idx}`; 
 
-        input.addEventListener('click', function(e) {
-            const isChecked = this.checked;
-            if (isChecked) {
-                // Directly save 100% score without triggering the quiz
-                saveLineScore(idx, 100);
-            } else {
-                // Reset score to 0 when unchecked
-                saveLineScore(idx, 0);
-            }
-        });
-
         const textSpan = document.createElement('span');
         textSpan.innerText = "Memorized"; 
 
@@ -3912,24 +3585,136 @@ function injectSlider(lineElement, idx) {
         label.appendChild(textSpan);
         container.appendChild(label);
 
-        // 2. NEW: Practice Button Section
+        // 2. SRS Rating Panel (Hidden by default)
+        const srsPanel = document.createElement('div');
+        srsPanel.className = 'srs-rating-panel';
+        srsPanel.id = `srs-panel-${idx}`;
+        srsPanel.style.display = 'none';
+        
+        // Define the 4 rating buttons
+        // Get the dynamic setting and format the label
+        const startMins = getFirstIntervalMins();
+        const againLabel = startMins >= 60 ? `Again` : `Again`;
+
+        // Define the 4 rating buttons dynamically
+        const ratings = [
+            { val: 2, label: 'Hard', color: '#c0392b' },
+            { val: 3, label: 'Normal', color: '#27ae60' },
+            { val: 4, label: 'Easy', color: '#2980b9' }
+        ];
+
+        ratings.forEach(r => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-srs-rating';
+            btn.innerText = r.label;
+            btn.style.backgroundColor = r.color;
+            btn.onclick = () => handleSRSRating(idx, r.val, input, srsPanel);
+            srsPanel.appendChild(btn);
+        });
+
+        container.appendChild(srsPanel);
+
+       // Event listener to toggle the SRS panel AND the text
+        input.addEventListener('change', function() {
+            if (this.checked) {
+                srsPanel.style.display = 'flex';
+                textSpan.style.display = 'none'; // Hides the "Đã thuộc" text
+            } else {
+                srsPanel.style.display = 'none';
+                textSpan.style.display = 'inline'; // Shows the text again if unchecked
+                // Reset standard tracking if unchecked
+                saveLineScore(idx, 0); 
+            }
+        });
+
+        // 3. Keep the old Practice Button
         const practiceBtn = document.createElement('button');
         practiceBtn.className = 'btn-practice';
-        practiceBtn.innerHTML = '<i class="fas fa-bullseye-arrow"></i> Practicing';
+        practiceBtn.innerHTML = '<i class="fas fa-bullseye-arrow"></i>';
         practiceBtn.onclick = function() {
-            // Mode: 'practice' -> Questions 1 & 3
             startLineTest(idx, 'practice');
         };
         
         container.appendChild(practiceBtn);
-
         lineElement.appendChild(container);
     }
 
-    // Sync state
+    // Sync Checkbox UI with Legacy system to maintain Dashboard heatmaps
     const currentScore = getLineScore(idx);
-    const input = container.querySelector('input');
-    input.checked = (currentScore >= 100);
+    const inputCheckbox = container.querySelector('input');
+    inputCheckbox.checked = (currentScore >= 100);
+    
+    // Ensure the text and panel reflect the saved state when the line first loads
+    if (inputCheckbox.checked) {
+        textSpan.style.display = 'none';
+        srsPanel.style.display = 'flex';
+    }
+}
+function handleSRSRating(lineIdx, ratingValue, checkboxElement, panelElement) {
+    const sectionId = sections[currentSectionIndex].id;
+    
+    // 1. Retrieve current SRS state
+    let srsItem = getSRSItem(sectionId, lineIdx);
+    
+    // 2. Apply SM-2 Algorithm
+    srsItem = calculateSM2(ratingValue, srsItem);
+    
+    // 3. Save updated SRS state
+    saveSRSItem(sectionId, lineIdx, srsItem);
+    
+    // 4. Update UI
+    panelElement.style.display = 'none'; // Hide buttons after rating
+    
+    // 5. Update Legacy Dashboard (so the boxes turn green)
+    saveLineScore(lineIdx, 100); 
+    
+    updateReviewBadge();
+    if (navigator.vibrate) navigator.vibrate(50);
+}
+
+// Calculate total sentences due for review right now
+function getDueReviewCount() {
+    let dueCount = 0;
+    const now = Date.now();
+    
+    sections.forEach(section => {
+        const lines = section.text.split('\n').filter(l => /\s*\[(\d+(\.\d+)?)\]\s*$/.test(l));
+        
+        lines.forEach((_, lineIdx) => {
+            const item = getSRSItem(section.id, lineIdx);
+            // Count it as due if it has a timestamp and that time has passed
+            if (item.nextReview && item.nextReview > 0 && item.nextReview <= now) {
+                dueCount++;
+            }
+        });
+    });
+    
+    return dueCount;
+}
+
+// Update the red notification dot on the Stats button
+function updateReviewBadge() {
+    const count = getDueReviewCount();
+    let badge = document.getElementById('review-badge');
+    
+    // Inject badge into the stats button if it doesn't exist
+    if (!badge) {
+        const btnStats = document.getElementById('btn-stats');
+        if (!btnStats) return;
+        
+        badge = document.createElement('span');
+        badge.id = 'review-badge';
+        badge.className = 'badge-notification';
+        btnStats.appendChild(badge);
+    }
+
+    // Toggle visibility based on count
+    if (count > 0) {
+        badge.innerText = count > 99 ? '99+' : count;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
 }
 
 /* --- HELPER: GET TRANSLATION FOR PALI LINE --- */
